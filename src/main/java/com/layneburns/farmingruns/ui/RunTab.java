@@ -22,13 +22,12 @@ import com.layneburns.farmingruns.run.Protection;
 import com.layneburns.farmingruns.run.RunPlanService;
 import com.layneburns.farmingruns.pathing.ShortestPathClient;
 import com.layneburns.farmingruns.run.RunController;
+import com.layneburns.farmingruns.run.RunProgress;
 import com.layneburns.farmingruns.run.RunSession;
 import com.layneburns.farmingruns.run.RunSetup;
-import com.layneburns.farmingruns.run.TeleportSuggestions;
 import com.layneburns.farmingruns.run.TreeRoutine;
 import com.layneburns.farmingruns.state.ContractService;
 import com.layneburns.farmingruns.state.ItemStore;
-import com.layneburns.farmingruns.state.LocationPrefs;
 import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.SetupStore;
@@ -81,8 +80,6 @@ public class RunTab extends TabPanel
 	private final RunSession session;
 	private final RunController controller;
 	private final ShortestPathClient shortestPath;
-	private final TeleportSuggestions suggestions;
-	private final LocationPrefs prefs;
 	private final ItemManager itemManager;
 	private final BankRunTab bankRunTab;
 
@@ -95,8 +92,7 @@ public class RunTab extends TabPanel
 	@Inject
 	RunTab(GameData data, SetupStore setups, RunPlanService planner, UnlockService unlocks, ItemStore items,
 		PlayerInfo player, ContractService contract, RunCheckService checks, RunSession session, PatchStates states,
-		ItemManager itemManager, BankRunTab bankRunTab, RunController controller, ShortestPathClient shortestPath,
-		TeleportSuggestions suggestions, LocationPrefs prefs)
+		ItemManager itemManager, BankRunTab bankRunTab, RunController controller, ShortestPathClient shortestPath)
 	{
 		this.data = data;
 		this.setups = setups;
@@ -108,8 +104,6 @@ public class RunTab extends TabPanel
 		this.session = session;
 		this.controller = controller;
 		this.shortestPath = shortestPath;
-		this.suggestions = suggestions;
-		this.prefs = prefs;
 		this.itemManager = itemManager;
 		this.bankRunTab = bankRunTab;
 		add(scrollPane(content), BorderLayout.CENTER);
@@ -121,7 +115,6 @@ public class RunTab extends TabPanel
 		contract.addListener(this::refresh);
 		states.addListener(this::refresh);
 		session.addListener(this::refresh);
-		suggestions.addListener(this::refresh);
 		refresh();
 	}
 
@@ -149,16 +142,16 @@ public class RunTab extends TabPanel
 		PlantingPlan plan = check.getPlan();
 		content.removeAll();
 
-		if (!suggestions.all().isEmpty())
-		{
-			SectionPanel suggested = section("Teleport suggestions");
-			SuggestionList.fill(suggested, suggestions, prefs, data);
-			content.add(suggested);
-		}
 		RunSession.ActiveRun active = session.active();
 		if (active != null)
 		{
-			content.add(activeRun(active));
+			RunProgress progress = active.getProgress();
+			JLabel running = text(progress.isFinished() ? "Run complete: see the Live tab."
+				: "Run in progress (" + progress.doneCount() + " of " + progress.getStops().size()
+				+ " stops): see the Live tab.");
+			running.setForeground(Palette.ACCENT);
+			running.setBorder(BorderFactory.createEmptyBorder(0, 0, 6, 0));
+			content.add(running);
 		}
 
 		SectionPanel presets = section("Presets");
@@ -343,18 +336,6 @@ public class RunTab extends TabPanel
 			label.setForeground(Palette.PARTIAL);
 			section.addRow(label);
 		}
-		return section;
-	}
-
-	/** The run in progress: its stops in order, and Stop. */
-	private SectionPanel activeRun(RunSession.ActiveRun run)
-	{
-		SectionPanel section = section("Run in progress");
-		StopList.fill(section, run, data, controller::goTo, controller::skip);
-		JButton stop = button(run.getProgress().isFinished() ? "Close run" : "Stop run", "Ends the run and clears the"
-			+ " path");
-		stop.addActionListener(e -> controller.stop());
-		section.addRow(fill(stop));
 		return section;
 	}
 

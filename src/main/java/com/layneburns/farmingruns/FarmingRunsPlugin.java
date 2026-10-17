@@ -19,8 +19,10 @@ import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.RunePouchWatcher;
 import com.layneburns.farmingruns.state.SetupStore;
+import com.layneburns.farmingruns.state.StatsStore;
 import com.layneburns.farmingruns.run.GuidanceTracker;
 import com.layneburns.farmingruns.run.RunController;
+import com.layneburns.farmingruns.run.RunTracker;
 import com.layneburns.farmingruns.run.TeleportWatcher;
 import com.layneburns.farmingruns.ui.BankHighlightOverlay;
 import com.layneburns.farmingruns.ui.BankRunTab;
@@ -131,6 +133,12 @@ public class FarmingRunsPlugin extends Plugin
 	private GuidanceTracker guidanceTracker;
 
 	@Inject
+	private RunTracker runTracker;
+
+	@Inject
+	private StatsStore statsStore;
+
+	@Inject
 	private RunItemOverlay runItemOverlay;
 
 	@Inject
@@ -168,10 +176,13 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(runController);
 		eventBus.register(teleportWatcher);
 		eventBus.register(guidanceTracker);
+		eventBus.register(runTracker);
+		eventBus.register(statsStore);
 		bankRunTab.register();
 		itemStore.loadRemembered();
 		locationPrefs.load();
 		setupStore.load();
+		statsStore.load();
 		// If the plugin starts while logged in, read what the client already has.
 		clientThread.invokeLater(() ->
 		{
@@ -191,6 +202,8 @@ public class FarmingRunsPlugin extends Plugin
 	protected void shutDown()
 	{
 		runController.stop();
+		eventBus.unregister(statsStore);
+		eventBus.unregister(runTracker);
 		eventBus.unregister(guidanceTracker);
 		eventBus.unregister(teleportWatcher);
 		eventBus.unregister(runController);

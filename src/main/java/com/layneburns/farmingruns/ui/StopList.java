@@ -27,7 +27,7 @@ import javax.swing.JPopupMenu;
 import net.runelite.client.ui.FontManager;
 
 /**
- * The run's stops in order (SPEC §2.5): done ones ticked, the current one highlighted, skipped ones greyed. Each
+ * A stop in the Live tab's lists (SPEC §2.5): done ones ticked, the current one highlighted, skipped ones greyed. Each
  * shows its teleport and how many of its patches are done. Click a stop to go there next or skip it.
  */
 final class StopList
@@ -36,20 +36,7 @@ final class StopList
 	{
 	}
 
-	static void fill(SectionPanel section, RunSession.ActiveRun run, GameData data, Consumer<String> goTo,
-		Consumer<String> skip)
-	{
-		RunProgress progress = run.getProgress();
-		section.addRow(TabPanel.text(progress.isFinished() ? "Run complete." : progress.doneCount() + " of "
-			+ progress.getStops().size() + " stops done. Click a stop to go there next or skip it."));
-		int number = 1;
-		for (RunProgress.Stop stop : progress.getStops())
-		{
-			section.addRow(row(number++, stop, run, data, goTo, skip));
-		}
-	}
-
-	private static JPanel row(int number, RunProgress.Stop stop, RunSession.ActiveRun run, GameData data,
+	static JPanel row(int number, RunProgress.Stop stop, RunSession.ActiveRun run, GameData data,
 		Consumer<String> goTo, Consumer<String> skip)
 	{
 		RunProgress progress = run.getProgress();

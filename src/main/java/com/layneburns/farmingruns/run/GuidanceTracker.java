@@ -7,16 +7,23 @@
 package com.layneburns.farmingruns.run;
 
 import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.data.Location;
+import com.layneburns.farmingruns.data.TeleportChoice;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
+import net.runelite.api.Client;
+import net.runelite.api.Player;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.util.Text;
@@ -24,7 +31,8 @@ import net.runelite.client.util.Text;
 /**
  * Follows the game's messages during a run: "You treat the bush patch with supercompost." marks a patch composted,
  * and "You pay the gardener 8 ... to protect the patch." marks it paid for. Gives the overlays what to point out at
- * the current stop ({@link RunGuidance}). Client thread.
+ * the current stop ({@link RunGuidance}), and while you're not at it yet, the teleport item that gets you there.
+ * Client thread.
  */
 @Slf4j
 @Singleton
@@ -33,20 +41,37 @@ public class GuidanceTracker
 	private static final Pattern TREATED = Pattern.compile("you treat the (.+) with (?:ultra|super)?compost");
 	private static final Pattern PAID = Pattern.compile("you pay the gardener .+ to protect");
 
+	private final Client client;
 	private final GameData data;
 	private final RunSession session;
+	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 	/** Patches composted in the current run, and which run that is (by its start time). */
 	private final Set<String> composted = new HashSet<>();
 	private long runStartedAt;
 
 	@Inject
-	GuidanceTracker(GameData data, RunSession session)
+	GuidanceTracker(Client client, GameData data, RunSession session)
 	{
+		this.client = client;
 		this.data = data;
 		this.session = session;
 	}
 
-	/** What to outline now: nothing when no run is going. */
+	public void addListener(Runnable listener)
+	{
+		listeners.add(listener);
+	}
+
+	/** True when the game said this patch was treated with compost during the run. */
+	public boolean isComposted(String patchId)
+	{
+		return composted.contains(patchId);
+	}
+
+	/**
+	 * What to outline now: nothing when no run is going. Away from the current stop, its teleport item as well, so it's
+	 * ready when you've finished where you are.
+	 */
 	public RunGuidance.Highlights highlights()
 	{
 		RunSession.ActiveRun run = currentRun();
@@ -54,8 +79,49 @@ public class GuidanceTracker
 		{
 			return RunGuidance.NONE;
 		}
-		return RunGuidance.at(run.getProgress().currentStop(), run.getProgress(), run.getSetup().getCompost(),
+		RunProgress.Stop stop = run.getProgress().currentStop();
+		RunGuidance.Highlights here = RunGuidance.at(stop, run.getProgress(), run.getSetup().getCompost(),
 			Set.copyOf(composted), data.getItems());
+		if (stop == null || isAt(stop))
+		{
+			return here;
+		}
+		Set<Integer> items = new HashSet<>(here.getItems());
+		items.addAll(teleportItems(run.getTeleports().get(stop.getLocationId())));
+		return new RunGuidance.Highlights(Set.copyOf(items), here.getNpcs());
+	}
+
+	/** The items to use for a teleport: its item, or a way into your house for a portal; none for spells and walks. */
+	private Set<Integer> teleportItems(@Nullable TeleportChoice teleport)
+	{
+		if (teleport == null)
+		{
+			return Set.of();
+		}
+		switch (teleport.getMethod().getType())
+		{
+			case ITEM:
+				return teleport.itemIds();
+			case HOUSE:
+				Set<Integer> house = new HashSet<>(data.getItems().group("construction_cape"));
+				house.addAll(data.getItems().group("house_tablet"));
+				return house;
+			default:
+				return Set.of();
+		}
+	}
+
+	/** True when you're in the stop's region. */
+	private boolean isAt(RunProgress.Stop stop)
+	{
+		Player player = client.getLocalPlayer();
+		if (player == null)
+		{
+			return false;
+		}
+		int region = player.getWorldLocation().getRegionID();
+		Location location = data.location(stop.getLocationId());
+		return location.getRegionId() == region || location.getExtraRegionIds().contains(region);
 	}
 
 	@Subscribe
@@ -87,6 +153,7 @@ public class GuidanceTracker
 				{
 					composted.add(a.getPatch().getId());
 					log.debug("[farmrun] composted {}", a.getPatch().getId());
+					listeners.forEach(Runnable::run);
 				});
 			return;
 		}
