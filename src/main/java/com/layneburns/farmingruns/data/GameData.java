@@ -37,9 +37,10 @@ public final class GameData
 	@Getter
 	private final String runeliteTag;
 	private final Set<Integer> trackedItemIds;
+	private final List<GoalPreset> goals;
 
 	GameData(Map<String, Location> locations, List<Seed> seeds, Map<String, Teleport> teleports,
-		Map<String, UnlockRule> rules, CostTable costs, ItemCatalog items, String runeliteTag)
+		Map<String, UnlockRule> rules, CostTable costs, ItemCatalog items, String runeliteTag, List<GoalPreset> goals)
 	{
 		this.locations = locations;
 		this.patches = locations.values().stream()
@@ -62,6 +63,7 @@ public final class GameData
 		this.items = items;
 		this.runeliteTag = runeliteTag;
 		this.trackedItemIds = collectTracked(this.seeds, teleports, items);
+		this.goals = goals;
 	}
 
 	public Collection<Location> locations()
@@ -113,6 +115,12 @@ public final class GameData
 			counts.merge(patch.getKind(), 1, Integer::sum);
 		}
 		return counts;
+	}
+
+	/** The built-in goal presets, in file order (grouped by category). */
+	public List<GoalPreset> goals()
+	{
+		return goals;
 	}
 
 	public Collection<Teleport> teleports()

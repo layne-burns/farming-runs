@@ -43,7 +43,9 @@ public final class DataLoader
 		RawData.PatchLocations generated = read("patch_locations.json", RawData.PatchLocations.class);
 		Map<String, Location> locations = loadLocations(generated, rules, teleports);
 		CostTable costs = loadCosts(locations);
-		return new GameData(locations, loadSeeds(), teleports, rules, costs, loadItems(), generated.runeliteTag);
+		List<Seed> seeds = loadSeeds();
+		return new GameData(locations, seeds, teleports, rules, costs, loadItems(), generated.runeliteTag,
+			loadGoals(seeds));
 	}
 
 	// ------------------------------------------------------------------ locations and patches
@@ -168,6 +170,29 @@ public final class DataLoader
 				SeedXp.from(raw.xp), raw.growth));
 		}
 		return seeds;
+	}
+
+	private List<GoalPreset> loadGoals(List<Seed> seeds)
+	{
+		Map<String, Seed> byName = new HashMap<>();
+		seeds.forEach(s -> byName.put(s.getName(), s));
+		List<GoalPreset> goals = new ArrayList<>();
+		for (RawData.Goal raw : read("goal_presets.json", RawData.Goals.class).presets)
+		{
+			List<GoalPreset.Crop> crops = new ArrayList<>();
+			for (RawData.GoalCrop c : raw.crops)
+			{
+				Seed seed = byName.get(c.seed);
+				if (seed == null || !seed.getKind().name().equals(c.kind))
+				{
+					throw new DataException("goal_presets.json " + raw.id + ": no " + c.kind + " seed called " + c.seed);
+				}
+				crops.add(new GoalPreset.Crop(seed, c.perProduct, c.avgYieldPerPatch));
+			}
+			goals.add(new GoalPreset(raw.id, raw.name, raw.category, raw.why == null ? "" : raw.why, List.copyOf(crops),
+				raw.notFarmed == null ? List.of() : List.copyOf(raw.notFarmed), raw.minFarmingLevel));
+		}
+		return List.copyOf(goals);
 	}
 
 	private Map<String, Teleport> loadTeleports()

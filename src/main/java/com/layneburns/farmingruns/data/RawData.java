@@ -155,6 +155,31 @@ final class RawData
 		Integer level;
 	}
 
+	/** goal_presets.json (hand-reviewed research). */
+	static class Goals
+	{
+		List<Goal> presets;
+	}
+
+	static class Goal
+	{
+		String id;
+		String name;
+		String category;
+		String why;
+		List<GoalCrop> crops;
+		List<String> notFarmed;
+		int minFarmingLevel;
+	}
+
+	static class GoalCrop
+	{
+		String seed;
+		String kind;
+		double perProduct;
+		double avgYieldPerPatch;
+	}
+
 	/** items.json (generated). */
 	static class Items
 	{

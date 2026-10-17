@@ -7,10 +7,12 @@
 package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.data.GoalPreset;
 import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.data.RunType;
 import com.layneburns.farmingruns.data.Seed;
 import com.layneburns.farmingruns.run.CompostChoice;
+import com.layneburns.farmingruns.run.GoalSetups;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.PresetCombiner;
 import com.layneburns.farmingruns.run.RunPlanService;
@@ -59,9 +61,10 @@ public class RunTab extends TabPanel
 	private final SetupStore setups;
 	private final RunPlanService planner;
 	private final UnlockService unlocks;
+	private final PlayerInfo player;
 
 	private final FitWidthPanel content = new FitWidthPanel();
-	/** Presets ticked, in the order ticked (the first one's compost wins when combining). */
+	/** Goals and presets ticked (see PresetsPanel's keys), in the order ticked: the first one's compost wins. */
 	private final Set<String> ticked = new LinkedHashSet<>();
 	private final Map<String, Boolean> collapsed = new HashMap<>(Map.of("Patches to visit", true));
 	private final AtomicBoolean redrawQueued = new AtomicBoolean();
@@ -74,6 +77,7 @@ public class RunTab extends TabPanel
 		this.setups = setups;
 		this.planner = planner;
 		this.unlocks = unlocks;
+		this.player = player;
 		add(scrollPane(content), BorderLayout.CENTER);
 		// Redraw when the setup, your items, unlocks, level or contract change.
 		setups.addListener(this::refresh);
@@ -106,7 +110,8 @@ public class RunTab extends TabPanel
 		content.removeAll();
 
 		SectionPanel presets = section("Presets");
-		presets.addRow(new PresetsPanel(setups.presets().keySet(), ticked, this::tick, this::deletePreset, this::savePreset));
+		presets.addRow(new PresetsPanel(data.goals(), setups.presets().keySet(), ticked, player.getFarmingLevel(),
+			this::tick, this::deletePreset, this::savePreset));
 		content.add(presets);
 
 		SectionPanel types = section("Run types");
@@ -253,14 +258,27 @@ public class RunTab extends TabPanel
 		{
 			ticked.remove(name);
 		}
-		List<RunSetup> chosen = ticked.stream().map(n -> setups.presets().get(n)).filter(p -> p != null)
-			.collect(Collectors.toList());
+		List<RunSetup> chosen = ticked.stream().map(this::setupFor).filter(p -> p != null).collect(Collectors.toList());
 		if (chosen.isEmpty())
 		{
 			refresh();
 			return;
 		}
 		setups.setCurrent(PresetCombiner.combine(chosen));
+	}
+
+	/** The setup for a ticked key: a goal turned into a setup, or a saved preset; null if it's gone. */
+	private RunSetup setupFor(String key)
+	{
+		for (GoalPreset goal : data.goals())
+		{
+			if (PresetsPanel.goalKey(goal.getId()).equals(key))
+			{
+				return GoalSetups.toSetup(goal);
+			}
+		}
+		return setups.presets().entrySet().stream().filter(e -> PresetsPanel.presetKey(e.getKey()).equals(key))
+			.map(Map.Entry::getValue).findFirst().orElse(null);
 	}
 
 	private void savePreset()
@@ -284,7 +302,7 @@ public class RunTab extends TabPanel
 		if (JOptionPane.showConfirmDialog(this, "Delete the preset \"" + name + "\"?", "Delete preset",
 			JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
 		{
-			ticked.remove(name);
+			ticked.remove(PresetsPanel.presetKey(name));
 			setups.deletePreset(name);
 		}
 	}

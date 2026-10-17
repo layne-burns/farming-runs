@@ -1,0 +1,1285 @@
+{
+	"_comment": "Hand-reviewed goal presets (researched from the OSRS wiki, 2026-10-17). Each crop names a seed exactly as in seeds.json. perProduct: harvested items one product needs; avgYieldPerPatch: average harvest per patch (0 when not meaningful, e.g. trees grown for logs or XP), used to share a patch kind between a goal's crops. Notes and wiki links record where the numbers came from.",
+	"_sources": "Recipes, ingredient counts and payments read from OSRS Wiki raw wikitext via the MediaWiki API (October 2026); seed names/kinds/levels/XP/payments from seeds.json. avgYieldPerPatch for harvest-lives crops is computed with the wiki's own Module:Farming yield calculator formula (lives / (1 - chanceToSave), CTS low/high taken from each seed page's {{Farming yield calculator}}) at Farming 80 (or the crop's requirement if higher), ultracompost, magic secateurs, no diary/Farming cape/attas; limpwurt uses the module's dedicated formula; grapes use the Grape vine page's chart values. yieldBasis: formula (wiki formula), fixed (game mechanic), minimum (guaranteed floor because the wiki publishes no formula), estimate (interpolated/assumed), none (not a per-patch harvest). perProduct is per 3-dose potion unless productUnit says otherwise. xpPerPatch appears only on Farming XP presets.",
+	"assumptions": {
+		"farmingLevel": 80,
+		"compost": "ultracompost",
+		"magicSecateurs": true,
+		"diary": null,
+		"farmingCape": false,
+		"attas": false
+	},
+	"presets": [
+		{
+			"id": "prayer_potion",
+			"name": "Prayer potion",
+			"category": "Potions",
+			"why": "Core prayer restore for every ironman PvM trip until super restores are steady; both ingredients are farmable.",
+			"crops": [
+				{
+					"seed": "Ranarr seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 8.7,
+					"note": "grimy ranarr weed; 1 per 3-dose potion; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Snape grass seed",
+					"kind": "ALLOTMENT",
+					"perProduct": 1,
+					"avgYieldPerPatch": 30.1,
+					"note": "snape grass; 1 per potion; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~37.5 at 99)",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 61,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Prayer_potion",
+				"https://oldschool.runescape.wiki/w/Ranarr_seed",
+				"https://oldschool.runescape.wiki/w/Snape_grass_seed"
+			]
+		},
+		{
+			"id": "super_restore",
+			"name": "Super restore (incl. Sanfew serum)",
+			"category": "Potions",
+			"why": "Restores prayer and drained stats; the brew/restore pair is the backbone of ironman bossing.",
+			"crops": [
+				{
+					"seed": "Snapdragon seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 8.9,
+					"note": "grimy snapdragon; 1 per 3-dose potion; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [
+				"Red spiders' eggs (1 per potion)",
+				"Sanfew serum also needs unicorn horn dust, snake weed and nail beast nails"
+			],
+			"minFarmingLevel": 62,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Super_restore",
+				"https://oldschool.runescape.wiki/w/Sanfew_serum",
+				"https://oldschool.runescape.wiki/w/Snapdragon_seed"
+			]
+		},
+		{
+			"id": "saradomin_brew",
+			"name": "Saradomin brew",
+			"category": "Potions",
+			"why": "Main high-healing potion for ironman bossing (paired with super restores).",
+			"crops": [
+				{
+					"seed": "Toadflax seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 8.8,
+					"note": "grimy toadflax; 1 per 3-dose brew; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [
+				"Crushed nest (1 per brew; bird nests come from Woodcutting/nest drops, not patches)"
+			],
+			"minFarmingLevel": 38,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Saradomin_brew",
+				"https://oldschool.runescape.wiki/w/Toadflax_seed"
+			]
+		},
+		{
+			"id": "ranging_potion",
+			"name": "Ranging potion (incl. Divine)",
+			"category": "Potions",
+			"why": "Standard ranged boost; dwarf weed is the bottleneck for ironmen, and wine of Zamorak can be grown at the vinery.",
+			"crops": [
+				{
+					"seed": "Dwarf weed seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 9.0,
+					"note": "grimy dwarf weed; 1 per 3-dose potion; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Grape seed",
+					"kind": "GRAPES",
+					"perProduct": 1,
+					"avgYieldPerPatch": 12.4,
+					"note": "Zamorak's grapes -> wine of Zamorak (jug of water, Cooking 65; ~50% success at 65 rising to 100% at 98, so budget up to 2 grapes per wine at low Cooking). Picking Zamorak's grapes at the Hosidius vinery consumes 1 Bologa's blessing per grape (Tithe Farm shop; unlock needs 50 Prayer, 65 Cooking, 75k to Bologa). Yield: 5 lives, magic secateurs + sulphurous fertiliser, Farming 80, from the wiki's Grape vine yield chart (~22.9 at 99; ~9.6 without fertiliser).",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [
+				"Crystal dust for the divine version (from crystal shards)",
+				"Wine of Zamorak can instead be telegrabbed or looted if the vinery is skipped"
+			],
+			"minFarmingLevel": 79,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Ranging_potion",
+				"https://oldschool.runescape.wiki/w/Dwarf_weed_seed",
+				"https://oldschool.runescape.wiki/w/Zamorak's_grapes",
+				"https://oldschool.runescape.wiki/w/Grape_vine",
+				"https://oldschool.runescape.wiki/w/Bologa's_blessing"
+			]
+		},
+		{
+			"id": "super_combat",
+			"name": "Super combat potion (incl. Divine)",
+			"category": "Potions",
+			"why": "Best melee boost; every herb plus limpwurt and white berries are farmable.",
+			"crops": [
+				{
+					"seed": "Torstol seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 9.1,
+					"note": "grimy torstol; 1 per super combat(4); Farming 85, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Irit seed",
+					"kind": "HERB",
+					"perProduct": 1.33,
+					"avgYieldPerPatch": 8.8,
+					"note": "grimy irit leaf; super attack; 4/3 per super combat(4) because a 4-dose super is 4/3 of a 3-dose potion; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Kwuarm seed",
+					"kind": "HERB",
+					"perProduct": 1.33,
+					"avgYieldPerPatch": 8.9,
+					"note": "grimy kwuarm; super strength; 4/3 per super combat(4); Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Cadantine seed",
+					"kind": "HERB",
+					"perProduct": 1.33,
+					"avgYieldPerPatch": 9.0,
+					"note": "grimy cadantine; super defence; 4/3 per super combat(4); Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Limpwurt seed",
+					"kind": "FLOWER",
+					"perProduct": 1.33,
+					"avgYieldPerPatch": 6.9,
+					"note": "super strength secondary, 4/3 per super combat(4); limpwurt root; 3 + floor(rand(0..floor(F*1.10)-1)/10) with magic secateurs, compost has no effect; wiki module formula at Farming 80 (~7.9 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Whiteberry seed",
+					"kind": "BUSH",
+					"perProduct": 1.33,
+					"avgYieldPerPatch": 4,
+					"note": "white berries (super defence secondary, 4/3 per super combat(4)); 4 is the guaranteed minimum per harvest - the wiki says a level-scaled random bonus is added (magic secateurs apply) but publishes no formula, so the real average is higher. Bushes regrow (~80 min) so later runs can harvest again.",
+					"yieldBasis": "minimum"
+				}
+			],
+			"notFarmed": [
+				"Eye of newt (super attack)",
+				"Crystal dust for the divine version"
+			],
+			"minFarmingLevel": 85,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Super_combat_potion",
+				"https://oldschool.runescape.wiki/w/Super_attack",
+				"https://oldschool.runescape.wiki/w/Super_strength",
+				"https://oldschool.runescape.wiki/w/Super_defence",
+				"https://oldschool.runescape.wiki/w/Divine_super_combat_potion",
+				"https://oldschool.runescape.wiki/w/Limpwurt_seed",
+				"https://oldschool.runescape.wiki/w/Whiteberry_bush"
+			],
+			"productUnit": "Super combat potion(4)"
+		},
+		{
+			"id": "antifire",
+			"name": "Antifire / Extended / Super antifire",
+			"category": "Potions",
+			"why": "Required for dragons (Vorkath, metal dragons, KBD); lantadyme is the only farmable input.",
+			"crops": [
+				{
+					"seed": "Lantadyme seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 9.0,
+					"note": "grimy lantadyme; 1 per 3-dose antifire (extended and super versions upgrade an antifire); Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [
+				"Dragon scale dust (antifire)",
+				"Lava scale shard (extended)",
+				"Crushed superior dragon bones (super antifire)"
+			],
+			"minFarmingLevel": 73,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Antifire_potion",
+				"https://oldschool.runescape.wiki/w/Extended_antifire",
+				"https://oldschool.runescape.wiki/w/Super_antifire_potion",
+				"https://oldschool.runescape.wiki/w/Lantadyme_seed"
+			]
+		},
+		{
+			"id": "stamina",
+			"name": "Stamina potion (super energy)",
+			"category": "Potions",
+			"why": "Run energy for nearly every ironman activity; avantoe makes the super energy base.",
+			"crops": [
+				{
+					"seed": "Avantoe seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 8.9,
+					"note": "grimy avantoe; 1 per 3-dose super energy (= stamina(3) with 3 amylase); Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [
+				"Mort myre fungus (super energy)",
+				"Amylase crystal (1 per dose, Mark of grace shop)"
+			],
+			"minFarmingLevel": 50,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Stamina_potion",
+				"https://oldschool.runescape.wiki/w/Super_energy",
+				"https://oldschool.runescape.wiki/w/Avantoe_seed"
+			],
+			"productUnit": "Stamina potion(3)"
+		},
+		{
+			"id": "anti_venom_plus",
+			"name": "Anti-venom+",
+			"category": "Potions",
+			"why": "Venom immunity for Zulrah, Vorkath and Hydra; irit, coconut, magic roots and torstol all come from patches.",
+			"crops": [
+				{
+					"seed": "Irit seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 8.8,
+					"note": "grimy irit leaf; 1 per antidote++(4); Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Palm tree seed",
+					"kind": "FRUIT_TREE",
+					"perProduct": 1,
+					"avgYieldPerPatch": 6,
+					"note": "coconut -> half coconut -> coconut milk (1 per antidote++(4)); a grown fruit tree holds 6 fruit and regrows 1 every 40 min (fixed, not affected by compost/secateurs).",
+					"yieldBasis": "fixed"
+				},
+				{
+					"seed": "Magic seed",
+					"kind": "TREE",
+					"perProduct": 1,
+					"avgYieldPerPatch": 1,
+					"note": "magic roots, dug from the stump after chopping a grown magic tree: 1 at Farming 75-82, 2 at 83, 3 at 91, 4 at 99 (boosts count). 1 root per antidote++(4) - this is the bottleneck.",
+					"yieldBasis": "fixed"
+				},
+				{
+					"seed": "Torstol seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 9.1,
+					"note": "grimy torstol; 1 per anti-venom+(4); not needed for plain anti-venom; Farming 85, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [
+				"Zulrah's scales (20 per anti-venom(4))"
+			],
+			"minFarmingLevel": 85,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Anti-venom+",
+				"https://oldschool.runescape.wiki/w/Anti-venom",
+				"https://oldschool.runescape.wiki/w/Antidote++",
+				"https://oldschool.runescape.wiki/w/Coconut_milk",
+				"https://oldschool.runescape.wiki/w/Magic_roots"
+			],
+			"productUnit": "Anti-venom+(4)"
+		},
+		{
+			"id": "super_antipoison",
+			"name": "Super antipoison",
+			"category": "Potions",
+			"why": "Cheap poison cure/immunity for poisonous Slayer tasks before anti-venom is practical.",
+			"crops": [
+				{
+					"seed": "Irit seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 8.8,
+					"note": "grimy irit leaf; 1 per 3-dose potion; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [
+				"Unicorn horn dust"
+			],
+			"minFarmingLevel": 44,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Super_antipoison",
+				"https://oldschool.runescape.wiki/w/Irit_seed"
+			]
+		},
+		{
+			"id": "magic_potion",
+			"name": "Magic potion (incl. Divine)",
+			"category": "Potions",
+			"why": "+4 Magic boost for bossing and level boosts; both ingredients are farmable.",
+			"crops": [
+				{
+					"seed": "Lantadyme seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 9.0,
+					"note": "grimy lantadyme; 1 per 3-dose potion; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Potato cactus seed",
+					"kind": "CACTUS",
+					"perProduct": 1,
+					"avgYieldPerPatch": 6,
+					"note": "potato cactus; 1 per potion. 6 is the guaranteed minimum (wiki infobox '6+'); the Farming page's experimental estimate is 15-20 per patch at 99 with secateurs. CTS unpublished. Regrows fully in ~35 min.",
+					"yieldBasis": "minimum"
+				}
+			],
+			"notFarmed": [
+				"Crystal dust for the divine version"
+			],
+			"minFarmingLevel": 73,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Magic_potion",
+				"https://oldschool.runescape.wiki/w/Lantadyme_seed",
+				"https://oldschool.runescape.wiki/w/Potato_cactus_(plant)"
+			]
+		},
+		{
+			"id": "zamorak_brew",
+			"name": "Zamorak brew",
+			"category": "Potions",
+			"why": "Attack/Strength boost (with Defence/HP penalty) for niche setups and boosting; fully farmable.",
+			"crops": [
+				{
+					"seed": "Torstol seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 9.1,
+					"note": "grimy torstol; 1 per 3-dose brew; Farming 85, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Jangerberry seed",
+					"kind": "BUSH",
+					"perProduct": 1,
+					"avgYieldPerPatch": 4,
+					"note": "jangerberries; 1 per brew; 4 is the guaranteed minimum per harvest - the wiki says a level-scaled random bonus is added (magic secateurs apply) but publishes no formula, so the real average is higher. Bushes regrow (~80 min) so later runs can harvest again.",
+					"yieldBasis": "minimum"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 85,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Zamorak_brew",
+				"https://oldschool.runescape.wiki/w/Torstol_seed",
+				"https://oldschool.runescape.wiki/w/Jangerberry_seed"
+			]
+		},
+		{
+			"id": "bastion",
+			"name": "Bastion potion (incl. Divine)",
+			"category": "Potions",
+			"why": "Combined Ranged + Defence boost (replaces ranging potion + super defence).",
+			"crops": [
+				{
+					"seed": "Cadantine seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 9.0,
+					"note": "grimy cadantine; 1 per 3-dose potion; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Grape seed",
+					"kind": "GRAPES",
+					"perProduct": 1,
+					"avgYieldPerPatch": 12.4,
+					"note": "Zamorak's grapes -> wine of Zamorak (jug of water, Cooking 65; ~50% success at 65 rising to 100% at 98, so budget up to 2 grapes per wine at low Cooking). Picking Zamorak's grapes at the Hosidius vinery consumes 1 Bologa's blessing per grape (Tithe Farm shop; unlock needs 50 Prayer, 65 Cooking, 75k to Bologa). Yield: 5 lives, magic secateurs + sulphurous fertiliser, Farming 80, from the wiki's Grape vine yield chart (~22.9 at 99; ~9.6 without fertiliser).",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [
+				"Vial of blood (for cadantine blood potion (unf))",
+				"Crystal dust for the divine version"
+			],
+			"minFarmingLevel": 67,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Bastion_potion",
+				"https://oldschool.runescape.wiki/w/Cadantine_seed",
+				"https://oldschool.runescape.wiki/w/Zamorak's_grapes"
+			]
+		},
+		{
+			"id": "battlemage",
+			"name": "Battlemage potion (incl. Divine)",
+			"category": "Potions",
+			"why": "Combined Magic + Defence boost; cadantine and potato cactus are farmable.",
+			"crops": [
+				{
+					"seed": "Cadantine seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 9.0,
+					"note": "grimy cadantine; 1 per 3-dose potion; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~9.2 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Potato cactus seed",
+					"kind": "CACTUS",
+					"perProduct": 1,
+					"avgYieldPerPatch": 6,
+					"note": "potato cactus; 1 per potion. 6 is the guaranteed minimum (wiki infobox '6+'); the Farming page's experimental estimate is 15-20 per patch at 99 with secateurs. CTS unpublished. Regrows fully in ~35 min.",
+					"yieldBasis": "minimum"
+				}
+			],
+			"notFarmed": [
+				"Vial of blood (for cadantine blood potion (unf))",
+				"Crystal dust for the divine version"
+			],
+			"minFarmingLevel": 67,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Battlemage_potion",
+				"https://oldschool.runescape.wiki/w/Cadantine_seed"
+			]
+		},
+		{
+			"id": "prayer_regeneration",
+			"name": "Prayer regeneration potion",
+			"category": "Potions",
+			"why": "Prayer drain offset for long fights; huasca is the only farmable input (seeds drop in Varlamore).",
+			"crops": [
+				{
+					"seed": "Huasca seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 8.9,
+					"note": "grimy huasca; 1 per 3-dose potion. ESTIMATE: the wiki gives no CTS for huasca (it says it uses the normal herb harvest-lives mechanic), so CTS low=59 was interpolated between snapdragon (57) and cadantine (60), high=80 like all herbs; Farming 80, ultracompost, magic secateurs (~9.2 at 99)",
+					"yieldBasis": "estimate"
+				}
+			],
+			"notFarmed": [
+				"Aldarium (Mastering Mixology)"
+			],
+			"minFarmingLevel": 65,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Prayer_regeneration_potion",
+				"https://oldschool.runescape.wiki/w/Huasca_(plant)",
+				"https://oldschool.runescape.wiki/w/Huasca_seed"
+			]
+		},
+		{
+			"id": "armadyl_brew",
+			"name": "Armadyl brew",
+			"category": "Potions",
+			"why": "Sailing-era ranged brew (heals over max and boosts Ranged); umbral coral grows in the coral nursery.",
+			"crops": [
+				{
+					"seed": "Umbral frag",
+					"kind": "CORAL",
+					"perProduct": 1,
+					"avgYieldPerPatch": 14.2,
+					"note": "umbral coral; 1 per 3-dose brew (vial of water + coral = umbral potion (unf)). Coral nurseries take no compost (fixed 6 lives); wiki calculator with magic secateurs at Farming 80 (~25.6 at 99). Whether secateurs affect coral is not confirmed - the wiki calculator assumes they do.",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [
+				"Rainbow crab paste",
+				"Herblore 89"
+			],
+			"minFarmingLevel": 77,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Armadyl_brew",
+				"https://oldschool.runescape.wiki/w/Umbral_coral",
+				"https://oldschool.runescape.wiki/w/Umbral_frag",
+				"https://oldschool.runescape.wiki/w/Coral_nursery"
+			]
+		},
+		{
+			"id": "summer_pie",
+			"name": "Summer pie",
+			"category": "Cooking",
+			"why": "+5 Agility per bite plus 22 HP fast food: the standard ironman Agility training/boost food; all fillings are farmed.",
+			"crops": [
+				{
+					"seed": "Strawberry seed",
+					"kind": "ALLOTMENT",
+					"perProduct": 1,
+					"avgYieldPerPatch": 21.0,
+					"note": "strawberry; 1 per pie; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~26.9 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Watermelon seed",
+					"kind": "ALLOTMENT",
+					"perProduct": 1,
+					"avgYieldPerPatch": 22.3,
+					"note": "watermelon; 1 per pie; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~26.9 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Apple tree seed",
+					"kind": "FRUIT_TREE",
+					"perProduct": 1,
+					"avgYieldPerPatch": 6,
+					"note": "cooking apple; 1 per pie; a grown fruit tree holds 6 fruit and regrows 1 every 40 min (fixed, not affected by compost/secateurs).",
+					"yieldBasis": "fixed"
+				}
+			],
+			"notFarmed": [
+				"Pie shell (pastry dough + pie dish)",
+				"Cooking 95"
+			],
+			"minFarmingLevel": 47,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Summer_pie",
+				"https://oldschool.runescape.wiki/w/Raw_summer_pie",
+				"https://oldschool.runescape.wiki/w/Part_summer_pie_(strawberry)",
+				"https://oldschool.runescape.wiki/w/Part_summer_pie_(watermelon)"
+			]
+		},
+		{
+			"id": "garden_pie",
+			"name": "Garden pie",
+			"category": "Cooking",
+			"why": "+3 Farming per bite: plant crops a few levels early (e.g. torstol/celastrus at 82); cheap low-level allotment crops.",
+			"crops": [
+				{
+					"seed": "Tomato seed",
+					"kind": "ALLOTMENT",
+					"perProduct": 1,
+					"avgYieldPerPatch": 21.3,
+					"note": "tomato; 1 per pie; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~26.9 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Onion seed",
+					"kind": "ALLOTMENT",
+					"perProduct": 1,
+					"avgYieldPerPatch": 21.0,
+					"note": "onion; 1 per pie; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~26.9 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Cabbage seed",
+					"kind": "ALLOTMENT",
+					"perProduct": 1,
+					"avgYieldPerPatch": 21.0,
+					"note": "cabbage; 1 per pie; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~26.9 at 99)",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [
+				"Pie shell (pastry dough + pie dish)"
+			],
+			"minFarmingLevel": 12,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Garden_pie",
+				"https://oldschool.runescape.wiki/w/Raw_garden_pie",
+				"https://oldschool.runescape.wiki/w/Part_garden_pie_(tomato)",
+				"https://oldschool.runescape.wiki/w/Part_garden_pie_(onion)"
+			]
+		},
+		{
+			"id": "jug_of_wine",
+			"name": "Jug of wine",
+			"category": "Cooking",
+			"why": "200 Cooking XP each (no failures from Cooking 68) and, blessed at Ralos' Rise, Prayer training; the Hosidius vinery is the ironman grape source.",
+			"crops": [
+				{
+					"seed": "Grape seed",
+					"kind": "GRAPES",
+					"perProduct": 1,
+					"avgYieldPerPatch": 15.2,
+					"note": "grapes; 1 per jug. 5 harvest lives, magic secateurs + sulphurous fertiliser (+~180% grapes), Farming 80, from the wiki's Grape vine yield chart (~40.0 at 99; ~11.2 without fertiliser). Vine patches need saltpetre before planting.",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [
+				"Jug of water"
+			],
+			"minFarmingLevel": 36,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Jug_of_wine",
+				"https://oldschool.runescape.wiki/w/Grape_vine",
+				"https://oldschool.runescape.wiki/w/Grape_seed"
+			]
+		},
+		{
+			"id": "pineapple_pizza",
+			"name": "Pineapple pizza",
+			"category": "Cooking",
+			"why": "22 HP two-bite fast food at Cooking 65; one pineapple tops four pizzas.",
+			"crops": [
+				{
+					"seed": "Pineapple seed",
+					"kind": "FRUIT_TREE",
+					"perProduct": 0.25,
+					"avgYieldPerPatch": 6,
+					"note": "pineapple; cut into 4 rings, 1 ring per pizza; a grown fruit tree holds 6 fruit and regrows 1 every 40 min (fixed, not affected by compost/secateurs).",
+					"yieldBasis": "fixed"
+				},
+				{
+					"seed": "Tomato seed",
+					"kind": "ALLOTMENT",
+					"perProduct": 1,
+					"avgYieldPerPatch": 21.3,
+					"note": "tomato; 1 per pizza; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~26.9 at 99)",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [
+				"Pizza base (flour + water)",
+				"Cheese"
+			],
+			"minFarmingLevel": 51,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Pineapple_pizza",
+				"https://oldschool.runescape.wiki/w/Plain_pizza",
+				"https://oldschool.runescape.wiki/w/Incomplete_pizza",
+				"https://oldschool.runescape.wiki/w/Pineapple_ring"
+			]
+		},
+		{
+			"id": "tuna_potato",
+			"name": "Tuna potato",
+			"category": "Cooking",
+			"why": "22 HP one-bite food at Cooking 68 (ties manta ray/anglerfish/dark crab); potato and sweetcorn are farmed.",
+			"crops": [
+				{
+					"seed": "Potato seed",
+					"kind": "ALLOTMENT",
+					"perProduct": 1,
+					"avgYieldPerPatch": 20.8,
+					"note": "potato; 1 per tuna potato (baked, then buttered); Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~26.9 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Sweetcorn seed",
+					"kind": "ALLOTMENT",
+					"perProduct": 1,
+					"avgYieldPerPatch": 19.9,
+					"note": "sweetcorn; 1 per tuna potato (via tuna and corn); Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~26.9 at 99)",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [
+				"Tuna",
+				"Pat of butter",
+				"Bowl"
+			],
+			"minFarmingLevel": 20,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Tuna_potato",
+				"https://oldschool.runescape.wiki/w/Tuna_and_corn",
+				"https://oldschool.runescape.wiki/w/Potato_with_butter"
+			]
+		},
+		{
+			"id": "bow_strings",
+			"name": "Bow strings (flax)",
+			"category": "Crafting & other",
+			"why": "Ironmen need thousands of bow strings for Fletching; flax also spins into linen yarn (Sailing) and pays for hemp.",
+			"crops": [
+				{
+					"seed": "Flax seed",
+					"kind": "HOPS",
+					"perProduct": 1,
+					"avgYieldPerPatch": 29.0,
+					"note": "flax; 1 per bow string (spinning wheel or Spin Flax); Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~36.6 at 99)",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 18,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Bow_string",
+				"https://oldschool.runescape.wiki/w/Flax",
+				"https://oldschool.runescape.wiki/w/Flax_seed"
+			]
+		},
+		{
+			"id": "bolt_of_canvas",
+			"name": "Bolt of canvas (hemp, Sailing)",
+			"category": "Crafting & other",
+			"why": "Sailing mast & sail upgrades for teak, mahogany and camphor boats use bolts of canvas.",
+			"crops": [
+				{
+					"seed": "Hemp seed",
+					"kind": "HOPS",
+					"perProduct": 2,
+					"avgYieldPerPatch": 21.3,
+					"note": "hemp -> hemp yarn (1:1); 2 yarn per bolt of canvas (Crafting 39); Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~25.6 at 99)",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 37,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Bolt_of_canvas",
+				"https://oldschool.runescape.wiki/w/Hemp_yarn",
+				"https://oldschool.runescape.wiki/w/Hemp",
+				"https://oldschool.runescape.wiki/w/Mast_and_sails"
+			]
+		},
+		{
+			"id": "bolt_of_cotton",
+			"name": "Bolt of cotton (cotton, Sailing)",
+			"category": "Crafting & other",
+			"why": "Ironwood and rosewood boat sails use bolts of cotton; cotton yarn also makes haemostatic dressings.",
+			"crops": [
+				{
+					"seed": "Cotton seed",
+					"kind": "HOPS",
+					"perProduct": 2,
+					"avgYieldPerPatch": 13.7,
+					"note": "cotton boll -> cotton yarn (1:1); 2 yarn per bolt of cotton (Crafting 73); Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~15.5 at 99)",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 71,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Bolt_of_cotton",
+				"https://oldschool.runescape.wiki/w/Cotton_yarn",
+				"https://oldschool.runescape.wiki/w/Cotton_boll",
+				"https://oldschool.runescape.wiki/w/Mast_and_sails"
+			]
+		},
+		{
+			"id": "molten_glass",
+			"name": "Molten glass (giant seaweed)",
+			"category": "Crafting & other",
+			"why": "Superglass Make with giant seaweed is the ironman's main molten glass source for Crafting XP.",
+			"crops": [
+				{
+					"seed": "Seaweed spore",
+					"kind": "SEAWEED",
+					"perProduct": 3,
+					"avgYieldPerPatch": 26.9,
+					"note": "giant seaweed; 3 seaweed + 18 buckets of sand per Superglass Make cast (~28.8 molten glass), i.e. ~0.10 seaweed per glass. Magic secateurs do NOT apply to seaweed; ultracompost, Farming 80 (~34.1 at 99).",
+					"yieldBasis": "formula"
+				}
+			],
+			"notFarmed": [
+				"Bucket of sand (18 per cast)",
+				"Astral, fire and air runes"
+			],
+			"minFarmingLevel": 23,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Molten_glass",
+				"https://oldschool.runescape.wiki/w/Giant_seaweed",
+				"https://oldschool.runescape.wiki/w/Seaweed_spore"
+			],
+			"productUnit": "Superglass Make cast (~28.8 molten glass)"
+		},
+		{
+			"id": "battlestaves",
+			"name": "Battlestaves (celastrus)",
+			"category": "Crafting & other",
+			"why": "Ironmen have few battlestaff sources; celastrus bark is the farmable one (elemental staves/Crafting XP).",
+			"crops": [
+				{
+					"seed": "Celastrus seed",
+					"kind": "CELASTRUS",
+					"perProduct": 1,
+					"avgYieldPerPatch": 3,
+					"note": "celastrus bark; 1 per battlestaff (Fletching 40). 3 is the guaranteed minimum (harvest-lives mechanic; ultracompost, secateurs and attas raise it); the wiki's experimental estimate is 8-10 per tree at 99 with ultracompost + secateurs. CTS not published. The tree does not regrow bark.",
+					"yieldBasis": "minimum"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 85,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Battlestaff",
+				"https://oldschool.runescape.wiki/w/Celastrus_bark",
+				"https://oldschool.runescape.wiki/w/Celastrus_tree"
+			]
+		},
+		{
+			"id": "construction_planks",
+			"name": "Teak & mahogany logs (Construction/Sailing)",
+			"category": "Crafting & other",
+			"why": "Planks for Construction and early Sailing hulls/sails; farmed hardwoods give logs without Fossil Island chopping trips.",
+			"crops": [
+				{
+					"seed": "Teak seed",
+					"kind": "HARDWOOD_TREE",
+					"perProduct": 1,
+					"avgYieldPerPatch": 0,
+					"note": "teak logs; 1 per teak plank. Farmed hardwood trees are chopped like normal trees, so logs per tree depend on Woodcutting depletion - the wiki gives no fixed yield.",
+					"yieldBasis": "none"
+				},
+				{
+					"seed": "Mahogany seed",
+					"kind": "HARDWOOD_TREE",
+					"perProduct": 1,
+					"avgYieldPerPatch": 0,
+					"note": "mahogany logs; 1 per mahogany plank. Logs per tree not fixed (chop until depleted).",
+					"yieldBasis": "none"
+				}
+			],
+			"notFarmed": [
+				"Coins or runes for the sawmill / Plank Make"
+			],
+			"minFarmingLevel": 55,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Teak_tree_(Farming)",
+				"https://oldschool.runescape.wiki/w/Mahogany_tree_(Farming)",
+				"https://oldschool.runescape.wiki/w/Teak_logs",
+				"https://oldschool.runescape.wiki/w/Mahogany_logs"
+			]
+		},
+		{
+			"id": "sailing_hardwoods",
+			"name": "Camphor & ironwood logs (Sailing)",
+			"category": "Crafting & other",
+			"why": "Camphor and ironwood planks are the mid/high-tier Sailing boat materials; farming them avoids trips to the Great Conch/Sunbleak Island.",
+			"crops": [
+				{
+					"seed": "Camphor seed",
+					"kind": "HARDWOOD_TREE",
+					"perProduct": 1,
+					"avgYieldPerPatch": 0,
+					"note": "camphor logs; 1 per camphor plank. Logs per tree not fixed (chop until depleted).",
+					"yieldBasis": "none"
+				},
+				{
+					"seed": "Ironwood seed",
+					"kind": "HARDWOOD_TREE",
+					"perProduct": 1,
+					"avgYieldPerPatch": 0,
+					"note": "ironwood logs; 1 per ironwood plank. Logs per tree not fixed (chop until depleted).",
+					"yieldBasis": "none"
+				}
+			],
+			"notFarmed": [
+				"Coins or runes for the sawmill / Plank Make",
+				"Rosewood (Farming 92) is the next tier"
+			],
+			"minFarmingLevel": 80,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Camphor_logs",
+				"https://oldschool.runescape.wiki/w/Ironwood_logs",
+				"https://oldschool.runescape.wiki/w/Camphor_tree_(Farming)",
+				"https://oldschool.runescape.wiki/w/Ironwood_tree_(Farming)"
+			]
+		},
+		{
+			"id": "xp_trees_mid",
+			"name": "Tree run XP (Farming 75+)",
+			"category": "Farming XP",
+			"why": "Highest XP-per-run trees available below 81: magic, palm and calquat.",
+			"crops": [
+				{
+					"seed": "Magic seed",
+					"kind": "TREE",
+					"perProduct": 1,
+					"avgYieldPerPatch": 0,
+					"xpPerPatch": 13913.8,
+					"note": "magic tree; xpPerPatch = plant + check-health (+ harvest where listed) from seeds.json. Protect with 25 coconuts.",
+					"yieldBasis": "none"
+				},
+				{
+					"seed": "Palm tree seed",
+					"kind": "FRUIT_TREE",
+					"perProduct": 1,
+					"avgYieldPerPatch": 6,
+					"xpPerPatch": 10509.6,
+					"note": "palm tree (6 coconuts); xpPerPatch = plant + check-health (+ harvest where listed) from seeds.json. Protect with 15 papaya.",
+					"yieldBasis": "fixed"
+				},
+				{
+					"seed": "Calquat tree seed",
+					"kind": "CALQUAT",
+					"perProduct": 1,
+					"avgYieldPerPatch": 6,
+					"xpPerPatch": 12516.5,
+					"note": "calquat tree (6 calquat fruit at 48.5 XP each included); xpPerPatch = plant + check-health (+ harvest where listed) from seeds.json. Protect with 8 poison ivy berries.",
+					"yieldBasis": "fixed"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 75,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Farming_training",
+				"https://oldschool.runescape.wiki/w/Magic_tree_(Farming)",
+				"https://oldschool.runescape.wiki/w/Palm_tree",
+				"https://oldschool.runescape.wiki/w/Calquat_tree_seed"
+			]
+		},
+		{
+			"id": "xp_trees_high",
+			"name": "Tree run XP (Farming 85+)",
+			"category": "Farming XP",
+			"why": "End-game daily tree run: magic, dragonfruit, calquat, spirit tree and celastrus.",
+			"crops": [
+				{
+					"seed": "Magic seed",
+					"kind": "TREE",
+					"perProduct": 1,
+					"avgYieldPerPatch": 0,
+					"xpPerPatch": 13913.8,
+					"note": "magic tree; xpPerPatch = plant + check-health (+ harvest where listed) from seeds.json.",
+					"yieldBasis": "none"
+				},
+				{
+					"seed": "Dragonfruit tree seed",
+					"kind": "FRUIT_TREE",
+					"perProduct": 1,
+					"avgYieldPerPatch": 6,
+					"xpPerPatch": 17895.0,
+					"note": "dragonfruit tree (6 dragonfruit); xpPerPatch = plant + check-health (+ harvest where listed) from seeds.json. Protect with 15 coconuts.",
+					"yieldBasis": "fixed"
+				},
+				{
+					"seed": "Calquat tree seed",
+					"kind": "CALQUAT",
+					"perProduct": 1,
+					"avgYieldPerPatch": 6,
+					"xpPerPatch": 12516.5,
+					"note": "calquat tree (6 fruit included); xpPerPatch = plant + check-health (+ harvest where listed) from seeds.json.",
+					"yieldBasis": "fixed"
+				},
+				{
+					"seed": "Spirit seed",
+					"kind": "SPIRIT_TREE",
+					"perProduct": 1,
+					"avgYieldPerPatch": 0,
+					"xpPerPatch": 19501.3,
+					"note": "spirit tree; xpPerPatch = plant + check-health (+ harvest where listed) from seeds.json. Protect with 5 monkey nuts + monkey bar + ground tooth.",
+					"yieldBasis": "none"
+				},
+				{
+					"seed": "Celastrus seed",
+					"kind": "CELASTRUS",
+					"perProduct": 1,
+					"avgYieldPerPatch": 3,
+					"xpPerPatch": 14404.5,
+					"note": "celastrus tree (+23.5 XP per bark, 3 bark minimum counted); xpPerPatch = plant + check-health (+ harvest where listed) from seeds.json. Protect with 8 potato cacti.",
+					"yieldBasis": "minimum"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 85,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Farming_training",
+				"https://oldschool.runescape.wiki/w/Dragonfruit_tree",
+				"https://oldschool.runescape.wiki/w/Spirit_tree_(Farming)",
+				"https://oldschool.runescape.wiki/w/Celastrus_tree"
+			]
+		},
+		{
+			"id": "xp_hardwood",
+			"name": "Hardwood XP (Farming 80+)",
+			"category": "Farming XP",
+			"why": "Ironwood gives the most XP per hardwood patch below 92 (20k+ per tree on a ~3.5 day cycle).",
+			"crops": [
+				{
+					"seed": "Ironwood seed",
+					"kind": "HARDWOOD_TREE",
+					"perProduct": 1,
+					"avgYieldPerPatch": 0,
+					"xpPerPatch": 20525.0,
+					"note": "ironwood tree; xpPerPatch = plant + check-health (+ harvest where listed) from seeds.json. Protect with 10 curry leaves.",
+					"yieldBasis": "none"
+				}
+			],
+			"notFarmed": [
+				"Mahogany (55, ~15.8k XP) and camphor (66, ~17.9k XP) are the lower-level fallbacks"
+			],
+			"minFarmingLevel": 80,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Ironwood_tree_(Farming)",
+				"https://oldschool.runescape.wiki/w/Hardwood_tree_patch"
+			]
+		},
+		{
+			"id": "xp_long_trees_endgame",
+			"name": "Redwood & rosewood XP (Farming 92)",
+			"category": "Farming XP",
+			"why": "Largest single-patch XP in the game for later; both are protected with dragonfruit.",
+			"crops": [
+				{
+					"seed": "Redwood tree seed",
+					"kind": "REDWOOD",
+					"perProduct": 1,
+					"avgYieldPerPatch": 0,
+					"xpPerPatch": 22680.0,
+					"note": "redwood tree; xpPerPatch = plant + check-health (+ harvest where listed) from seeds.json. Protect with 6 dragonfruit.",
+					"yieldBasis": "none"
+				},
+				{
+					"seed": "Rosewood seed",
+					"kind": "HARDWOOD_TREE",
+					"perProduct": 1,
+					"avgYieldPerPatch": 0,
+					"xpPerPatch": 23352.0,
+					"note": "rosewood tree; xpPerPatch = plant + check-health (+ harvest where listed) from seeds.json. Protect with 8 dragonfruit.",
+					"yieldBasis": "none"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 92,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Redwood_tree_(Farming)",
+				"https://oldschool.runescape.wiki/w/Rosewood_tree_(Farming)"
+			]
+		},
+		{
+			"id": "xp_short_cycle",
+			"name": "Herb/allotment/hops XP",
+			"category": "Farming XP",
+			"why": "Best XP from the fast patches between tree runs: snape grass (~2.5k per allotment), dwarf weed, cotton, white lily, poison ivy.",
+			"crops": [
+				{
+					"seed": "Snape grass seed",
+					"kind": "ALLOTMENT",
+					"perProduct": 1,
+					"avgYieldPerPatch": 30.1,
+					"xpPerPatch": 2552,
+					"note": "snape grass; xpPerPatch = plant XP + harvest XP x average yield at Farming 80 (ultracompost, magic secateurs).",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Dwarf weed seed",
+					"kind": "HERB",
+					"perProduct": 1,
+					"avgYieldPerPatch": 9.0,
+					"xpPerPatch": 1905,
+					"note": "grimy dwarf weed (switch to torstol at 85); xpPerPatch = plant XP + harvest XP x average yield at Farming 80 (ultracompost, magic secateurs).",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Cotton seed",
+					"kind": "HOPS",
+					"perProduct": 1,
+					"avgYieldPerPatch": 13.7,
+					"xpPerPatch": 1197,
+					"note": "cotton boll; xpPerPatch = plant XP + harvest XP x average yield at Farming 80 (ultracompost, magic secateurs).",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "White lily seed",
+					"kind": "FLOWER",
+					"perProduct": 1,
+					"avgYieldPerPatch": 1,
+					"xpPerPatch": 292.0,
+					"note": "white lily; also protects neighbouring allotments from disease.",
+					"yieldBasis": "fixed"
+				},
+				{
+					"seed": "Poison ivy seed",
+					"kind": "BUSH",
+					"perProduct": 1,
+					"avgYieldPerPatch": 4,
+					"xpPerPatch": 1020,
+					"note": "poison ivy berries; xpPerPatch = plant + check-health + 4 berries x 45 (guaranteed minimum; real average higher, formula unpublished). Never diseases, no payment needed.",
+					"yieldBasis": "minimum"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 79,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Farming_training",
+				"https://oldschool.runescape.wiki/w/Snape_grass_seed",
+				"https://oldschool.runescape.wiki/w/Cotton_boll",
+				"https://oldschool.runescape.wiki/w/White_lily_seed",
+				"https://oldschool.runescape.wiki/w/Poison_ivy_seed"
+			]
+		},
+		{
+			"id": "pay_coconuts",
+			"name": "Coconuts (magic & dragonfruit payment)",
+			"category": "Payment supplies",
+			"why": "25 coconuts protect a magic tree and 15 a dragonfruit tree; palm trees are the ironman's coconut source.",
+			"crops": [
+				{
+					"seed": "Palm tree seed",
+					"kind": "FRUIT_TREE",
+					"perProduct": 25,
+					"avgYieldPerPatch": 6,
+					"note": "coconut; 25 per magic tree (15 per dragonfruit tree); a grown fruit tree holds 6 fruit and regrows 1 every 40 min (fixed, not affected by compost/secateurs).",
+					"yieldBasis": "fixed"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 68,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Magic_tree_(Farming)",
+				"https://oldschool.runescape.wiki/w/Coconut",
+				"https://oldschool.runescape.wiki/w/Palm_tree"
+			],
+			"productUnit": "Magic tree protection"
+		},
+		{
+			"id": "pay_papaya",
+			"name": "Papaya (palm tree payment)",
+			"category": "Payment supplies",
+			"why": "15 papaya protect a palm tree.",
+			"crops": [
+				{
+					"seed": "Papaya tree seed",
+					"kind": "FRUIT_TREE",
+					"perProduct": 15,
+					"avgYieldPerPatch": 6,
+					"note": "papaya fruit; 15 per palm tree; a grown fruit tree holds 6 fruit and regrows 1 every 40 min (fixed, not affected by compost/secateurs).",
+					"yieldBasis": "fixed"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 57,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Palm_tree",
+				"https://oldschool.runescape.wiki/w/Papaya_fruit"
+			],
+			"productUnit": "Palm tree protection"
+		},
+		{
+			"id": "pay_cactus_spines",
+			"name": "Cactus spines (yew payment)",
+			"category": "Payment supplies",
+			"why": "10 cactus spines protect a yew tree.",
+			"crops": [
+				{
+					"seed": "Cactus seed",
+					"kind": "CACTUS",
+					"perProduct": 10,
+					"avgYieldPerPatch": 6.1,
+					"note": "cactus spine; 10 per yew. Minimum 3 spines; chance to use a life is 75% at 55 and 30% at 99 (2018 news post, quoted on the Farming page) - linear interpolation assumed, compost effect on spines not documented so ignored, secateurs don't apply; Farming 80 (~10 at 99). Cactus regrows after harvest.",
+					"yieldBasis": "estimate"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 55,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Cactus_spine",
+				"https://oldschool.runescape.wiki/w/Cactus_seed",
+				"https://oldschool.runescape.wiki/w/Farming"
+			],
+			"productUnit": "Yew tree protection"
+		},
+		{
+			"id": "pay_dragonfruit",
+			"name": "Dragonfruit (redwood & rosewood payment)",
+			"category": "Payment supplies",
+			"why": "6 dragonfruit protect a redwood and 8 a rosewood.",
+			"crops": [
+				{
+					"seed": "Dragonfruit tree seed",
+					"kind": "FRUIT_TREE",
+					"perProduct": 8,
+					"avgYieldPerPatch": 6,
+					"note": "dragonfruit; 8 per rosewood (6 per redwood); a grown fruit tree holds 6 fruit and regrows 1 every 40 min (fixed, not affected by compost/secateurs).",
+					"yieldBasis": "fixed"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 81,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Dragonfruit",
+				"https://oldschool.runescape.wiki/w/Redwood_tree_(Farming)",
+				"https://oldschool.runescape.wiki/w/Rosewood_tree_(Farming)"
+			],
+			"productUnit": "Rosewood protection"
+		},
+		{
+			"id": "pay_hardwoods",
+			"name": "Hardwood payments",
+			"category": "Payment supplies",
+			"why": "Protection for the four hardwoods plantable below 92: limpwurt (teak), yanillian hops (mahogany), white berries (camphor), curry leaves (ironwood).",
+			"crops": [
+				{
+					"seed": "Limpwurt seed",
+					"kind": "FLOWER",
+					"perProduct": 15,
+					"avgYieldPerPatch": 6.9,
+					"note": "15 limpwurt roots per teak tree; limpwurt root; 3 + floor(rand(0..floor(F*1.10)-1)/10) with magic secateurs, compost has no effect; wiki module formula at Farming 80 (~7.9 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Yanillian seed",
+					"kind": "HOPS",
+					"perProduct": 25,
+					"avgYieldPerPatch": 21.6,
+					"note": "yanillian hops; 25 per mahogany tree; Farming 80, ultracompost, magic secateurs, no diary/cape/attas; wiki 'Farming yield calculator' CTS formula (~26.9 at 99)",
+					"yieldBasis": "formula"
+				},
+				{
+					"seed": "Whiteberry seed",
+					"kind": "BUSH",
+					"perProduct": 10,
+					"avgYieldPerPatch": 4,
+					"note": "white berries; 10 per camphor tree; 4 is the guaranteed minimum per harvest - the wiki says a level-scaled random bonus is added (magic secateurs apply) but publishes no formula, so the real average is higher. Bushes regrow (~80 min) so later runs can harvest again.",
+					"yieldBasis": "minimum"
+				},
+				{
+					"seed": "Curry tree seed",
+					"kind": "FRUIT_TREE",
+					"perProduct": 10,
+					"avgYieldPerPatch": 6,
+					"note": "curry leaf; 10 per ironwood tree; a grown fruit tree holds 6 fruit and regrows 1 every 40 min (fixed, not affected by compost/secateurs).",
+					"yieldBasis": "fixed"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 59,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Teak_tree_(Farming)",
+				"https://oldschool.runescape.wiki/w/Mahogany_tree_(Farming)",
+				"https://oldschool.runescape.wiki/w/Camphor_tree_(Farming)",
+				"https://oldschool.runescape.wiki/w/Ironwood_tree_(Farming)"
+			],
+			"productUnit": "One protection of each hardwood"
+		},
+		{
+			"id": "pay_special_trees",
+			"name": "Celastrus & calquat payments",
+			"category": "Payment supplies",
+			"why": "8 potato cacti protect a celastrus tree and 8 poison ivy berries a calquat tree.",
+			"crops": [
+				{
+					"seed": "Potato cactus seed",
+					"kind": "CACTUS",
+					"perProduct": 8,
+					"avgYieldPerPatch": 6,
+					"note": "8 per celastrus tree; potato cactus; 6 is the guaranteed minimum (wiki infobox '6+'); the Farming page's experimental estimate is 15-20 per patch at 99 with secateurs. CTS unpublished. Regrows fully in ~35 min.",
+					"yieldBasis": "minimum"
+				},
+				{
+					"seed": "Poison ivy seed",
+					"kind": "BUSH",
+					"perProduct": 8,
+					"avgYieldPerPatch": 4,
+					"note": "poison ivy berries; 8 per calquat tree; 4 is the guaranteed minimum per harvest - the wiki says a level-scaled random bonus is added (magic secateurs apply) but publishes no formula, so the real average is higher. Bushes regrow (~80 min) so later runs can harvest again.",
+					"yieldBasis": "minimum"
+				}
+			],
+			"notFarmed": [],
+			"minFarmingLevel": 70,
+			"wiki": [
+				"https://oldschool.runescape.wiki/w/Celastrus_tree",
+				"https://oldschool.runescape.wiki/w/Calquat_tree_seed",
+				"https://oldschool.runescape.wiki/w/Potato_cactus_(plant)"
+			],
+			"productUnit": "One celastrus + one calquat protection"
+		}
+	]
+}

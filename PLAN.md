@@ -73,6 +73,8 @@ run/
   RunSetup, KindPlan, CropShare  (pure) run types; per kind: auto or chosen crops (weight or exact patches),
                          pay, tree routine; skipped patches; compost. SetupJson saves them (tolerant of old saves)
   PresetCombiner         (pure) ticked presets combined: run types joined, a shared kind split evenly per preset
+  GoalSetups             (pure) a goal preset as a setup; a goal's crops of one kind share by patches needed
+                         (items per product / average harvest per patch)
   SeedPicker             (pure) contract first; auto = best level you can spare, mixing; chosen crops via
                          ShareSplitter (exact first, then weights, capped by spare); trees plant saplings
   ShareSplitter          (pure) largest-remainder split of patches between crops
@@ -133,6 +135,7 @@ Each external dependency has exactly one home: SP is `pathing`; game state is `s
 | `seeds.json` | Generated | 82 seeds: item id, kind, level, seeds per patch, sapling id, protection payment (items, ids, amounts) | `scripts/update_seed_data.py` (wiki *&lt;kind&gt; patch/Seeds* tables); `PAYMENT_FIXES` in it for corrections |
 | `teleports.json` | Generated | 45 teleport methods in menu groups (Jewellery, Items, spells, Tablets & scrolls, Fairy ring, Spirit tree, Other), each with its destinations (skills necklace → 6 guilds, 53 fairy ring codes...): item ids (a destination can narrow them: Ardougne cloak 2+ for the farm) or spell runes and spellbook | `scripts/update_item_data.py` from the hand-edited `scripts/teleports.in.json`; fairy ring codes from the wiki's Fairy ring table |
 | `items.json` | Generated | Named item groups (spade, axe, compost types, bottomless bucket, farmer's outfit pieces, seed box, coins) and rune ids | `scripts/update_item_data.py` from the hand-edited `scripts/items.in.json` |
+| `goal_presets.json` | Hand-reviewed | 38 goals (Potions, Cooking, Crafting & other, Farming XP, Payment supplies): crops by seed name, items per product, average harvest per patch, non-farmed ingredients, Farming level, wiki sources | Researched from the wiki (2026-10-17); edit directly |
 | `unlocks.json` | Hand | Named rules: quest (finished or started), varbit (diary tiers), skill level | Edited directly |
 | `costs.tsv` | Hand | `arrive` ticks per location, plus `link` ticks between neighbours (walks, spirit-tree hops) | Edited directly; tuned in phase 9 |
 
