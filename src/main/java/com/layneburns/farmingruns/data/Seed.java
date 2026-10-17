@@ -41,6 +41,12 @@ public class Seed
 		return saplingItemId != NO_SAPLING;
 	}
 
+	/** The item actually planted: the sapling for trees, else the seed. */
+	public int plantItemId()
+	{
+		return isPlantedAsSapling() ? saplingItemId : itemId;
+	}
+
 	public boolean canBeProtected()
 	{
 		return !payment.isEmpty();

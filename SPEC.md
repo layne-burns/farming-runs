@@ -43,7 +43,10 @@ Assumptions: you play an ironman (payment comes from your own produce), you've c
 - **Tree routine,** set per kind: "check health, pay to remove" (200 coins) or "check health, chop and dig" (needs an axe).
 - **Compost** setting: None, Compost, Supercompost (current), Ultracompost, Bottomless bucket or Fertile Soil.
 - **Teleports:** each location has a ranked list of teleports (default order from the data, e.g. skills necklace, then fairy ring CIR). You can reorder, add or remove them per location in the Locations tab. The inventory check uses the first one you can use, and warns only if none work (added 2026-10-17).
-- **Goal presets (proposed 2026-10-17, details to settle):** pick a product such as Prayer potion, and the run plants its farmable ingredients (ranarr in herb patches, snape grass in allotments). Built-in presets sit beside your saved ones and can be combined. Still open: where they live, which products, and how combined presets share a patch kind.
+- **Goal presets (settled 2026-10-17):** a Presets block at the top of the Run tab. It lists built-in goal presets (pick a product such as Prayer potion, and the run plants its farmable ingredients: ranarr in herb patches, snape grass in allotments) next to your saved presets.
+  - Tick several to combine them.
+  - Built-ins cover Potions, Cooking, Crafting & other, and Farming XP. Which ones, and their ingredients and yields, come from a researched data file.
+  - When combined presets want the same patch kind (e.g. ranarr and snapdragon for herbs), the patches are split evenly by default (50:50 for two). You can change the split by proportion, or by entering an exact number of patches (seeds) for each crop.
 - **Presets:** save, load and delete named setups (kinds, skips, seed mode, payment, routines, compost). The last-used one is remembered.
 
 ### 2.4 Start Run

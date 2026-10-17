@@ -11,11 +11,13 @@ import com.google.inject.Provides;
 import com.layneburns.farmingruns.data.DataLoader;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.state.ContainerWatcher;
+import com.layneburns.farmingruns.state.ContractService;
 import com.layneburns.farmingruns.state.ItemStore;
 import com.layneburns.farmingruns.state.LeprechaunWatcher;
 import com.layneburns.farmingruns.state.LocationPrefs;
 import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PlayerInfo;
+import com.layneburns.farmingruns.state.SetupStore;
 import com.layneburns.farmingruns.ui.BankTab;
 import com.layneburns.farmingruns.ui.FarmingRunsPanel;
 import java.awt.image.BufferedImage;
@@ -81,6 +83,12 @@ public class FarmingRunsPlugin extends Plugin
 	@Inject
 	private PatchStates patchStates;
 
+	@Inject
+	private ContractService contractService;
+
+	@Inject
+	private SetupStore setupStore;
+
 	private NavigationButton navigationButton;
 
 	@Override
@@ -101,14 +109,18 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(playerInfo);
 		eventBus.register(locationPrefs);
 		eventBus.register(patchStates);
+		eventBus.register(contractService);
+		eventBus.register(setupStore);
 		itemStore.loadRemembered();
 		locationPrefs.load();
+		setupStore.load();
 		// If the plugin starts while logged in, read what the client already has.
 		clientThread.invokeLater(() ->
 		{
 			containerWatcher.readCurrent();
 			leprechaunWatcher.refresh();
 			playerInfo.refresh();
+			contractService.refresh();
 		});
 
 		log.debug("[farmrun] started: {} locations, {} patches, {} seeds (patch table from {})",
@@ -119,6 +131,8 @@ public class FarmingRunsPlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
+		eventBus.unregister(setupStore);
+		eventBus.unregister(contractService);
 		eventBus.unregister(patchStates);
 		eventBus.unregister(locationPrefs);
 		eventBus.unregister(playerInfo);

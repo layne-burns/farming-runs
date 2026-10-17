@@ -1,0 +1,117 @@
+/*
+ * Copyright (c) 2026, Layne Burns <https://github.com/layne-burns>
+ * All rights reserved.
+ *
+ * Licensed under the BSD 2-Clause License; see the LICENSE file in the project root.
+ */
+package com.layneburns.farmingruns.run;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import com.google.gson.Gson;
+import com.layneburns.farmingruns.data.DataLoader;
+import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.data.Patch;
+import com.layneburns.farmingruns.data.RunType;
+import com.layneburns.farmingruns.state.BufferSettings;
+import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import net.runelite.api.gameval.ItemID;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+public class SeedPickerTest
+{
+	private static final BufferSettings BUFFERS = new BufferSettings(9, 2, 3);
+	private static GameData data;
+	private static List<Patch> herbs;
+
+	@BeforeClass
+	public static void load()
+	{
+		data = new DataLoader(new Gson()).load();
+		herbs = data.patches().stream().filter(p -> p.getKind() == PatchImplementation.HERB)
+			.sorted((a, b) -> a.getId().compareTo(b.getId())).collect(Collectors.toList());
+	}
+
+	@Test
+	public void autoPicksTheBestYouCanSpareAndMixesWhenShort()
+	{
+		// Level 70: lantadyme (73) is out. Snapdragon: 4 held, 3 kept back, so 1 spare. Ranarr: 9 spare.
+		Map<Integer, Integer> held = Map.of(ItemID.SNAPDRAGON_SEED, 4, ItemID.RANARR_SEED, 12,
+			ItemID.GUAM_SEED, 100, ItemID.LANTADYME_SEED, 50);
+		PlantingPlan plan = SeedPicker.plan(herbRun(), herbs, held, BUFFERS, 70, data, null);
+		Map<String, Long> counts = countsBySeed(plan);
+		assertEquals(1L, (long) counts.get("Snapdragon seed"));
+		assertEquals(Math.min(9, herbs.size() - 1), (long) counts.get("Ranarr seed"));
+		assertFalse(counts.containsKey("Lantadyme seed"));
+		assertEquals(herbs.size(), plan.plantedCount());
+	}
+
+	@Test
+	public void chosenCropsShareEvenlyAndShortfallsAreFilledAutomatically()
+	{
+		RunSetup setup = herbRun().withKindPlan(PatchImplementation.HERB, KindPlan.AUTO.withAuto(false)
+			.withCrops(List.of(CropShare.even(ItemID.RANARR_SEED), CropShare.even(ItemID.TOADFLAX_SEED))));
+		Map<Integer, Integer> held = Map.of(ItemID.RANARR_SEED, 100, ItemID.TOADFLAX_SEED, 4, ItemID.GUAM_SEED, 100);
+		PlantingPlan plan = SeedPicker.plan(setup, herbs, held, BUFFERS, 99, data, null);
+		Map<String, Long> counts = countsBySeed(plan);
+		// Toadflax has 1 spare, so ranarr takes the rest of the patches.
+		assertEquals(1L, (long) counts.get("Toadflax seed"));
+		assertEquals(herbs.size() - 1, (long) counts.get("Ranarr seed"));
+	}
+
+	@Test
+	public void theContractGetsItsPatchEvenFromTheBuffer()
+	{
+		Patch guildHerb = data.patch("farming_guild.herb");
+		SeedPicker.Contract contract = new SeedPicker.Contract(guildHerb.getId(), data.seedByItem(ItemID.RANARR_SEED));
+		// 3 ranarr held, all inside the buffer of 3: none spare, but the contract may still use one.
+		Map<Integer, Integer> held = Map.of(ItemID.RANARR_SEED, 3, ItemID.GUAM_SEED, 100);
+		PlantingPlan plan = SeedPicker.plan(herbRun(), herbs, held, BUFFERS, 99, data, contract);
+		PlantingPlan.Assignment guild = plan.getAssignments().stream()
+			.filter(a -> a.getPatch() == guildHerb).findFirst().orElseThrow();
+		assertTrue(guild.isContract());
+		assertEquals("Ranarr seed", guild.getSeed().getName());
+		assertEquals(1L, (long) countsBySeed(plan).get("Ranarr seed"));
+	}
+
+	@Test
+	public void treesPlantSaplingsAndKeepTheSaplingBuffer()
+	{
+		List<Patch> trees = data.patches().stream().filter(p -> p.getKind() == PatchImplementation.TREE)
+			.collect(Collectors.toList());
+		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.TREE));
+		Map<Integer, Integer> held = Map.of(ItemID.PLANTPOT_MAGIC_TREE_SAPLING, 4, ItemID.MAGIC_TREE_SEED, 50);
+		PlantingPlan plan = SeedPicker.plan(setup, trees, held, BUFFERS, 99, data, null);
+		assertEquals(2L, plan.plantedCount());
+		assertEquals(Map.of(ItemID.PLANTPOT_MAGIC_TREE_SAPLING, 2), plan.itemsToPlant());
+		assertTrue(plan.getWarnings().stream().anyMatch(w -> w.contains("without a seed you can spare")));
+	}
+
+	@Test
+	public void allotmentsUseThreeSeedsPerPatch()
+	{
+		List<Patch> allotments = data.patches().stream().filter(p -> p.getKind() == PatchImplementation.ALLOTMENT)
+			.limit(2).collect(Collectors.toList());
+		// 15 held, 9 kept back: 6 spare = 2 patches.
+		PlantingPlan plan = SeedPicker.plan(RunSetup.EMPTY.withRunTypes(Set.of(RunType.ALLOTMENT)), allotments,
+			Map.of(ItemID.POTATO_SEED, 15), BUFFERS, 99, data, null);
+		assertEquals(Map.of(ItemID.POTATO_SEED, 6), plan.itemsToPlant());
+	}
+
+	private static RunSetup herbRun()
+	{
+		return RunSetup.EMPTY.withRunTypes(Set.of(RunType.HERB));
+	}
+
+	private static Map<String, Long> countsBySeed(PlantingPlan plan)
+	{
+		return plan.getAssignments().stream().filter(a -> a.getSeed() != null)
+			.collect(Collectors.groupingBy(a -> a.getSeed().getName(), Collectors.counting()));
+	}
+}
