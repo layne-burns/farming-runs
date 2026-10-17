@@ -6,29 +6,64 @@
  */
 package com.layneburns.farmingruns.ui;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
 
 /**
  * What the Bank tab shows, as plain data: built by {@link BankViewBuilder}, drawn by {@link BankTab}. Keeping the
- * two apart means the choices (what's listed, what counts as spare) are tested without any Swing.
+ * two apart means the choices (what's listed, what counts as spare, what a search finds) are tested without Swing.
+ *
+ * Layout: pages (Seeds / Supplies / Leprechaun) hold sections (e.g. "Trees"), which hold groups (one per patch
+ * kind, e.g. "Fruit tree"), which hold rows (one per item).
  */
 @Value
 public class BankView
 {
-	/** When the remembered places were last seen, e.g. "Bank: 5 min ago · Seed vault: never". */
-	String seenLine;
+	/** When the remembered places were last seen, one short entry each: "Bank: now", "Vault: 2h", "Box: never". */
+	List<String> seen;
 	List<Section> sections;
+
+	@Getter
+	@RequiredArgsConstructor
+	public enum Page
+	{
+		SEEDS("Seeds"),
+		SUPPLIES("Supplies"),
+		LEPRECHAUN("Leprechaun");
+
+		private final String title;
+	}
 
 	@Value
 	public static class Section
 	{
+		Page page;
 		String title;
-		List<Row> rows;
-		/** Shown instead of rows when there are none; null to hide the section. */
+		List<Group> groups;
+		/** Shown when there are no rows; null to hide the section instead. */
 		@Nullable
 		String emptyText;
+
+		public boolean isEmpty()
+		{
+			return groups.stream().allMatch(g -> g.getRows().isEmpty());
+		}
+	}
+
+	@Value
+	public static class Group
+	{
+		/** The patch kind, e.g. "Fruit tree"; null for a section with a single list. */
+		@Nullable
+		String title;
+		List<Row> rows;
 	}
 
 	@Value
@@ -37,8 +72,59 @@ public class BankView
 		/** Item whose icon is shown. */
 		int iconItemId;
 		String label;
+		/** The main count, kept short so it always fits. */
 		String value;
-		/** Where the items are, e.g. "Bank 10, Seed vault 2". */
+		/** A smaller second line, e.g. "11 spare · 5 seeds"; null for none. */
+		@Nullable
+		String detail;
+		/** Where the items are, e.g. "Bank 12, Seed vault 2". */
 		String tooltip;
+	}
+
+	/** The sections of one page, without empty ones that have nothing to say. */
+	public List<Section> page(Page page)
+	{
+		return sections.stream()
+			.filter(s -> s.getPage() == page && (!s.isEmpty() || s.getEmptyText() != null))
+			.collect(Collectors.toList());
+	}
+
+	/**
+	 * Every row, on any page, matching the search: each word must appear in the row's name or in its group's or
+	 * section's title, so "fruit" lists all fruit tree seeds and "ranarr" just the one. Empty groups and sections
+	 * are dropped.
+	 */
+	public List<Section> search(String query)
+	{
+		List<String> words = Arrays.stream(query.toLowerCase(Locale.ROOT).trim().split("\\s+"))
+			.filter(w -> !w.isEmpty())
+			.collect(Collectors.toList());
+		List<Section> results = new ArrayList<>();
+		for (Section section : sections)
+		{
+			List<Group> groups = new ArrayList<>();
+			for (Group group : section.getGroups())
+			{
+				String context = (section.getTitle() + " " + (group.getTitle() == null ? "" : group.getTitle()))
+					.toLowerCase(Locale.ROOT);
+				List<Row> rows = group.getRows().stream()
+					.filter(r -> matchesAll(words, context + " " + r.getLabel().toLowerCase(Locale.ROOT)))
+					.collect(Collectors.toList());
+				if (!rows.isEmpty())
+				{
+					groups.add(new Group(group.getTitle(), rows));
+				}
+			}
+			if (!groups.isEmpty())
+			{
+				results.add(new Section(section.getPage(), section.getTitle(), groups, null));
+			}
+		}
+		return results;
+	}
+
+	private static boolean matchesAll(List<String> words, String text)
+	{
+		return words.stream().allMatch(text::contains);
 	}
 }

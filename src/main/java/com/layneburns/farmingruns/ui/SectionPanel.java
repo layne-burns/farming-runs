@@ -8,6 +8,7 @@ package com.layneburns.farmingruns.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -18,8 +19,12 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.FontManager;
 
-/** A titled block in a tab that collapses when its title is clicked. */
+/**
+ * A titled block in a tab that collapses when its title is clicked. Inside, rows can be grouped under small
+ * sub-headings (one per patch kind).
+ */
 class SectionPanel extends JPanel
 {
 	private final JPanel body = new JPanel();
@@ -56,6 +61,18 @@ class SectionPanel extends JPanel
 		add(title, BorderLayout.NORTH);
 		add(body, BorderLayout.CENTER);
 		setCollapsed(collapsed);
+	}
+
+	/** A small grey sub-heading, e.g. "Fruit tree". */
+	void addHeading(String heading)
+	{
+		JLabel label = new JLabel(heading);
+		label.setFont(FontManager.getRunescapeSmallFont());
+		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		label.setBorder(BorderFactory.createEmptyBorder(4, 4, 1, 0));
+		label.setAlignmentX(LEFT_ALIGNMENT);
+		label.setMaximumSize(new Dimension(Integer.MAX_VALUE, label.getPreferredSize().height));
+		body.add(label);
 	}
 
 	void addRow(JComponent row)

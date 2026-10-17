@@ -16,7 +16,9 @@ import com.layneburns.farmingruns.state.BufferSettings;
 import com.layneburns.farmingruns.state.ItemLedger;
 import com.layneburns.farmingruns.state.ItemSource;
 import com.layneburns.farmingruns.state.StorageSnapshot;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import net.runelite.api.gameval.ItemID;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -39,8 +41,9 @@ public class BankViewBuilderTest
 		ItemLedger ledger = ItemLedger.EMPTY
 			.with(ItemSource.BANK, new StorageSnapshot(Map.of(ItemID.RANARR_SEED, 12), NOW))
 			.with(ItemSource.SEED_VAULT, new StorageSnapshot(Map.of(ItemID.RANARR_SEED, 2), NOW));
-		BankView.Row ranarr = row(build(ledger), "Herb seeds", "Ranarr seed");
-		assertEquals("14 (11 spare)", ranarr.getValue());
+		BankView.Row ranarr = row(build(ledger).getSections(), "Herbs & flowers", "Herb", "Ranarr seed");
+		assertEquals("14", ranarr.getValue());
+		assertEquals("11 spare", ranarr.getDetail());
 		assertEquals("Bank 12, Seed vault 2", ranarr.getTooltip());
 	}
 
@@ -49,7 +52,8 @@ public class BankViewBuilderTest
 	{
 		ItemLedger ledger = ItemLedger.EMPTY
 			.with(ItemSource.BANK, new StorageSnapshot(Map.of(ItemID.POTATO_SEED, 5), NOW));
-		assertEquals("5 (0 spare)", row(build(ledger), "Allotment seeds", "Potato seed").getValue());
+		assertEquals("0 spare",
+			row(build(ledger).getSections(), "Allotments & hops", "Allotment", "Potato seed").getDetail());
 	}
 
 	@Test
@@ -57,16 +61,28 @@ public class BankViewBuilderTest
 	{
 		ItemLedger ledger = ItemLedger.EMPTY.with(ItemSource.BANK,
 			new StorageSnapshot(Map.of(ItemID.PLANTPOT_MAGIC_TREE_SAPLING, 3, ItemID.MAGIC_TREE_SEED, 5), NOW));
-		assertEquals("3 saplings (1 spare) · 5 seeds", row(build(ledger), "Tree seeds", "Magic seed").getValue());
+		BankView.Row magic = row(build(ledger).getSections(), "Trees", "Tree", "Magic seed");
+		assertEquals("3", magic.getValue());
+		assertEquals("saplings · 1 spare · 5 seeds", magic.getDetail());
 	}
 
 	@Test
 	public void noSeedsExplainsHowToFillTheLog()
 	{
-		BankView.Section seeds = build(ItemLedger.EMPTY).getSections().get(0);
-		assertEquals("Seeds", seeds.getTitle());
-		assertTrue(seeds.getRows().isEmpty());
-		assertNotNull(seeds.getEmptyText());
+		List<BankView.Section> seeds = build(ItemLedger.EMPTY).page(BankView.Page.SEEDS);
+		assertEquals(1, seeds.size());
+		assertEquals("Seeds", seeds.get(0).getTitle());
+		assertNotNull(seeds.get(0).getEmptyText());
+	}
+
+	@Test
+	public void emptySeedSectionsAreHidden()
+	{
+		ItemLedger ledger = ItemLedger.EMPTY
+			.with(ItemSource.BANK, new StorageSnapshot(Map.of(ItemID.RANARR_SEED, 1), NOW));
+		List<String> titles = build(ledger).page(BankView.Page.SEEDS).stream()
+			.map(BankView.Section::getTitle).collect(Collectors.toList());
+		assertEquals(List.of("Herbs & flowers"), titles);
 	}
 
 	@Test
@@ -74,7 +90,7 @@ public class BankViewBuilderTest
 	{
 		ItemLedger ledger = ItemLedger.EMPTY
 			.with(ItemSource.BANK, new StorageSnapshot(Map.of(ItemID.BASKET_TOMATO_5, 4), NOW));
-		BankView.Row tomatoes = row(build(ledger), "Protection payments", "Tomatoes(5)");
+		BankView.Row tomatoes = row(build(ledger).getSections(), "Protection payments", null, "Tomatoes(5)");
 		assertEquals("4", tomatoes.getValue());
 		assertTrue(tomatoes.getTooltip(), tomatoes.getTooltip().contains("Acorn (1)"));
 	}
@@ -84,19 +100,43 @@ public class BankViewBuilderTest
 	{
 		ItemLedger ledger = ItemLedger.EMPTY.with(ItemSource.LEPRECHAUN,
 			new StorageSnapshot(Map.of(ItemID.FAIRY_ENCHANTED_SECATEURS, 1, ItemID.BUCKET_ULTRACOMPOST, 30), NOW));
-		BankView view = build(ledger);
-		assertEquals("1", row(view, "Tool leprechaun", "Magic secateurs").getValue());
-		assertEquals("30", row(view, "Tool leprechaun", "Ultracompost").getValue());
-		assertEquals("30", row(view, "Compost", "Ultracompost").getValue());
+		List<BankView.Section> sections = build(ledger).getSections();
+		assertEquals("1", row(sections, "Tool leprechaun", null, "Magic secateurs").getValue());
+		BankView.Row ultra = row(sections, "Compost", null, "Ultracompost");
+		assertEquals("30", ultra.getValue());
+		assertEquals("30 in leprechaun", ultra.getDetail());
 	}
 
 	@Test
-	public void agesReadNaturally()
+	public void searchMatchesNamesAndKinds()
 	{
-		assertEquals("never seen", BankViewBuilder.age(0, NOW));
-		assertEquals("just now", BankViewBuilder.age(NOW - 10_000, NOW));
-		assertEquals("5 min ago", BankViewBuilder.age(NOW - 5 * 60_000, NOW));
-		assertEquals("2 h ago", BankViewBuilder.age(NOW - 2 * 3_600_000, NOW));
+		ItemLedger ledger = ItemLedger.EMPTY.with(ItemSource.BANK, new StorageSnapshot(Map.of(
+			ItemID.RANARR_SEED, 5, ItemID.SNAPDRAGON_SEED, 4,
+			ItemID.PLANTPOT_APPLE_SAPLING, 2, ItemID.PLANTPOT_MAGIC_TREE_SAPLING, 3), NOW));
+		BankView view = build(ledger);
+
+		List<BankView.Section> ranarr = view.search("ranarr");
+		assertEquals(1, ranarr.size());
+		assertEquals("Ranarr seed", ranarr.get(0).getGroups().get(0).getRows().get(0).getLabel());
+
+		// A kind name finds every seed of that kind, and nothing else.
+		List<BankView.Section> fruit = view.search("fruit");
+		assertEquals(1, fruit.size());
+		assertEquals("Fruit tree", fruit.get(0).getGroups().get(0).getTitle());
+		assertEquals(1, fruit.get(0).getGroups().get(0).getRows().size());
+
+		// Every word must match.
+		assertTrue(view.search("ranarr magic").isEmpty());
+		assertEquals(2, view.search("herb").get(0).getGroups().get(0).getRows().size());
+	}
+
+	@Test
+	public void agesAreShort()
+	{
+		assertEquals("never", BankViewBuilder.age(0, NOW));
+		assertEquals("now", BankViewBuilder.age(NOW - 10_000, NOW));
+		assertEquals("5m", BankViewBuilder.age(NOW - 5 * 60_000, NOW));
+		assertEquals("2h", BankViewBuilder.age(NOW - 2 * 3_600_000, NOW));
 	}
 
 	private static BankView build(ItemLedger ledger)
@@ -104,13 +144,15 @@ public class BankViewBuilderTest
 		return BankViewBuilder.build(data, ledger, BUFFERS, 0, NOW);
 	}
 
-	private static BankView.Row row(BankView view, String section, String label)
+	private static BankView.Row row(List<BankView.Section> sections, String section, String group, String label)
 	{
-		return view.getSections().stream()
+		return sections.stream()
 			.filter(s -> s.getTitle().equals(section))
-			.flatMap(s -> s.getRows().stream())
+			.flatMap(s -> s.getGroups().stream())
+			.filter(g -> group == null ? g.getTitle() == null : group.equals(g.getTitle()))
+			.flatMap(g -> g.getRows().stream())
 			.filter(r -> r.getLabel().equals(label))
 			.findFirst()
-			.orElseThrow(() -> new AssertionError("no row " + label + " in " + section));
+			.orElseThrow(() -> new AssertionError("no row " + label + " in " + section + " / " + group));
 	}
 }

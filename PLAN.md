@@ -81,9 +81,11 @@ ui/
   FarmingRunsPanel       side panel with tabs: Run, Bank, Locations
   RunTab                 setup form → Start; during a run, the ordered stop list with skip/go-next
   BankTab                draws BankView; redraws on item or buffer changes
-  BankView, BankViewBuilder  (pure) what the Bank tab lists: seeds by kind (total / spare / where), compost,
+  BankView, BankViewBuilder  (pure) what the Bank tab lists: pages (Seeds / Supplies / Leprechaun) → sections →
+                         kind groups → rows (count, "spare" detail, where); search across every page; compost,
                          payments (and what they protect), teleport items, leprechaun
-  SectionPanel, ItemRow, TabPanel   shared look: collapsible sections, icon rows, dark background
+  SectionPanel, ItemRow, TabPanel, FitWidthPanel   shared look: collapsible sections with kind sub-headings,
+                         two-line icon rows, dark background, lists that never scroll sideways
   LocationsTab           unlock state + reason, override box, teleport dropdown, patch ready times
   NotReadyDialog, StartAnywayDialog
   PatchOutlineOverlay    outlines to-do patches at the current stop (match by varbit)

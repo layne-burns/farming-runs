@@ -31,19 +31,27 @@ import net.runelite.api.gameval.ItemID;
  */
 public final class BankViewBuilder
 {
-	/** Kinds in the order the seed log lists them. */
-	private static final List<PatchImplementation> KIND_ORDER = List.of(
-		PatchImplementation.HERB, PatchImplementation.ALLOTMENT, PatchImplementation.FLOWER, PatchImplementation.HOPS,
-		PatchImplementation.BUSH, PatchImplementation.TREE, PatchImplementation.FRUIT_TREE,
-		PatchImplementation.HARDWOOD_TREE, PatchImplementation.CALQUAT, PatchImplementation.CELASTRUS,
-		PatchImplementation.REDWOOD, PatchImplementation.SPIRIT_TREE, PatchImplementation.CRYSTAL_TREE,
-		PatchImplementation.CACTUS, PatchImplementation.MUSHROOM, PatchImplementation.BELLADONNA,
-		PatchImplementation.GRAPES, PatchImplementation.SEAWEED, PatchImplementation.CORAL,
-		PatchImplementation.HESPORI, PatchImplementation.ANIMA);
+	/** How the seed page is organised: section title, then the patch kinds listed under it. */
+	private static final Map<String, List<PatchImplementation>> SEED_SECTIONS = new LinkedHashMap<>();
+
+	static
+	{
+		SEED_SECTIONS.put("Herbs & flowers", List.of(PatchImplementation.HERB, PatchImplementation.FLOWER));
+		SEED_SECTIONS.put("Allotments & hops", List.of(PatchImplementation.ALLOTMENT, PatchImplementation.HOPS));
+		SEED_SECTIONS.put("Bushes & cacti", List.of(PatchImplementation.BUSH, PatchImplementation.CACTUS));
+		SEED_SECTIONS.put("Trees", List.of(PatchImplementation.TREE, PatchImplementation.FRUIT_TREE,
+			PatchImplementation.HARDWOOD_TREE, PatchImplementation.CALQUAT, PatchImplementation.CELASTRUS,
+			PatchImplementation.REDWOOD, PatchImplementation.SPIRIT_TREE, PatchImplementation.CRYSTAL_TREE));
+		SEED_SECTIONS.put("Special", List.of(PatchImplementation.MUSHROOM, PatchImplementation.BELLADONNA,
+			PatchImplementation.GRAPES, PatchImplementation.SEAWEED, PatchImplementation.CORAL,
+			PatchImplementation.HESPORI, PatchImplementation.ANIMA));
+	}
 
 	/** Places seeds are counted from (not the leprechaun, which can't hold them). */
 	private static final List<ItemSource> SEED_SOURCES = List.of(
 		ItemSource.BANK, ItemSource.SEED_VAULT, ItemSource.SEED_BOX, ItemSource.INVENTORY);
+
+	private static final List<ItemSource> ALL_SOURCES = List.of(ItemSource.values());
 
 	private static final List<Integer> COMPOSTS = List.of(
 		ItemID.BUCKET_COMPOST, ItemID.BUCKET_SUPERCOMPOST, ItemID.BUCKET_ULTRACOMPOST);
@@ -56,61 +64,74 @@ public final class BankViewBuilder
 		long nowMillis)
 	{
 		List<BankView.Section> sections = new ArrayList<>(seedSections(data, ledger, buffers));
-		if (sections.isEmpty())
+		if (sections.stream().allMatch(BankView.Section::isEmpty))
 		{
-			sections.add(new BankView.Section("Seeds", List.of(),
+			sections.add(new BankView.Section(BankView.Page.SEEDS, "Seeds", List.of(),
 				"No seeds seen yet. Open your bank and seed vault to fill the seed log."));
 		}
-		sections.add(compost(data, ledger, bottomlessUses));
-		sections.add(payments(data, ledger));
-		sections.add(teleports(data, ledger));
-		sections.add(leprechaun(data, ledger));
-		return new BankView(seenLine(ledger, nowMillis), sections);
+		sections.add(single(BankView.Page.SUPPLIES, "Compost", compost(data, ledger, bottomlessUses),
+			"No compost seen."));
+		sections.add(single(BankView.Page.SUPPLIES, "Protection payments", payments(data, ledger),
+			"No payment items seen."));
+		sections.add(single(BankView.Page.SUPPLIES, "Teleport items", teleports(data, ledger),
+			"No teleport items seen."));
+		sections.add(single(BankView.Page.LEPRECHAUN, "Tool leprechaun", leprechaun(data, ledger),
+			"Nothing stored, or not logged in."));
+		return new BankView(seen(ledger, nowMillis), sections);
 	}
 
-	// ------------------------------------------------------------------ sections
+	// ------------------------------------------------------------------ seeds
 
 	private static List<BankView.Section> seedSections(GameData data, ItemLedger ledger, BufferSettings buffers)
 	{
 		List<BankView.Section> sections = new ArrayList<>();
-		for (PatchImplementation kind : KIND_ORDER)
+		SEED_SECTIONS.forEach((title, kinds) ->
 		{
-			List<BankView.Row> rows = new ArrayList<>();
-			for (Seed seed : data.seedsFor(kind))
+			List<BankView.Group> groups = new ArrayList<>();
+			for (PatchImplementation kind : kinds)
 			{
-				int seeds = count(ledger, seed.getItemId(), SEED_SOURCES);
-				int saplings = seed.isPlantedAsSapling() ? count(ledger, seed.getSaplingItemId(), SEED_SOURCES) : 0;
-				if (seeds + saplings == 0)
+				List<BankView.Row> rows = data.seedsFor(kind).stream()
+					.map(seed -> seedRow(seed, ledger, buffers))
+					.filter(row -> row != null)
+					.collect(Collectors.toList());
+				if (!rows.isEmpty())
 				{
-					continue;
-				}
-				if (seed.isPlantedAsSapling())
-				{
-					String value = saplings > 0
-						? saplings + " saplings (" + buffers.spare(seed, saplings) + " spare)" : "no saplings";
-					if (seeds > 0)
-					{
-						value += " · " + seeds + " seeds";
-					}
-					rows.add(new BankView.Row(saplings > 0 ? seed.getSaplingItemId() : seed.getItemId(),
-						seed.getName(), value, "Saplings: " + where(ledger, seed.getSaplingItemId(), SEED_SOURCES)
-						+ " · Seeds: " + where(ledger, seed.getItemId(), SEED_SOURCES)));
-				}
-				else
-				{
-					rows.add(new BankView.Row(seed.getItemId(), seed.getName(),
-						seeds + " (" + buffers.spare(seed, seeds) + " spare)", where(ledger, seed.getItemId(), SEED_SOURCES)));
+					groups.add(new BankView.Group(kindName(kind), rows));
 				}
 			}
-			if (!rows.isEmpty())
-			{
-				sections.add(new BankView.Section(kindName(kind) + " seeds", rows, null));
-			}
-		}
+			sections.add(new BankView.Section(BankView.Page.SEEDS, title, groups, null));
+		});
 		return sections;
 	}
 
-	private static BankView.Section compost(GameData data, ItemLedger ledger, int bottomlessUses)
+	/** One seed's row, or null if you have none of it. */
+	private static BankView.Row seedRow(Seed seed, ItemLedger ledger, BufferSettings buffers)
+	{
+		int seeds = count(ledger, seed.getItemId(), SEED_SOURCES);
+		if (!seed.isPlantedAsSapling())
+		{
+			return seeds == 0 ? null : new BankView.Row(seed.getItemId(), seed.getName(), String.valueOf(seeds),
+				buffers.spare(seed, seeds) + " spare", where(ledger, seed.getItemId(), SEED_SOURCES));
+		}
+		// Trees: saplings are what gets planted, so they're the main count.
+		int saplings = count(ledger, seed.getSaplingItemId(), SEED_SOURCES);
+		if (seeds + saplings == 0)
+		{
+			return null;
+		}
+		String detail = "saplings · " + buffers.spare(seed, saplings) + " spare";
+		if (seeds > 0)
+		{
+			detail += " · " + seeds + " seeds";
+		}
+		return new BankView.Row(saplings > 0 ? seed.getSaplingItemId() : seed.getItemId(), seed.getName(),
+			String.valueOf(saplings), detail, "Saplings: " + where(ledger, seed.getSaplingItemId(), SEED_SOURCES)
+				+ " · Seeds: " + where(ledger, seed.getItemId(), SEED_SOURCES));
+	}
+
+	// ------------------------------------------------------------------ supplies
+
+	private static List<BankView.Row> compost(GameData data, ItemLedger ledger, int bottomlessUses)
 	{
 		List<BankView.Row> rows = new ArrayList<>();
 		for (int id : COMPOSTS)
@@ -118,21 +139,22 @@ public final class BankViewBuilder
 			int total = ledger.count(id);
 			if (total > 0)
 			{
+				int stored = ledger.count(id, ItemSource.LEPRECHAUN);
 				rows.add(new BankView.Row(id, data.getItems().displayName(id), String.valueOf(total),
-					where(ledger, id, List.of(ItemSource.values()))));
+					stored > 0 ? stored + " in leprechaun" : null, where(ledger, id, ALL_SOURCES)));
 			}
 		}
 		Set<Integer> bucket = data.getItems().group("bottomless_compost_bucket");
 		if (ledger.countAny(bucket) > 0)
 		{
-			String value = bottomlessUses > 0 ? bottomlessUses + " uses (leprechaun)" : "filled";
 			int id = bucket.iterator().next();
-			rows.add(new BankView.Row(id, "Bottomless compost bucket", value, where(ledger, id, List.of(ItemSource.values()))));
+			rows.add(new BankView.Row(id, "Bottomless bucket", bottomlessUses > 0 ? String.valueOf(bottomlessUses) : "-",
+				bottomlessUses > 0 ? "uses left (leprechaun)" : "filled", where(ledger, id, ALL_SOURCES)));
 		}
-		return new BankView.Section("Compost", rows, "No compost seen.");
+		return rows;
 	}
 
-	private static BankView.Section payments(GameData data, ItemLedger ledger)
+	private static List<BankView.Row> payments(GameData data, ItemLedger ledger)
 	{
 		// Each payment item once, with the crops it protects.
 		Map<Integer, List<String>> paysFor = new LinkedHashMap<>();
@@ -143,20 +165,22 @@ public final class BankViewBuilder
 			{
 				names.putIfAbsent(payment.getItemId(), payment.getName());
 				paysFor.computeIfAbsent(payment.getItemId(), k -> new ArrayList<>())
-					.add(seed.getName() + " (" + payment.getAmount() + ")");
+					.add(cropName(seed) + " (" + payment.getAmount() + ")");
 			}
 		}
-		List<BankView.Row> rows = names.entrySet().stream()
+		return names.entrySet().stream()
 			.filter(e -> ledger.count(e.getKey()) > 0)
 			.sorted(Map.Entry.comparingByValue())
-			.map(e -> new BankView.Row(e.getKey(), e.getValue(), String.valueOf(ledger.count(e.getKey())),
-				where(ledger, e.getKey(), List.of(ItemSource.values())) + " · Pays for: "
-					+ String.join(", ", paysFor.get(e.getKey()))))
+			.map(e ->
+			{
+				String crops = String.join(", ", paysFor.get(e.getKey()));
+				return new BankView.Row(e.getKey(), e.getValue(), String.valueOf(ledger.count(e.getKey())),
+					"for " + crops, where(ledger, e.getKey(), ALL_SOURCES) + " · Pays for " + crops);
+			})
 			.collect(Collectors.toList());
-		return new BankView.Section("Protection payments", rows, "No payment items seen.");
 	}
 
-	private static BankView.Section teleports(GameData data, ItemLedger ledger)
+	private static List<BankView.Row> teleports(GameData data, ItemLedger ledger)
 	{
 		List<BankView.Row> rows = new ArrayList<>();
 		for (Teleport teleport : data.teleports())
@@ -168,35 +192,44 @@ public final class BankViewBuilder
 			int total = ledger.countAny(teleport.getItemIds());
 			if (total > 0)
 			{
-				int icon = teleport.getItemIds().stream()
-					.max(Comparator.comparingInt(ledger::count)).orElseThrow();
-				rows.add(new BankView.Row(icon, teleport.getName(), String.valueOf(total),
+				int icon = teleport.getItemIds().stream().max(Comparator.comparingInt(ledger::count)).orElseThrow();
+				rows.add(new BankView.Row(icon, teleport.getName(), String.valueOf(total), null,
 					whereAny(ledger, teleport.getItemIds())));
 			}
 		}
-		return new BankView.Section("Teleport items", rows, "No teleport items seen.");
+		return rows;
 	}
 
-	private static BankView.Section leprechaun(GameData data, ItemLedger ledger)
+	private static List<BankView.Row> leprechaun(GameData data, ItemLedger ledger)
 	{
-		List<BankView.Row> rows = ledger.snapshot(ItemSource.LEPRECHAUN).getItems().entrySet().stream()
+		return ledger.snapshot(ItemSource.LEPRECHAUN).getItems().entrySet().stream()
 			.map(e -> new BankView.Row(e.getKey(), leprechaunItemName(data, e.getKey()), String.valueOf(e.getValue()),
-				"Stored with the tool leprechaun"))
+				null, "Stored with the tool leprechaun"))
 			.sorted(Comparator.comparing(BankView.Row::getLabel))
 			.collect(Collectors.toList());
-		return new BankView.Section("Tool leprechaun", rows, "Nothing stored (or not logged in).");
 	}
 
 	// ------------------------------------------------------------------ helpers
+
+	private static BankView.Section single(BankView.Page page, String title, List<BankView.Row> rows, String empty)
+	{
+		return new BankView.Section(page, title, List.of(new BankView.Group(null, rows)), empty);
+	}
 
 	private static String leprechaunItemName(GameData data, int itemId)
 	{
 		if (itemId == ItemID.BOTTOMLESS_COMPOST_BUCKET)
 		{
-			return "Bottomless compost bucket (empty)";
+			return "Bottomless bucket (empty)";
 		}
 		String name = data.getItems().displayName(itemId);
 		return name != null ? name : "Item " + itemId;
+	}
+
+	/** "Apple tree seed" becomes "Apple tree", "Acorn" stays: the crop a payment protects. */
+	private static String cropName(Seed seed)
+	{
+		return seed.getName().replaceAll(" (seed|spore)$", "");
 	}
 
 	private static int count(ItemLedger ledger, int itemId, List<ItemSource> sources)
@@ -243,29 +276,31 @@ public final class BankViewBuilder
 		return Character.toUpperCase(words.charAt(0)) + words.substring(1);
 	}
 
-	static String seenLine(ItemLedger ledger, long nowMillis)
+	static List<String> seen(ItemLedger ledger, long nowMillis)
 	{
-		return List.of(ItemSource.BANK, ItemSource.SEED_VAULT, ItemSource.SEED_BOX).stream()
-			.map(s -> s.getDisplayName() + ": " + age(ledger.snapshot(s).getCapturedAtMillis(), nowMillis))
-			.collect(Collectors.joining(" · "));
+		return List.of(
+			"Bank: " + age(ledger.snapshot(ItemSource.BANK).getCapturedAtMillis(), nowMillis),
+			"Vault: " + age(ledger.snapshot(ItemSource.SEED_VAULT).getCapturedAtMillis(), nowMillis),
+			"Box: " + age(ledger.snapshot(ItemSource.SEED_BOX).getCapturedAtMillis(), nowMillis));
 	}
 
+	/** A short age: "now", "5m", "3h", "2d", or "never". */
 	static String age(long capturedAtMillis, long nowMillis)
 	{
 		if (capturedAtMillis <= 0)
 		{
-			return "never seen";
+			return "never";
 		}
 		long minutes = Math.max(0, (nowMillis - capturedAtMillis) / 60_000);
 		if (minutes < 1)
 		{
-			return "just now";
+			return "now";
 		}
 		if (minutes < 60)
 		{
-			return minutes + " min ago";
+			return minutes + "m";
 		}
 		long hours = minutes / 60;
-		return hours < 48 ? hours + " h ago" : hours / 24 + " days ago";
+		return hours < 48 ? hours + "h" : hours / 24 + "d";
 	}
 }
