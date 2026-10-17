@@ -56,7 +56,8 @@ public final class PresetCombiner
 	/**
 	 * One kind across presets: the presets that chose crops each get an equal share of the patches, split inside
 	 * that share by their own weights. Exact counts are kept as they are. Pay if any preset pays; harvest unless
-	 * every preset skips it. The tree routine and fill order come from the first preset that set this kind.
+	 * every preset skips it. The tree routine, fill order and amulet choice come from the first preset that set this
+	 * kind.
 	 */
 	private static KindPlan combineKind(List<RunSetup> presets, PatchImplementation kind)
 	{
@@ -65,6 +66,7 @@ public final class PresetCombiner
 		boolean skipHarvest = true;
 		TreeRoutine routine = null;
 		FillOrder order = null;
+		Boolean amulet = null;
 		for (RunSetup preset : presets)
 		{
 			KindPlan plan = preset.kindPlan(kind);
@@ -74,6 +76,7 @@ public final class PresetCombiner
 			{
 				routine = plan.getTreeRoutine();
 				order = plan.getFillOrder();
+				amulet = plan.getAmuletOfBounty();
 			}
 			if (!plan.isAuto() && !plan.getCrops().isEmpty())
 			{
@@ -84,7 +87,7 @@ public final class PresetCombiner
 		order = order == null ? FillOrder.SHARES : order;
 		if (chosen.isEmpty())
 		{
-			return new KindPlan(true, List.of(), pay, routine, skipHarvest, order);
+			return new KindPlan(true, List.of(), pay, routine, skipHarvest, order, amulet);
 		}
 		// Scale each preset's weights so every preset's total is the same: the product of all the totals.
 		long common = 1;
@@ -101,7 +104,7 @@ public final class PresetCombiner
 				crops.add(new CropShare(crop.getSeedItemId(), (int) (crop.getWeight() * scale), crop.getPatches()));
 			}
 		}
-		return new KindPlan(false, List.copyOf(crops), pay, routine, skipHarvest, order);
+		return new KindPlan(false, List.copyOf(crops), pay, routine, skipHarvest, order, amulet);
 	}
 
 	private static long totalWeight(KindPlan plan)

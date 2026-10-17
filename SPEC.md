@@ -41,6 +41,7 @@ Assumptions: you play an ironman (payment comes from your own produce), you've c
   - **Farming contract:** a contract you hold but haven't planted makes the matching Farming Guild patch use the contract seed. The buffer doesn't apply to it.
 - **Payment:** one toggle per kind. A data file holds each crop's payment item and amount.
 - **Tree routine,** set per kind: "check health, pay to remove" (200 coins) or "check health, chop and dig" (needs an axe). Trees with a crop (fruit trees, calquat, celastrus) are harvested first; you can switch that off per kind (added 2026-10-17).
+- **Amulet of bounty** (allotments; added 2026-10-17): worn while planting, it gives a 25% chance to use one seed instead of three. On by default when an allotment seed above strawberry is planted (watermelon, snape grass); a tick box on the allotment card overrides that.
 - **Compost** setting: None, Compost, Supercompost (current), Ultracompost, Bottomless bucket or Fertile Soil.
 - **Teleports:** each location has a ranked list of teleports (default order from the data, e.g. skills necklace, then fairy ring CIR). You can reorder, add or remove them per location in the Locations tab. The inventory check uses the first one you can use, and warns only if none work (added 2026-10-17).
 - **Goal presets (settled 2026-10-17):** a Presets block at the top of the Run tab. It lists built-in goal presets (pick a product such as Prayer potion, and the run plants its farmable ingredients: ranarr in herb patches, snape grass in allotments) next to your saved presets.
@@ -59,7 +60,8 @@ Assumptions: you play an ironman (payment comes from your own produce), you've c
    - tools: spade, secateurs if owned, axe if needed, rake;
    - teleport items or runes for the chosen teleports;
    - dramen staff, unless you have the Lumbridge elite diary;
-   - the farmer's outfit, worn.
+   - the farmer's outfit, worn;
+   - an amulet of bounty, when it's on for the allotments.
 
    **Items in the tool leprechaun count as available**, because every patch has a leprechaun. A tool or compost that is only stored there passes, with a note such as "withdraw from leprechaun". During the run, the overhead reminder says to grab it at the first stop.
 

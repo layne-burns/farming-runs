@@ -7,6 +7,7 @@
 package com.layneburns.farmingruns.run;
 
 import java.util.List;
+import javax.annotation.Nullable;
 import lombok.Value;
 import lombok.With;
 
@@ -21,7 +22,7 @@ public class KindPlan
 {
 	/** Auto: the best seeds you can spare. */
 	public static final KindPlan AUTO = new KindPlan(true, List.of(), false, TreeRoutine.PAY_TO_REMOVE, false,
-		FillOrder.SHARES);
+		FillOrder.SHARES, null);
 
 	/** True: pick the best seeds you can spare. False: use {@link #crops}. */
 	boolean auto;
@@ -37,4 +38,7 @@ public class KindPlan
 	boolean skipHarvest;
 	/** How your chosen crops get patches: by share, or most XP first. */
 	FillOrder fillOrder;
+	/** Allotments: wear an amulet of bounty while planting; null to follow {@link BountyAmulet}'s default. */
+	@Nullable
+	Boolean amuletOfBounty;
 }

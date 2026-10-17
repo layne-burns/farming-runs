@@ -72,6 +72,9 @@
 			13639,
 			24482
 		],
+		"amulet_of_bounty": [
+			21160
+		],
 		"coins": [
 			995
 		]
@@ -95,6 +98,7 @@
 		"farmers_boro_trousers": "Farmer's outfit: +0.6% Farming XP (+2.5% with the full set).",
 		"farmers_boots": "Farmer's outfit: +0.2% Farming XP (+2.5% with the full set).",
 		"seed_box": "Carries up to 6 kinds of seeds in one inventory slot.",
+		"amulet_of_bounty": "Worn while planting allotments: 25% chance to use one seed instead of three (10 charges).",
 		"coins": "Pays gardeners to clear grown trees (200 coins each)."
 	},
 	"runes": {

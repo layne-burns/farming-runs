@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
@@ -53,9 +54,11 @@ class KindCard extends JPanel
 	 * @param canPay   whether any seed of this kind can be protected
 	 * @param isTree   whether a tree routine applies
 	 * @param harvests whether the grown tree has a crop to pick before clearing (fruit trees, calquat, celastrus)
+	 * @param amulet   allotments: whether the amulet of bounty will be worn (your choice or the default); null for
+	 *                 other kinds
 	 */
 	KindCard(String title, KindPlan plan, List<Seed> seeds, List<PlantingPlan.Assignment> planned, int patches,
-		boolean canPay, boolean isTree, boolean harvests, Consumer<KindPlan> onChange)
+		boolean canPay, boolean isTree, boolean harvests, @Nullable Boolean amulet, Consumer<KindPlan> onChange)
 	{
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(Palette.SURFACE);
@@ -122,6 +125,15 @@ class KindCard extends JPanel
 			JCheckBox pay = check("Pay the gardener to protect", plan.isPay());
 			pay.addActionListener(e -> onChange.accept(plan.withPay(pay.isSelected())));
 			add(left(pay));
+		}
+		if (amulet != null)
+		{
+			JCheckBox bounty = check("Wear an amulet of bounty", amulet);
+			bounty.setToolTipText("25% chance to plant with one seed instead of three. "
+				+ (plan.getAmuletOfBounty() == null ? "On by default above strawberry (watermelon, snape grass)."
+				: "Your choice (the default is on above strawberry)."));
+			bounty.addActionListener(e -> onChange.accept(plan.withAmuletOfBounty(bounty.isSelected())));
+			add(left(bounty));
 		}
 		if (harvests)
 		{

@@ -69,7 +69,8 @@ public final class SetupJson
 					kinds.put(kind, new KindPlan(plan.isAuto(),
 						plan.getCrops() == null ? List.of() : List.copyOf(plan.getCrops()), plan.isPay(),
 						plan.getTreeRoutine() == null ? TreeRoutine.PAY_TO_REMOVE : plan.getTreeRoutine(),
-						plan.isSkipHarvest(), plan.getFillOrder() == null ? FillOrder.SHARES : plan.getFillOrder()));
+						plan.isSkipHarvest(), plan.getFillOrder() == null ? FillOrder.SHARES : plan.getFillOrder(),
+						plan.getAmuletOfBounty()));
 				}
 			});
 		}
