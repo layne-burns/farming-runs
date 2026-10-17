@@ -6,6 +6,8 @@
  */
 package com.layneburns.farmingruns;
 
+import java.awt.Color;
+import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -77,6 +79,29 @@ public interface FarmingRunsConfig extends Config
 	default boolean pathCarriedOnly()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = "overheadReminders",
+		name = "Overhead reminders",
+		description = "During a run, show the next thing to do at a stop above your head (compost, plant, pay...)",
+		position = 11
+	)
+	default boolean overheadReminders()
+	{
+		return true;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "reminderColour",
+		name = "Reminder colour",
+		description = "Colour of the overhead reminders",
+		position = 12
+	)
+	default Color reminderColour()
+	{
+		return new Color(255, 255, 0);
 	}
 
 	@ConfigItem(

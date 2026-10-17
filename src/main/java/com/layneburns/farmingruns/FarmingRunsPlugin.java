@@ -18,6 +18,7 @@ import com.layneburns.farmingruns.state.LocationPrefs;
 import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.RunePouchWatcher;
+import com.layneburns.farmingruns.state.PatchObjects;
 import com.layneburns.farmingruns.state.SetupStore;
 import com.layneburns.farmingruns.state.StatsStore;
 import com.layneburns.farmingruns.run.GuidanceTracker;
@@ -30,6 +31,8 @@ import com.layneburns.farmingruns.ui.BankSearchButton;
 import com.layneburns.farmingruns.ui.SeedVaultFilter;
 import com.layneburns.farmingruns.ui.BankTab;
 import com.layneburns.farmingruns.ui.DepositOverlay;
+import com.layneburns.farmingruns.ui.PatchOutlineOverlay;
+import com.layneburns.farmingruns.ui.ReminderOverlay;
 import com.layneburns.farmingruns.ui.GardenerOverlay;
 import com.layneburns.farmingruns.ui.RunItemOverlay;
 import com.layneburns.farmingruns.ui.FarmingRunsPanel;
@@ -66,6 +69,9 @@ public class FarmingRunsPlugin extends Plugin
 {
 	@Inject
 	private ClientToolbar clientToolbar;
+
+	@Inject
+	private FarmingRunsConfig config;
 
 	@Inject
 	private ClientThread clientThread;
@@ -148,6 +154,15 @@ public class FarmingRunsPlugin extends Plugin
 	@Inject
 	private DepositOverlay depositOverlay;
 
+	@Inject
+	private PatchOutlineOverlay patchOutlineOverlay;
+
+	@Inject
+	private ReminderOverlay reminderOverlay;
+
+	@Inject
+	private PatchObjects patchObjects;
+
 	private NavigationButton navigationButton;
 
 	@Override
@@ -165,6 +180,8 @@ public class FarmingRunsPlugin extends Plugin
 		overlayManager.add(runItemOverlay);
 		overlayManager.add(gardenerOverlay);
 		overlayManager.add(depositOverlay);
+		overlayManager.add(patchOutlineOverlay);
+		overlayManager.add(reminderOverlay);
 
 		eventBus.register(itemStore);
 		eventBus.register(containerWatcher);
@@ -183,9 +200,11 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(guidanceTracker);
 		eventBus.register(runTracker);
 		eventBus.register(statsStore);
+		eventBus.register(patchObjects);
 		bankRunTab.register();
 		itemStore.loadRemembered();
 		locationPrefs.load();
+		DebugLogging.apply(config.debugLogging());
 		setupStore.load();
 		statsStore.load();
 		// If the plugin starts while logged in, read what the client already has.
@@ -207,6 +226,7 @@ public class FarmingRunsPlugin extends Plugin
 	protected void shutDown()
 	{
 		runController.stop();
+		eventBus.unregister(patchObjects);
 		eventBus.unregister(statsStore);
 		eventBus.unregister(runTracker);
 		eventBus.unregister(guidanceTracker);
@@ -226,6 +246,8 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.unregister(leprechaunWatcher);
 		eventBus.unregister(containerWatcher);
 		eventBus.unregister(itemStore);
+		overlayManager.remove(reminderOverlay);
+		overlayManager.remove(patchOutlineOverlay);
 		overlayManager.remove(depositOverlay);
 		overlayManager.remove(gardenerOverlay);
 		overlayManager.remove(runItemOverlay);
@@ -233,6 +255,7 @@ public class FarmingRunsPlugin extends Plugin
 		clientToolbar.removeNavigation(navigationButton);
 		navigationButton = null;
 		log.debug("[farmrun] stopped");
+		DebugLogging.apply(false);
 	}
 
 	@Subscribe
@@ -240,6 +263,7 @@ public class FarmingRunsPlugin extends Plugin
 	{
 		if (FarmingRunsConfig.GROUP.equals(event.getGroup()))
 		{
+			DebugLogging.apply(config.debugLogging());
 			bankTab.refresh();
 		}
 	}

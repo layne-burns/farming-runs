@@ -138,6 +138,8 @@ public class GuidanceTracker
 			return;
 		}
 		String message = Text.removeTags(event.getMessage()).toLowerCase(Locale.ROOT);
+		// With debug logging on, every game message during a run, to tune what's matched here and in RunTracker.
+		log.debug("[chat] {}", message);
 		Matcher treated = TREATED.matcher(message);
 		if (treated.find())
 		{

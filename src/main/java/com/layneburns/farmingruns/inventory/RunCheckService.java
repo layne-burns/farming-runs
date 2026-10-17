@@ -75,6 +75,8 @@ public class RunCheckService
 	 * what it needs: anything else in your inventory can go in the bank.
 	 */
 	private volatile Set<Integer> neededItems = Set.of();
+	/** What the last check said to take from the tool leprechaun, e.g. "9 × Supercompost". */
+	private volatile List<String> fromLeprechaun = List.of();
 	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
 	@Inject
@@ -131,6 +133,10 @@ public class RunCheckService
 			data.getItems().group("seed_box"));
 		setBankItems(lines);
 		setNeededItems(requirements);
+		fromLeprechaun = lines.stream()
+			.filter(l -> l.getFromLeprechaun() > 0 && l.getRequirement().getImportance() == Requirement.Importance.NEED)
+			.map(l -> l.getFromLeprechaun() + " × " + l.getRequirement().getLabel())
+			.collect(Collectors.toUnmodifiableList());
 		return new Check(plan, requirements, lines);
 	}
 
@@ -138,6 +144,12 @@ public class RunCheckService
 	public Map<Integer, Integer> bankItems()
 	{
 		return bankItems;
+	}
+
+	/** What to take from the tool leprechaun, e.g. "9 × Supercompost"; empty when nothing. */
+	public List<String> fromLeprechaun()
+	{
+		return fromLeprechaun;
 	}
 
 	/** Items the run uses; empty when there's no run set up. */

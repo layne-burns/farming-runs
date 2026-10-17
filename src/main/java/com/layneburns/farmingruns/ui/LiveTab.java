@@ -57,6 +57,7 @@ public class LiveTab extends TabPanel
 	private final StatsStore stats;
 	private final TeleportSuggestions suggestions;
 	private final LocationPrefs prefs;
+	private final DebugInfo debugInfo;
 
 	private final FitWidthPanel content = new FitWidthPanel();
 	private final Map<String, Boolean> collapsed = new HashMap<>(Map.of("Done", true));
@@ -67,7 +68,8 @@ public class LiveTab extends TabPanel
 
 	@Inject
 	LiveTab(GameData data, RunSession session, RunController controller, RunTracker tracker, GuidanceTracker guidance,
-		ItemStore items, PlayerInfo player, StatsStore stats, TeleportSuggestions suggestions, LocationPrefs prefs)
+		ItemStore items, PlayerInfo player, StatsStore stats, TeleportSuggestions suggestions, LocationPrefs prefs,
+		DebugInfo debugInfo)
 	{
 		this.data = data;
 		this.session = session;
@@ -79,6 +81,7 @@ public class LiveTab extends TabPanel
 		this.stats = stats;
 		this.suggestions = suggestions;
 		this.prefs = prefs;
+		this.debugInfo = debugInfo;
 		add(scrollPane(content), BorderLayout.CENTER);
 		session.addListener(this::refresh);
 		tracker.addListener(this::refresh);
@@ -132,6 +135,14 @@ public class LiveTab extends TabPanel
 			RunSummaryView.stats(lifetime, stats.stats());
 			content.add(lifetime);
 		}
+		JButton debug = button("Copy debug info", "Copies what the plugin knows (setup, run, last path) to the clipboard,"
+			+ " to paste into a bug report");
+		debug.addActionListener(e ->
+		{
+			debugInfo.copy();
+			debug.setText("Copied");
+		});
+		content.add(wrap(debug));
 		revalidate();
 		repaint();
 	}
