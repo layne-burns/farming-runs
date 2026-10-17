@@ -103,10 +103,9 @@ final class SuppliesBuilder
 			if (total > 0)
 			{
 				int icon = teleport.getItemIds().stream().max(Comparator.comparingInt(ledger::count)).orElseThrow();
-				List<String> first = locationsWhere(data, l -> l.getDefaultTeleportIds().get(0).equals(teleport.getId()));
-				List<String> fallback = locationsWhere(data, l -> l.getDefaultTeleportIds().indexOf(teleport.getId()) > 0);
+				List<String> usedFor = locationsWhere(data, l -> l.getDefaultTeleportIds().contains(teleport.getId()));
 				rows.add(new BankView.Row(icon, teleport.getName(), String.valueOf(total), null,
-					BankTooltips.teleport(first, fallback, whereAny(ledger, teleport.getItemIds()))));
+					BankTooltips.teleport(usedFor, whereAny(ledger, teleport.getItemIds()))));
 			}
 		}
 		return rows;
