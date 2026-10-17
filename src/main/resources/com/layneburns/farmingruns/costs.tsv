@@ -1,0 +1,66 @@
+# Hand-tuned travel costs for ordering a run, in game ticks (0.6 s). Rough is fine: they only decide the order.
+#
+#   arrive <location> <ticks>    cost of reaching the location from anywhere: its teleport plus the walk.
+#   link <a> <b> <ticks>         a cheaper way between two locations (a walk, a spirit tree hop). Works both ways.
+#
+# A leg costs the link if there is one, otherwise the destination's arrive cost.
+# Phase 9 tunes these from timed runs.
+type	from	to	ticks
+arrive	al_kharid	-	25
+arrive	aldarin	-	30
+arrive	anglers_retreat	-	120
+arrive	ardougne	-	15
+arrive	ardougne_bush	-	20
+arrive	auburnvale	-	30
+arrive	avium_savannah	-	30
+arrive	brimhaven	-	30
+arrive	canifis_mushroom	-	25
+arrive	catherby	-	30
+arrive	catherby_fruit_tree	-	35
+arrive	champions_guild	-	25
+arrive	civitas_illa_fortis	-	25
+arrive	draynor_manor	-	15
+arrive	entrana	-	80
+arrive	etceteria	-	30
+arrive	falador	-	15
+arrive	falador_park	-	20
+arrive	farming_guild	-	20
+arrive	farming_guild_hespori	-	40
+arrive	fossil_island	-	40
+arrive	fossil_island_seaweed	-	60
+arrive	gnome_stronghold	-	30
+arrive	great_conch	-	40
+arrive	harmony_island	-	20
+arrive	hosidius	-	25
+arrive	hosidius_vinery	-	30
+arrive	kastori	-	30
+arrive	lletya	-	25
+arrive	lumbridge_hops	-	35
+arrive	lumbridge_tree	-	20
+arrive	port_phasmatys	-	15
+arrive	port_sarim	-	25
+arrive	prifddinas	-	30
+arrive	rimmington	-	40
+arrive	seers_village	-	25
+arrive	tai_bwo_wannai	-	20
+arrive	taverley	-	40
+arrive	tree_gnome_village	-	35
+arrive	troll_stronghold	-	15
+arrive	varrock	-	20
+arrive	weiss	-	15
+arrive	yanille	-	20
+# Short walks between neighbouring locations.
+link	catherby	catherby_fruit_tree	20
+link	farming_guild	farming_guild_hespori	25
+link	hosidius	hosidius_vinery	25
+link	fossil_island	fossil_island_seaweed	40
+link	falador	port_sarim	25
+link	falador	falador_park	30
+# Spirit tree hops (walk to the tree, travel, walk to the patch).
+link	gnome_stronghold	tree_gnome_village	25
+link	gnome_stronghold	brimhaven	25
+link	tree_gnome_village	brimhaven	25
+link	gnome_stronghold	port_sarim	25
+link	gnome_stronghold	etceteria	25
+link	gnome_stronghold	hosidius	25
+link	gnome_stronghold	farming_guild	25

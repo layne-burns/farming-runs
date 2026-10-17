@@ -23,4 +23,4 @@ Shortest Path must be installed from the Plugin Hub, and RuneLite's Time Trackin
 | `src/main/java/com/layneburns/farmingruns/` | The plugin, one package per concern (PLAN.md §2) |
 | `.../vendor/timetracking/` | RuneLite's patch decoding, copied by `scripts/vendor_timetracking.py`; don't edit by hand |
 | `src/main/resources/com/layneburns/farmingruns/` | Game data files (PLAN.md §3) |
-| `scripts/` | Data and vendoring scripts |
+| `scripts/` | Data and vendoring scripts. `*.in.json` are their hand-edited inputs; see PLAN.md §3 for which file each script makes |

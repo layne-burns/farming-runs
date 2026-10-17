@@ -1,0 +1,40 @@
+/*
+ * Copyright (c) 2026, Layne Burns <https://github.com/layne-burns>
+ * All rights reserved.
+ *
+ * Licensed under the BSD 2-Clause License; see the LICENSE file in the project root.
+ */
+package com.layneburns.farmingruns.data;
+
+import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
+import java.util.List;
+import lombok.Value;
+
+/** A seed: the kind of patch it goes in, its level, how many go in a patch, and the gardener's payment. */
+@Value
+public class Seed
+{
+	/** Value of {@link #saplingItemId} for seeds planted directly. */
+	public static final int NO_SAPLING = -1;
+
+	String name;
+	int itemId;
+	PatchImplementation kind;
+	int level;
+	/** Seeds per patch: 3 for allotments, 4 for hops, else 1. */
+	int perPatch;
+	/** For trees: the sapling actually planted, else {@link #NO_SAPLING}. */
+	int saplingItemId;
+	/** The gardener's protection payment; empty when the crop can't be protected. */
+	List<ItemAmount> payment;
+
+	public boolean isPlantedAsSapling()
+	{
+		return saplingItemId != NO_SAPLING;
+	}
+
+	public boolean canBeProtected()
+	{
+		return !payment.isEmpty();
+	}
+}

@@ -9,17 +9,15 @@ package com.layneburns.farmingruns.ui;
 import java.awt.BorderLayout;
 import javax.inject.Singleton;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 /**
  * Bank tab: the seed log, run supplies and tool leprechaun storage (SPEC §2.2).
  */
 @Singleton
-public class BankTab extends JPanel
+public class BankTab extends TabPanel
 {
 	BankTab()
 	{
-		super(new BorderLayout());
 		add(new JLabel("<html>Coming in phase 2.</html>"), BorderLayout.NORTH);
 	}
 }

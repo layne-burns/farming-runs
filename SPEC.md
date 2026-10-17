@@ -89,7 +89,7 @@ You aren't a software engineer by trade, so the code is laid out to be easy to r
   - `inventory`: the check;
   - `ui`: panel tabs and overlays.
 
-  Aim for under ~300 lines per class. The plugin class only wires the parts together.
+  As a rough guide, a class over ~300 lines is worth a look for a second job it could hand off. It is not a cap: a class that genuinely needs more stays whole rather than being split for the sake of the number. The plugin class only wires the parts together.
 - **Game facts live in data files** (JSON/TSV under `resources/`): locations, patches, seeds, payments, teleports, costs and unlock requirements. Fixing a payment or adding a patch is an edit to a data file, and a unit test checks every file loads and every reference resolves.
 - **Pure logic doesn't touch the client.** The planner, seed picker, inventory check and unlock rules take plain inputs and are unit tested, as port-tasks' routing tests are.
 - **Debugging aids:**

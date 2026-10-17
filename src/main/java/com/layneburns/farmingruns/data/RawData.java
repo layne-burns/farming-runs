@@ -1,0 +1,152 @@
+/*
+ * Copyright (c) 2026, Layne Burns <https://github.com/layne-burns>
+ * All rights reserved.
+ *
+ * Licensed under the BSD 2-Clause License; see the LICENSE file in the project root.
+ */
+package com.layneburns.farmingruns.data;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * The shapes of the JSON files, exactly as written on disk, for Gson to fill. No logic lives here:
+ * {@link DataLoader} turns these into the checked, immutable classes the rest of the plugin uses.
+ */
+final class RawData
+{
+	private RawData()
+	{
+	}
+
+	static class Tile
+	{
+		int x;
+		int y;
+		int plane;
+	}
+
+	/** patch_locations.json (generated). */
+	static class PatchLocations
+	{
+		String runeliteTag;
+		List<PatchLocation> locations;
+	}
+
+	static class PatchLocation
+	{
+		String id;
+		String name;
+		int regionId;
+		List<Integer> extraRegionIds;
+		Tile target;
+		List<String> wikiTeleports;
+		List<RawPatch> patches;
+	}
+
+	static class RawPatch
+	{
+		String id;
+		String name;
+		String kind;
+		String varbit;
+		String gardener;
+		Tile tile;
+	}
+
+	/** location_settings.json (hand-edited). */
+	static class LocationSettingsFile
+	{
+		Map<String, LocationSettings> locations;
+	}
+
+	static class LocationSettings
+	{
+		String teleport;
+		String unlock;
+		String note;
+		Map<String, String> patchUnlocks;
+	}
+
+	/** seeds.json (generated). */
+	static class Seeds
+	{
+		List<RawSeed> seeds;
+	}
+
+	static class RawSeed
+	{
+		String name;
+		Integer itemId;
+		String kind;
+		int level;
+		int perPatch;
+		NamedItem sapling;
+		List<Payment> payment;
+	}
+
+	static class NamedItem
+	{
+		String name;
+		Integer itemId;
+	}
+
+	static class Payment
+	{
+		String item;
+		Integer itemId;
+		int amount;
+	}
+
+	/** teleports.json (generated). */
+	static class Teleports
+	{
+		List<RawTeleport> teleports;
+	}
+
+	static class RawTeleport
+	{
+		String id;
+		String name;
+		String type;
+		List<Integer> itemIds;
+		String spellbook;
+		List<Rune> runes;
+		String waivedByVarbit;
+	}
+
+	static class Rune
+	{
+		String rune;
+		int itemId;
+		int amount;
+	}
+
+	/** unlocks.json (hand-edited). */
+	static class Unlocks
+	{
+		Map<String, Rule> rules;
+	}
+
+	static class Rule
+	{
+		String name;
+		List<Condition> all;
+	}
+
+	static class Condition
+	{
+		String quest;
+		Boolean started;
+		String varbit;
+		String skill;
+		Integer level;
+	}
+
+	/** items.json (generated). */
+	static class Items
+	{
+		Map<String, List<Integer>> groups;
+		Map<String, Integer> runes;
+	}
+}

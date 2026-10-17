@@ -1,0 +1,24 @@
+{
+	"_comment": "Hand-edited. Named groups of items the plugin checks for (any id in a group counts). Run scripts/update_item_data.py after editing to regenerate src/main/resources/.../items.json.",
+	"groups": {
+		"spade": [{"page": "Spade"}],
+		"rake": [{"page": "Rake"}],
+		"seed_dibber": [{"page": "Seed dibber"}],
+		"secateurs": [{"page": "Secateurs"}],
+		"magic_secateurs": [{"page": "Magic secateurs"}],
+		"gardening_trowel": [{"page": "Gardening trowel"}],
+		"plant_cure": [{"page": "Plant cure"}],
+		"axe": [{"page": "Bronze axe"}, {"page": "Iron axe"}, {"page": "Steel axe"}, {"page": "Black axe"}, {"page": "Mithril axe"}, {"page": "Adamant axe"}, {"page": "Rune axe"}, {"page": "Dragon axe"}, {"page": "Crystal axe"}, {"page": "Infernal axe"}, {"page": "3rd age axe"}],
+		"compost": [{"page": "Compost"}],
+		"supercompost": [{"page": "Supercompost"}],
+		"ultracompost": [{"page": "Ultracompost"}],
+		"bottomless_compost_bucket": [{"page": "Bottomless compost bucket", "excludeVersions": ["Empty"]}],
+		"farmers_strawhat": [{"page": "Farmer's strawhat"}],
+		"farmers_jacket": [{"page": "Farmer's jacket"}, {"page": "Farmer's shirt"}],
+		"farmers_boro_trousers": [{"page": "Farmer's boro trousers"}],
+		"farmers_boots": [{"page": "Farmer's boots"}],
+		"seed_box": [{"page": "Seed box"}],
+		"coins": [{"page": "Coins"}]
+	},
+	"runes": ["Air rune", "Water rune", "Earth rune", "Fire rune", "Law rune", "Astral rune", "Nature rune", "Soul rune"]
+}

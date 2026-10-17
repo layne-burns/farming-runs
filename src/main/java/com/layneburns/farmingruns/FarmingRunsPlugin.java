@@ -6,10 +6,14 @@
  */
 package com.layneburns.farmingruns;
 
+import com.google.gson.Gson;
 import com.google.inject.Provides;
+import com.layneburns.farmingruns.data.DataLoader;
+import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.ui.FarmingRunsPanel;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.plugins.Plugin;
@@ -36,6 +40,9 @@ public class FarmingRunsPlugin extends Plugin
 	@Inject
 	private FarmingRunsPanel panel;
 
+	@Inject
+	private GameData gameData;
+
 	private NavigationButton navigationButton;
 
 	@Override
@@ -49,7 +56,8 @@ public class FarmingRunsPlugin extends Plugin
 			.panel(panel)
 			.build();
 		clientToolbar.addNavigation(navigationButton);
-		log.debug("[farmrun] started");
+		log.debug("[farmrun] started: {} locations, {} patches, {} seeds (patch table from {})",
+			gameData.locations().size(), gameData.patches().size(), gameData.seeds().size(), gameData.getRuneliteTag());
 	}
 
 	@Override
@@ -58,6 +66,14 @@ public class FarmingRunsPlugin extends Plugin
 		clientToolbar.removeNavigation(navigationButton);
 		navigationButton = null;
 		log.debug("[farmrun] stopped");
+	}
+
+	/** The game data, loaded and checked once. A broken data file stops the plugin here with a clear message. */
+	@Provides
+	@Singleton
+	GameData provideGameData(Gson gson)
+	{
+		return new DataLoader(gson).load();
 	}
 
 	@Provides

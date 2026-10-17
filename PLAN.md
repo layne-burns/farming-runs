@@ -29,7 +29,7 @@ This is how [SPEC.md](SPEC.md) gets built: the code layout, the data files, the 
 
 ## 2. Code layout
 
-Package root `com.layneburns.farmingruns`. Each class has one job. The aim is under ~300 lines per class; vendored code doesn't count. The **(pure)** classes never touch `Client`, so they can be unit tested without the game.
+Package root `com.layneburns.farmingruns`. Each class has one job. ~300 lines is a rough guide, not a cap: past it, check whether the class has a second job to split out, but never split just to hit the number. Vendored code doesn't count. The **(pure)** classes never touch `Client`, so they can be unit tested without the game.
 
 ```
 FarmingRunsPlugin        wiring only: creates services, forwards events, nothing else
@@ -86,24 +86,28 @@ Each external dependency has exactly one home: SP is `pathing`; game state is `s
 
 ## 3. Data files (`src/main/resources/com/layneburns/farmingruns/`)
 
-| File | Contents | Built from |
-|---|---|---|
-| `locations.json` | id, name, regionIds, **SP target tile**, patch ids, default teleport id, unlock rule id | Region ids and varbits are generated from the vendored `FarmingWorld` by a one-off test-scope dumper; targets and teleports are added by hand |
-| `patches.json` | id, location, kind, varbit, regionId | Generated as above |
-| `seeds.json` | itemId, name, kind, level, sapling/seedling ids, `payment {itemId, qty}` | `scripts/update_seed_data.py` from the wiki (seeds plus the Gardeners' payment table), like port-tasks' update scripts |
-| `teleports.json` | id, name, item alternatives or runes, spellbook/diary requirements, landing tile | By hand: about 40 entries |
-| `costs.tsv` | `arrive <loc> <ticks>` per location, plus `link <a> <b> <ticks>` overrides (spirit trees, cloak stops, walks) | By hand, tuned in phase 7 |
-| `unlocks.json` | rules: quest / diary / skill level / guild tier, combined with all/any | By hand: about 15 rules |
-| `tools.json` | leprechaun varbit → item id(s), plus how the value encodes the count | From the varbit list above |
+**Generated** files come from a script and should never be edited by hand: edit the script's input and re-run it. **Hand** files are edited directly. All the scripts live in `scripts/` and share `scripts/wiki.py`.
 
-`DataIntegrityTest` checks that every file loads, every id it refers to exists, every patch varbit belongs to the vendored table, and every location has a target and a teleport.
+| File | Kind | Contents | Made by |
+|---|---|---|---|
+| `patch_locations.json` | Generated | 43 locations and 99 patches: region, varbit and gardener names (from RuneLite's `FarmingWorld`), plus each patch's map tile and the wiki's teleport hints | `scripts/generate_patch_locations.py` (RuneLite tag + wiki *&lt;kind&gt; patch/Patches* tables) |
+| `location_settings.json` | Hand | Per location: default teleport, unlock rule, per-patch unlock rules (Farming Guild tiers, the Harmony herb patch), note | Edited directly |
+| `seeds.json` | Generated | 82 seeds: item id, kind, level, seeds per patch, sapling id, protection payment (items, ids, amounts) | `scripts/update_seed_data.py` (wiki *&lt;kind&gt; patch/Seeds* tables); `PAYMENT_FIXES` in it for corrections |
+| `teleports.json` | Generated | 28 teleports: type, item ids (every charge variant) or spell runes and spellbook, waiver varbit | `scripts/update_item_data.py` from the hand-edited `scripts/teleports.in.json` |
+| `items.json` | Generated | Named item groups (spade, axe, compost types, bottomless bucket, farmer's outfit pieces, seed box, coins) and rune ids | `scripts/update_item_data.py` from the hand-edited `scripts/items.in.json` |
+| `unlocks.json` | Hand | Named rules: quest (finished or started), varbit (diary tiers), skill level | Edited directly |
+| `costs.tsv` | Hand | `arrive` ticks per location, plus `link` ticks between neighbours (walks, spirit-tree hops) | Edited directly; tuned in phase 9 |
+
+The tool leprechaun's varbit encoding (how each `FARMING_TOOLS_*` value maps to a count) moved to phase 2, where it can be checked in game against the leprechaun's Exchange screen.
+
+`DataLoader` checks every reference between files when the plugin starts, so a bad edit stops the plugin with a message naming the file and entry. `DataIntegrityTest` loads the real files and adds cross-file checks: every patch kind has seeds, no two patches share a Time Tracking key, every patch has a tile, saplings map back to their seeds, and spot checks against known in-game values.
 
 ## 4. Phases
 
 | # | Phase | Delivers | Unit tests | In-game check |
 |---|---|---|---|---|
-| 0 | **Scaffold** | `git init`, remote, build, checkstyle, launcher; an empty plugin with a three-tab panel; vendored timetracking plus its sync script; README | The build compiles; the plugin loads in the test harness | The panel appears with three empty tabs |
-| 1 | **Data** | All the §3 files with loaders, plus the seed script | `DataIntegrityTest`; spot checks (ranarr payment none, apple-tree payment 9 sweetcorn) | — |
+| 0 | **Scaffold** ✅ | `git init`, remote, build, checkstyle, launcher; an empty plugin with a three-tab panel; vendored timetracking plus its sync script; README | The build compiles; the plugin loads in the test harness | The panel appears with three empty tabs |
+| 1 | **Data** | All the §3 files, their scripts and `DataLoader` | `DataIntegrityTest`, `CostTableTest` | The plugin starts (data loads); the tabs are dark |
 | 2 | **Seed log and leprechaun** | `SeedLog`, `Leprechaun`, `BankTab`, profile persistence | Snapshot merge, buffer arithmetic | Counts match the bank, vault and seed box after opening each, and the leprechaun matches its Exchange screen. **Verify:** is the seed-box container sent at login, or only once opened? |
 | 3 | **Unlocks** | `PlayerInfo`, `UnlockService`, `LocationsTab` with overrides and teleport dropdown | Rule evaluation on fake `PlayerInfo` | Prifddinas is locked (SotE) and everything else unlocked; overrides survive a relog |
 | 4 | **Patch states** | `PatchStates`, `ReadyPredictor`, ready times in `LocationsTab` | Decode and predict on recorded Time Tracking values | Ready times match Time Tracking's own Farming tab |

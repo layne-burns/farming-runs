@@ -1,0 +1,33 @@
+{
+	"_comment": "Hand-edited. Teleports the plugin knows. Run scripts/update_item_data.py after editing to regenerate src/main/resources/.../teleports.json. type: item (any listed item works), spell (runes from the wiki), fairy_ring, spirit_tree, or none (walk / boat / no items).",
+	"teleports": [
+		{"id": "explorers_ring", "name": "Explorer's ring (cabbage patch)", "type": "item", "items": [{"page": "Explorer's ring 2"}, {"page": "Explorer's ring 3"}, {"page": "Explorer's ring 4"}]},
+		{"id": "ardougne_cloak_farm", "name": "Ardougne cloak (farm)", "type": "item", "items": [{"page": "Ardougne cloak 2"}, {"page": "Ardougne cloak 3"}, {"page": "Ardougne cloak 4"}]},
+		{"id": "ardougne_cloak_monastery", "name": "Ardougne cloak (monastery)", "type": "item", "items": [{"page": "Ardougne cloak 1"}, {"page": "Ardougne cloak 2"}, {"page": "Ardougne cloak 3"}, {"page": "Ardougne cloak 4"}]},
+		{"id": "ectophial", "name": "Ectophial", "type": "item", "items": [{"page": "Ectophial", "excludeVersions": ["Empty"]}]},
+		{"id": "xerics_talisman", "name": "Xeric's talisman (Xeric's Glade)", "type": "item", "items": [{"page": "Xeric's talisman", "excludeVersions": ["Inert"]}]},
+		{"id": "skills_necklace", "name": "Skills necklace (Farming Guild)", "type": "item", "items": [{"page": "Skills necklace", "excludeVersions": ["Uncharged"]}]},
+		{"id": "quetzal_whistle", "name": "Quetzal whistle", "type": "item", "items": [{"page": "Basic quetzal whistle"}, {"page": "Enhanced quetzal whistle"}, {"page": "Perfected quetzal whistle"}, {"page": "Perfected quetzal whistle(i)"}]},
+		{"id": "stony_basalt", "name": "Stony basalt (Troll Stronghold)", "type": "item", "items": [{"page": "Stony basalt"}]},
+		{"id": "icy_basalt", "name": "Icy basalt (Weiss)", "type": "item", "items": [{"page": "Icy basalt"}]},
+		{"id": "harmony_tablet", "name": "Harmony Island teleport", "type": "item", "items": [{"page": "Harmony island teleport (tablet)"}]},
+		{"id": "draynor_manor_tablet", "name": "Draynor Manor teleport", "type": "item", "items": [{"page": "Draynor manor teleport (tablet)"}]},
+		{"id": "tai_bwo_wannai_scroll", "name": "Tai Bwo Wannai teleport", "type": "item", "items": [{"page": "Tai bwo wannai teleport"}]},
+		{"id": "teleport_crystal", "name": "Teleport crystal (Lletya)", "type": "item", "items": [{"page": "Teleport crystal"}]},
+		{"id": "digsite_pendant", "name": "Digsite pendant (Fossil Island)", "type": "item", "items": [{"page": "Digsite pendant"}]},
+		{"id": "ring_of_dueling", "name": "Ring of dueling (Emir's Arena)", "type": "item", "items": [{"page": "Ring of dueling"}]},
+		{"id": "combat_bracelet", "name": "Combat bracelet (Champions' Guild)", "type": "item", "items": [{"page": "Combat bracelet", "excludeVersions": ["Uncharged"]}]},
+		{"id": "camelot_teleport", "name": "Camelot Teleport", "type": "spell", "spell": "Camelot Teleport"},
+		{"id": "falador_teleport", "name": "Falador Teleport", "type": "spell", "spell": "Falador Teleport"},
+		{"id": "varrock_teleport", "name": "Varrock Teleport", "type": "spell", "spell": "Varrock Teleport"},
+		{"id": "lumbridge_teleport", "name": "Lumbridge Teleport", "type": "spell", "spell": "Lumbridge Teleport"},
+		{"id": "ardougne_teleport", "name": "Ardougne Teleport", "type": "spell", "spell": "Ardougne Teleport"},
+		{"id": "watchtower_teleport", "name": "Watchtower Teleport", "type": "spell", "spell": "Watchtower Teleport"},
+		{"id": "kourend_castle_teleport", "name": "Kourend Castle Teleport", "type": "spell", "spell": "Kourend Castle Teleport"},
+		{"id": "civitas_teleport", "name": "Civitas illa Fortis Teleport", "type": "spell", "spell": "Civitas illa Fortis Teleport"},
+		{"id": "catherby_teleport", "name": "Catherby Teleport (Lunar)", "type": "spell", "spell": "Catherby Teleport"},
+		{"id": "fairy_ring", "name": "Fairy ring", "type": "fairy_ring", "items": [{"page": "Dramen staff"}, {"page": "Lunar staff"}], "waivedByVarbit": "LUMBRIDGE_DIARY_ELITE_COMPLETE"},
+		{"id": "spirit_tree", "name": "Spirit tree", "type": "spirit_tree"},
+		{"id": "none", "name": "Walk / boat (no items)", "type": "none"}
+	]
+}

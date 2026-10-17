@@ -1,0 +1,19 @@
+{
+	"_comment": "Hand-edited. Named unlock rules used by location_settings.json. A rule passes when every condition in 'all' passes. Conditions: quest (finished; add \"started\": true to accept in progress) uses RuneLite's Quest names; varbit (value at least 1, e.g. a diary tier) uses RuneLite's VarbitID names; skill + level uses the real (unboosted) level.",
+	"rules": {
+		"priest_in_peril": {"name": "Priest in Peril", "all": [{"quest": "PRIEST_IN_PERIL"}]},
+		"my_arms_big_adventure": {"name": "My Arm's Big Adventure", "all": [{"quest": "MY_ARMS_BIG_ADVENTURE"}]},
+		"making_friends_with_my_arm": {"name": "Making Friends with My Arm", "all": [{"quest": "MAKING_FRIENDS_WITH_MY_ARM"}]},
+		"great_brain_robbery": {"name": "The Great Brain Robbery (started)", "all": [{"quest": "THE_GREAT_BRAIN_ROBBERY", "started": true}]},
+		"morytania_elite": {"name": "Elite Morytania diary", "all": [{"varbit": "MORYTANIA_DIARY_ELITE_COMPLETE"}]},
+		"song_of_the_elves": {"name": "Song of the Elves", "all": [{"quest": "SONG_OF_THE_ELVES"}]},
+		"bone_voyage": {"name": "Bone Voyage", "all": [{"quest": "BONE_VOYAGE"}]},
+		"mournings_end_started": {"name": "Mourning's End Part I (started)", "all": [{"quest": "MOURNINGS_END_PART_I", "started": true}]},
+		"fremennik_trials": {"name": "The Fremennik Trials", "all": [{"quest": "THE_FREMENNIK_TRIALS"}]},
+		"children_of_the_sun": {"name": "Children of the Sun (Varlamore)", "all": [{"quest": "CHILDREN_OF_THE_SUN"}]},
+		"troubled_tortugans": {"name": "Troubled Tortugans", "all": [{"quest": "TROUBLED_TORTUGANS"}]},
+		"farming_guild_beginner": {"name": "Farming Guild beginner tier (45 Farming)", "all": [{"skill": "FARMING", "level": 45}]},
+		"farming_guild_intermediate": {"name": "Farming Guild intermediate tier (65 Farming)", "all": [{"skill": "FARMING", "level": 65}]},
+		"farming_guild_advanced": {"name": "Farming Guild advanced tier (85 Farming)", "all": [{"skill": "FARMING", "level": 85}]}
+	}
+}

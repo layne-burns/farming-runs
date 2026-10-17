@@ -9,17 +9,15 @@ package com.layneburns.farmingruns.ui;
 import java.awt.BorderLayout;
 import javax.inject.Singleton;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 /**
  * Run tab: the run setup form and Start, then the ordered stop list during a run (SPEC §2.3, §2.5).
  */
 @Singleton
-public class RunTab extends JPanel
+public class RunTab extends TabPanel
 {
 	RunTab()
 	{
-		super(new BorderLayout());
 		add(new JLabel("<html>Coming in phase 5.</html>"), BorderLayout.NORTH);
 	}
 }
