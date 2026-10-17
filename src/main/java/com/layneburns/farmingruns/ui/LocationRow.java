@@ -155,21 +155,21 @@ class LocationRow extends JPanel
 		{
 			c.gridx = 0;
 			c.weightx = 0;
-			table.add(cell(patch.getName(), Palette.TEXT, JLabel.LEFT), c);
+			table.add(cell(patch.getName(), Palette.TEXT, JLabel.LEFT, false), c);
 
 			c.gridx = 1;
 			c.weightx = 1;
 			c.fill = GridBagConstraints.HORIZONTAL;
 			String crop = !patch.isUsable() || patch.getCrop() == null ? "–" : patch.getCrop();
-			table.add(cell(crop, Palette.SECONDARY_TEXT, JLabel.LEFT), c);
+			table.add(cell(crop, Palette.SECONDARY_TEXT, JLabel.LEFT, true), c);
 			c.fill = GridBagConstraints.NONE;
 
 			c.gridx = 2;
 			c.weightx = 0;
 			c.anchor = GridBagConstraints.EAST;
 			table.add(patch.isUsable()
-				? cell(patch.getState(), readinessColour(patch.getReadiness()), JLabel.RIGHT)
-				: cell(patch.getReason(), Palette.NONE, JLabel.RIGHT), c);
+				? cell(patch.getState(), readinessColour(patch.getReadiness()), JLabel.RIGHT, false)
+				: cell(patch.getReason(), Palette.NONE, JLabel.RIGHT, false), c);
 			c.anchor = GridBagConstraints.WEST;
 			c.gridy++;
 		}
@@ -177,11 +177,16 @@ class LocationRow extends JPanel
 		return table;
 	}
 
-	private static JLabel cell(String text, Color colour, int alignment)
+	/**
+	 * A table cell. Only the crop column may shrink (and shorten with "..."): when the panel is narrow the grid
+	 * falls back to minimum widths, and a patch name or state with no minimum would vanish entirely.
+	 */
+	private static JLabel cell(String text, Color colour, int alignment, boolean canShrink)
 	{
 		JLabel label = new JLabel(text, alignment);
 		label.setForeground(colour);
-		label.setMinimumSize(new Dimension(0, label.getPreferredSize().height));
+		Dimension size = label.getPreferredSize();
+		label.setMinimumSize(canShrink ? new Dimension(0, size.height) : size);
 		return label;
 	}
 
