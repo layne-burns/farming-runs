@@ -77,6 +77,13 @@
 		],
 		"coins": [
 			995
+		],
+		"house_tablet": [
+			8013
+		],
+		"construction_cape": [
+			9789,
+			9790
 		]
 	},
 	"descriptions": {
@@ -99,7 +106,9 @@
 		"farmers_boots": "Farmer's outfit: +0.2% Farming XP (+2.5% with the full set).",
 		"seed_box": "Carries up to 6 kinds of seeds in one inventory slot.",
 		"amulet_of_bounty": "Worn while planting allotments: 25% chance to use one seed instead of three (10 charges).",
-		"coins": "Pays gardeners to clear grown trees (200 coins each)."
+		"coins": "Pays gardeners to clear grown trees (200 coins each).",
+		"house_tablet": "Teleports you into your house, for its portals (used up).",
+		"construction_cape": "Unlimited teleports into your house, for its portals."
 	},
 	"runes": {
 		"Air rune": 556,

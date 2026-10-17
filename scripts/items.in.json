@@ -20,7 +20,9 @@
 		"farmers_boots": [{"page": "Farmer's boots"}],
 		"seed_box": [{"page": "Seed box"}],
 		"amulet_of_bounty": [{"page": "Amulet of bounty"}],
-		"coins": [{"page": "Coins"}]
+		"coins": [{"page": "Coins"}],
+		"house_tablet": [{"page": "Teleport to house (tablet)"}],
+		"construction_cape": [{"page": "Construction cape"}]
 	},
 	"descriptions": {
 		"spade": "Harvests crops, digs up tree roots and clears dead plants.",
@@ -42,7 +44,9 @@
 		"farmers_boots": "Farmer's outfit: +0.2% Farming XP (+2.5% with the full set).",
 		"seed_box": "Carries up to 6 kinds of seeds in one inventory slot.",
 		"amulet_of_bounty": "Worn while planting allotments: 25% chance to use one seed instead of three (10 charges).",
-		"coins": "Pays gardeners to clear grown trees (200 coins each)."
+		"coins": "Pays gardeners to clear grown trees (200 coins each).",
+		"house_tablet": "Teleports you into your house, for its portals (used up).",
+		"construction_cape": "Unlimited teleports into your house, for its portals."
 	},
 	"spells": {"fertile_soil": "Fertile Soil"},
 	"runes": ["Air rune", "Water rune", "Earth rune", "Fire rune", "Law rune", "Astral rune", "Nature rune", "Soul rune"]

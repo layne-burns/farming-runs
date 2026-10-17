@@ -37,8 +37,8 @@
 			{"id": "salvager_overlook", "name": "Salvager Overlook"}, {"id": "sunset_coast", "name": "Sunset Coast"}, {"id": "tal_teklan", "name": "Tal Teklan"}]},
 		{"id": "teleport_crystal", "name": "Teleport crystal", "group": "Items", "type": "item", "items": [{"page": "Teleport crystal"}], "destinations": [
 			{"id": "lletya", "name": "Lletya"}, {"id": "prifddinas", "name": "Prifddinas"}]},
-		{"id": "stony_basalt", "name": "Stony basalt (Troll Stronghold)", "group": "Items", "type": "item", "items": [{"page": "Stony basalt"}]},
-		{"id": "icy_basalt", "name": "Icy basalt (Weiss)", "group": "Items", "type": "item", "items": [{"page": "Icy basalt"}]},
+		{"id": "stony_basalt", "name": "Stony basalt (Troll Stronghold)", "group": "Items", "type": "item", "items": [{"page": "Stony basalt"}], "usedUp": true},
+		{"id": "icy_basalt", "name": "Icy basalt (Weiss)", "group": "Items", "type": "item", "items": [{"page": "Icy basalt"}], "usedUp": true},
 		{"id": "farming_cape", "name": "Farming cape (Farming Guild)", "group": "Items", "type": "item", "items": [{"page": "Farming cape"}]},
 		{"id": "varrock_teleport", "name": "Varrock Teleport", "group": "Standard spells", "type": "spell", "spell": "Varrock Teleport"},
 		{"id": "lumbridge_teleport", "name": "Lumbridge Teleport", "group": "Standard spells", "type": "spell", "spell": "Lumbridge Teleport"},
@@ -65,6 +65,7 @@
 		{"id": "ardougne_tablet", "name": "Ardougne teleport (tablet)", "group": "Tablets & scrolls", "type": "item", "items": [{"page": "Ardougne teleport (tablet)"}]},
 		{"id": "watchtower_tablet", "name": "Watchtower teleport (tablet)", "group": "Tablets & scrolls", "type": "item", "items": [{"page": "Watchtower teleport (tablet)"}]},
 		{"id": "tai_bwo_wannai_scroll", "name": "Tai Bwo Wannai teleport (scroll)", "group": "Tablets & scrolls", "type": "item", "items": [{"page": "Tai bwo wannai teleport"}]},
+		{"id": "house_portal", "name": "House portal", "group": "House", "type": "house", "spell": "Teleport to House", "destinations": [{"id": "weiss", "name": "Weiss"}, {"id": "troll_stronghold", "name": "Troll Stronghold"}, {"id": "catherby", "name": "Catherby"}, {"id": "kharyrll", "name": "Kharyrll (Canifis)"}, {"id": "ardougne", "name": "Ardougne"}, {"id": "falador", "name": "Falador"}, {"id": "varrock", "name": "Varrock"}, {"id": "lumbridge", "name": "Lumbridge"}, {"id": "camelot", "name": "Camelot"}, {"id": "kourend_castle", "name": "Kourend Castle"}, {"id": "fishing_guild", "name": "Fishing Guild"}, {"id": "civitas_illa_fortis", "name": "Civitas illa Fortis"}, {"id": "watchtower", "name": "Watchtower (Yanille)"}]},
 		{"id": "fairy_ring", "name": "Fairy ring", "group": "Fairy ring", "type": "fairy_ring", "items": [{"page": "Dramen staff"}, {"page": "Lunar staff"}], "waivedByVarbit": "LUMBRIDGE_DIARY_ELITE_COMPLETE", "destinations": "wiki fairy ring codes"},
 		{"id": "spirit_tree", "name": "Spirit tree", "group": "Spirit tree", "type": "spirit_tree", "destinations": [
 			{"id": "tree_gnome_village", "name": "Tree Gnome Village"}, {"id": "gnome_stronghold", "name": "Gnome Stronghold"},

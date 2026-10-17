@@ -23,7 +23,9 @@ import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.RunSetup;
 import com.layneburns.farmingruns.run.TreeRoutine;
 import com.layneburns.farmingruns.state.ItemLedger;
+import com.layneburns.farmingruns.state.ItemSource;
 import com.layneburns.farmingruns.state.PlayerFacts;
+import com.layneburns.farmingruns.state.StorageSnapshot;
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
 import java.util.List;
 import java.util.Map;
@@ -136,6 +138,28 @@ public class RequirementsBuilderTest
 		RunRequirements needs = build(setup, plan);
 		assertEquals(1, find(needs, PAPAYA_SAPLING).getAmount());
 		assertEquals(200, find(needs, data.getItems().group("coins").iterator().next()).getAmount());
+	}
+
+	@Test
+	public void aHousePortalNeedsACapeOrATabletPerUse()
+	{
+		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.HERB));
+		PlantingPlan weiss = plan(data.seedByItem(RANARR), "weiss.herb");
+		Map<String, List<String>> refs = Map.of("weiss", List.of("house_portal:weiss", "icy_basalt"));
+		int tablet = data.getItems().group("house_tablet").iterator().next();
+		int cape = data.getItems().group("construction_cape").iterator().next();
+
+		ItemLedger tablets = TeleportPickerTest.ledger(ItemSource.BANK, Map.of(tablet, 10));
+		RunRequirements withTablets = RequirementsBuilder.build(setup, weiss, refs, data, NORMAL_BOOK, tablets,
+			p -> true, false);
+		assertEquals("house_portal:weiss", withTablets.getTeleports().get("weiss").getRef());
+		assertEquals(1, find(withTablets, tablet).getAmount());
+
+		ItemLedger capeToo = tablets.with(ItemSource.EQUIPMENT, new StorageSnapshot(Map.of(cape, 1), 1));
+		RunRequirements withCape = RequirementsBuilder.build(setup, weiss, refs, data, NORMAL_BOOK, capeToo,
+			p -> true, false);
+		assertNotNull(find(withCape, cape));
+		assertNull(find(withCape, tablet));
 	}
 
 	@Test

@@ -116,6 +116,7 @@ final class RawData
 		String spellbook;
 		List<Rune> runes;
 		String waivedByVarbit;
+		boolean usedUp;
 		List<Destination> destinations;
 	}
 

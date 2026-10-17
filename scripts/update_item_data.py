@@ -107,6 +107,8 @@ def main() -> None:
             out["itemIds"] = sorted({i for d in resolved for i in d.get("itemIds", [])})
         if "spell" in t:
             out["spellbook"], out["runes"] = spell_cost(texts.get(t["spell"], ""), t["spell"], rune_ids)
+        # Tablets and scrolls are used up on each use; so is anything marked "usedUp" (the basalts).
+        out["usedUp"] = t.get("usedUp", t["group"] == "Tablets & scrolls")
         if "waivedByVarbit" in t:
             out["waivedByVarbit"] = t["waivedByVarbit"]
         if resolved:

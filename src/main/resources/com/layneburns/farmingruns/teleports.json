@@ -10,7 +10,8 @@
 				13126,
 				13127,
 				13128
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "skills_necklace",
@@ -25,6 +26,7 @@
 				11968,
 				11970
 			],
+			"usedUp": false,
 			"destinations": [
 				{
 					"id": "fishing_guild",
@@ -67,6 +69,7 @@
 				3865,
 				3867
 			],
+			"usedUp": false,
 			"destinations": [
 				{
 					"id": "burthorpe",
@@ -105,6 +108,7 @@
 				2564,
 				2566
 			],
+			"usedUp": false,
 			"destinations": [
 				{
 					"id": "emirs_arena",
@@ -138,6 +142,7 @@
 				11978,
 				19707
 			],
+			"usedUp": false,
 			"destinations": [
 				{
 					"id": "edgeville",
@@ -169,6 +174,7 @@
 				11986,
 				11988
 			],
+			"usedUp": false,
 			"destinations": [
 				{
 					"id": "miscellania",
@@ -201,6 +207,7 @@
 				11972,
 				11974
 			],
+			"usedUp": false,
 			"destinations": [
 				{
 					"id": "warriors_guild",
@@ -232,6 +239,7 @@
 				11193,
 				11194
 			],
+			"usedUp": false,
 			"destinations": [
 				{
 					"id": "digsite",
@@ -258,6 +266,7 @@
 				13123,
 				13124
 			],
+			"usedUp": false,
 			"destinations": [
 				{
 					"id": "monastery",
@@ -287,7 +296,8 @@
 			"type": "item",
 			"itemIds": [
 				4251
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "morytania_legs",
@@ -298,7 +308,8 @@
 				13113,
 				13114,
 				13115
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "xerics_talisman",
@@ -308,6 +319,7 @@
 			"itemIds": [
 				13393
 			],
+			"usedUp": false,
 			"destinations": [
 				{
 					"id": "lookout",
@@ -342,6 +354,7 @@
 				29275,
 				33120
 			],
+			"usedUp": false,
 			"destinations": [
 				{
 					"id": "aldarin",
@@ -409,6 +422,7 @@
 				6102,
 				13102
 			],
+			"usedUp": false,
 			"destinations": [
 				{
 					"id": "lletya",
@@ -427,7 +441,8 @@
 			"type": "item",
 			"itemIds": [
 				22601
-			]
+			],
+			"usedUp": true
 		},
 		{
 			"id": "icy_basalt",
@@ -436,7 +451,8 @@
 			"type": "item",
 			"itemIds": [
 				22599
-			]
+			],
+			"usedUp": true
 		},
 		{
 			"id": "farming_cape",
@@ -446,7 +462,8 @@
 			"itemIds": [
 				9810,
 				9811
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "varrock_teleport",
@@ -470,7 +487,8 @@
 					"itemId": 554,
 					"amount": 1
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "lumbridge_teleport",
@@ -494,7 +512,8 @@
 					"itemId": 557,
 					"amount": 1
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "falador_teleport",
@@ -518,7 +537,8 @@
 					"itemId": 556,
 					"amount": 3
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "camelot_teleport",
@@ -537,7 +557,8 @@
 					"itemId": 556,
 					"amount": 5
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "ardougne_teleport",
@@ -556,7 +577,8 @@
 					"itemId": 555,
 					"amount": 2
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "watchtower_teleport",
@@ -575,7 +597,8 @@
 					"itemId": 563,
 					"amount": 2
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "trollheim_teleport",
@@ -594,7 +617,8 @@
 					"itemId": 554,
 					"amount": 2
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "kourend_castle_teleport",
@@ -618,7 +642,8 @@
 					"itemId": 554,
 					"amount": 1
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "civitas_teleport",
@@ -642,7 +667,8 @@
 					"itemId": 554,
 					"amount": 1
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "catherby_teleport",
@@ -666,7 +692,8 @@
 					"itemId": 9075,
 					"amount": 3
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "fishing_guild_teleport",
@@ -690,7 +717,8 @@
 					"itemId": 9075,
 					"amount": 3
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "khazard_teleport",
@@ -714,7 +742,8 @@
 					"itemId": 9075,
 					"amount": 2
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "harmony_island_spell",
@@ -738,7 +767,8 @@
 					"itemId": 561,
 					"amount": 1
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "draynor_manor_spell",
@@ -762,7 +792,8 @@
 					"itemId": 555,
 					"amount": 1
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "fenkenstrain_teleport",
@@ -786,7 +817,8 @@
 					"itemId": 557,
 					"amount": 1
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "west_ardougne_teleport",
@@ -805,7 +837,8 @@
 					"itemId": 566,
 					"amount": 2
 				}
-			]
+			],
+			"usedUp": false
 		},
 		{
 			"id": "harmony_tablet",
@@ -814,7 +847,8 @@
 			"type": "item",
 			"itemIds": [
 				19625
-			]
+			],
+			"usedUp": true
 		},
 		{
 			"id": "draynor_manor_tablet",
@@ -823,7 +857,8 @@
 			"type": "item",
 			"itemIds": [
 				19615
-			]
+			],
+			"usedUp": true
 		},
 		{
 			"id": "varrock_tablet",
@@ -832,7 +867,8 @@
 			"type": "item",
 			"itemIds": [
 				8007
-			]
+			],
+			"usedUp": true
 		},
 		{
 			"id": "lumbridge_tablet",
@@ -841,7 +877,8 @@
 			"type": "item",
 			"itemIds": [
 				8008
-			]
+			],
+			"usedUp": true
 		},
 		{
 			"id": "falador_tablet",
@@ -850,7 +887,8 @@
 			"type": "item",
 			"itemIds": [
 				8009
-			]
+			],
+			"usedUp": true
 		},
 		{
 			"id": "camelot_tablet",
@@ -859,7 +897,8 @@
 			"type": "item",
 			"itemIds": [
 				8010
-			]
+			],
+			"usedUp": true
 		},
 		{
 			"id": "ardougne_tablet",
@@ -868,7 +907,8 @@
 			"type": "item",
 			"itemIds": [
 				8011
-			]
+			],
+			"usedUp": true
 		},
 		{
 			"id": "watchtower_tablet",
@@ -877,7 +917,8 @@
 			"type": "item",
 			"itemIds": [
 				8012
-			]
+			],
+			"usedUp": true
 		},
 		{
 			"id": "tai_bwo_wannai_scroll",
@@ -886,6 +927,86 @@
 			"type": "item",
 			"itemIds": [
 				12409
+			],
+			"usedUp": true
+		},
+		{
+			"id": "house_portal",
+			"name": "House portal",
+			"group": "House",
+			"type": "house",
+			"spellbook": "Normal",
+			"runes": [
+				{
+					"rune": "Earth rune",
+					"itemId": 557,
+					"amount": 1
+				},
+				{
+					"rune": "Law rune",
+					"itemId": 563,
+					"amount": 1
+				},
+				{
+					"rune": "Air rune",
+					"itemId": 556,
+					"amount": 1
+				}
+			],
+			"usedUp": false,
+			"destinations": [
+				{
+					"id": "weiss",
+					"name": "Weiss"
+				},
+				{
+					"id": "troll_stronghold",
+					"name": "Troll Stronghold"
+				},
+				{
+					"id": "catherby",
+					"name": "Catherby"
+				},
+				{
+					"id": "kharyrll",
+					"name": "Kharyrll (Canifis)"
+				},
+				{
+					"id": "ardougne",
+					"name": "Ardougne"
+				},
+				{
+					"id": "falador",
+					"name": "Falador"
+				},
+				{
+					"id": "varrock",
+					"name": "Varrock"
+				},
+				{
+					"id": "lumbridge",
+					"name": "Lumbridge"
+				},
+				{
+					"id": "camelot",
+					"name": "Camelot"
+				},
+				{
+					"id": "kourend_castle",
+					"name": "Kourend Castle"
+				},
+				{
+					"id": "fishing_guild",
+					"name": "Fishing Guild"
+				},
+				{
+					"id": "civitas_illa_fortis",
+					"name": "Civitas illa Fortis"
+				},
+				{
+					"id": "watchtower",
+					"name": "Watchtower (Yanille)"
+				}
 			]
 		},
 		{
@@ -897,6 +1018,7 @@
 				772,
 				9084
 			],
+			"usedUp": false,
 			"waivedByVarbit": "LUMBRIDGE_DIARY_ELITE_COMPLETE",
 			"destinations": [
 				{
@@ -1171,6 +1293,7 @@
 			"name": "Spirit tree",
 			"group": "Spirit tree",
 			"type": "spirit_tree",
+			"usedUp": false,
 			"destinations": [
 				{
 					"id": "tree_gnome_village",
@@ -1226,7 +1349,8 @@
 			"id": "walk",
 			"name": "Walk / boat (no items)",
 			"group": "Other",
-			"type": "walk"
+			"type": "walk",
+			"usedUp": false
 		}
 	]
 }

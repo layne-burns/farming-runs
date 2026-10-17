@@ -10,6 +10,7 @@ import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.ItemAmount;
 import com.layneburns.farmingruns.data.Teleport;
 import com.layneburns.farmingruns.data.TeleportChoice;
+import com.layneburns.farmingruns.data.TeleportType;
 import com.layneburns.farmingruns.state.ItemLedger;
 import com.layneburns.farmingruns.state.PlayerFacts;
 import java.util.List;
@@ -38,7 +39,7 @@ public final class TeleportPicker
 			{
 				continue;
 			}
-			if (owned(choice, facts, ledger))
+			if (owned(choice, data, facts, ledger))
 			{
 				return choice;
 			}
@@ -50,8 +51,30 @@ public final class TeleportPicker
 		return firstUsable;
 	}
 
-	/** False only for a spell on a spellbook you're not on (when the spellbook is known). */
+	/**
+	 * False only for a spell on a spellbook you're not on (when the spellbook is known). A house portal is always
+	 * usable: the spell is only one way into the house.
+	 */
 	static boolean usable(Teleport method, PlayerFacts facts)
+	{
+		return method.getType() == TeleportType.HOUSE || usableSpell(method, facts);
+	}
+
+	/** Runes for one cast, anywhere. */
+	static boolean hasRunes(Teleport method, ItemLedger ledger)
+	{
+		for (ItemAmount rune : method.getRunes())
+		{
+			if (ledger.count(rune.getItemId()) < rune.getAmount())
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/** The method's spell can be cast on your spellbook (or the spellbook isn't known). */
+	static boolean usableSpell(Teleport method, PlayerFacts facts)
 	{
 		String book = facts.spellbookName();
 		return method.getSpellbook() == null || book == null || book.equals(method.getSpellbook());
@@ -64,21 +87,18 @@ public final class TeleportPicker
 	}
 
 	/** You have what it takes somewhere: the item, a cast's runes, a staff (or the diary), or nothing is needed. */
-	static boolean owned(TeleportChoice choice, PlayerFacts facts, ItemLedger ledger)
+	static boolean owned(TeleportChoice choice, GameData data, PlayerFacts facts, ItemLedger ledger)
 	{
 		switch (choice.getMethod().getType())
 		{
 			case ITEM:
 				return ledger.countAny(choice.itemIds()) > 0;
 			case SPELL:
-				for (ItemAmount rune : choice.getMethod().getRunes())
-				{
-					if (ledger.count(rune.getItemId()) < rune.getAmount())
-					{
-						return false;
-					}
-				}
-				return true;
+				return hasRunes(choice.getMethod(), ledger);
+			case HOUSE:
+				return ledger.countAny(data.getItems().group("construction_cape")) > 0
+					|| ledger.countAny(data.getItems().group("house_tablet")) > 0
+					|| (usableSpell(choice.getMethod(), facts) && hasRunes(choice.getMethod(), ledger));
 			case FAIRY_RING:
 				return waived(choice.getMethod(), facts) || ledger.countAny(choice.itemIds()) > 0;
 			default:

@@ -17,8 +17,6 @@ public class Teleport
 {
 	/** Value of {@link #waivedByVarbitId} when nothing waives the items. */
 	public static final int NOT_WAIVED = -1;
-	/** The menu group of teleports used up on each use. */
-	private static final String USED_UP_GROUP = "Tablets & scrolls";
 
 	String id;
 	String name;
@@ -34,14 +32,10 @@ public class Teleport
 	List<ItemAmount> runes;
 	/** A varbit that, when set, means the items aren't needed (elite Lumbridge diary for fairy rings). */
 	int waivedByVarbitId;
+	/** Each use takes an item (tablets, scrolls, basalt) rather than a charge of a kept item. */
+	boolean usedUp;
 	/** Where it can go; empty when it goes to one place, named by the method itself ("Varrock Teleport"). */
 	List<TeleportDestination> destinations;
-
-	/** True when each use takes an item (tablets and scrolls) rather than a charge of a kept item. */
-	public boolean isUsedUp()
-	{
-		return USED_UP_GROUP.equals(group);
-	}
 
 	/** The destination with this id, or null. */
 	public TeleportDestination destination(String destinationId)

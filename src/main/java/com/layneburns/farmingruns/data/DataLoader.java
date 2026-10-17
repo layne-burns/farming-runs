@@ -220,7 +220,7 @@ public final class DataLoader
 					d.itemIds == null ? Set.of() : Set.copyOf(d.itemIds)))
 				.collect(Collectors.toUnmodifiableList());
 			teleports.put(raw.id, new Teleport(raw.id, raw.name, raw.group, type, itemIds, raw.spellbook, runes, waived,
-				destinations));
+				raw.usedUp, destinations));
 		}
 		return teleports;
 	}

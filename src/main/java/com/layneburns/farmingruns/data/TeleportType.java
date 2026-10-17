@@ -15,6 +15,11 @@ public enum TeleportType
 	SPELL,
 	/** A dramen or lunar staff, unless the waiving diary is done. */
 	FAIRY_RING,
+	/**
+	 * A portal in your house (portal chamber or nexus; the game can't tell us which you have, so adding it to a
+	 * location's list says you do): a way into the house, from a construction cape, a tablet or the spell's runes.
+	 */
+	HOUSE,
 	/** No items: from another spirit tree. */
 	SPIRIT_TREE,
 	/** No items: a walk or a boat. */
