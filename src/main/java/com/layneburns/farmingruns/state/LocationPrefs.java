@@ -16,6 +16,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -55,6 +56,9 @@ public class LocationPrefs
 	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 	private volatile Map<String, Boolean> overrides = Map.of();
 	private volatile Map<String, List<String>> teleports = Map.of();
+	/** The account these were loaded for, or null before login; see {@link #ensureLoaded()}. */
+	private volatile String loadedFor;
+	private volatile boolean everLoaded;
 
 	@Inject
 	LocationPrefs(ConfigManager configManager, Gson gson, GameData data)
@@ -73,12 +77,14 @@ public class LocationPrefs
 	@Nullable
 	public Boolean override(String locationId)
 	{
+		ensureLoaded();
 		return overrides.get(locationId);
 	}
 
 	/** @param unlocked true or false to force it, null to go back to the rules */
 	public void setOverride(String locationId, @Nullable Boolean unlocked)
 	{
+		ensureLoaded();
 		Map<String, Boolean> copy = new HashMap<>(overrides);
 		if (unlocked == null)
 		{
@@ -98,6 +104,7 @@ public class LocationPrefs
 	 */
 	public List<String> teleportsFor(Location location)
 	{
+		ensureLoaded();
 		List<String> saved = teleports.get(location.getId());
 		if (saved != null)
 		{
@@ -112,12 +119,14 @@ public class LocationPrefs
 
 	public boolean hasCustomTeleports(String locationId)
 	{
+		ensureLoaded();
 		return teleports.containsKey(locationId);
 	}
 
 	/** @param order your order of teleport ids, or null to go back to the default */
 	public void setTeleports(String locationId, @Nullable List<String> order)
 	{
+		ensureLoaded();
 		Map<String, List<String>> copy = new HashMap<>(teleports);
 		if (order == null)
 		{
@@ -134,6 +143,8 @@ public class LocationPrefs
 	/** Loads the saved choices for the current profile. */
 	public void load()
 	{
+		loadedFor = configManager.getRSProfileKey();
+		everLoaded = true;
 		overrides = read(OVERRIDES_KEY, BOOLEAN_MAP);
 		teleports = read(TELEPORTS_KEY, LIST_MAP);
 		migrateSingleChoices();
@@ -190,8 +201,26 @@ public class LocationPrefs
 		return data.teleportChoice(ref) != null;
 	}
 
+	/**
+	 * Reloads if the account changed since the last load. Choices are only ever saved over the account's own, never
+	 * over an empty set read before the account was known.
+	 */
+	private void ensureLoaded()
+	{
+		if (!everLoaded || !Objects.equals(configManager.getRSProfileKey(), loadedFor))
+		{
+			load();
+		}
+	}
+
 	private void save(String key, Map<String, ?> value)
 	{
+		if (loadedFor == null)
+		{
+			// Not logged in: no account to save to; keep the choice for this session only.
+			listeners.forEach(Runnable::run);
+			return;
+		}
 		if (value.isEmpty())
 		{
 			configManager.unsetRSProfileConfiguration(FarmingRunsConfig.GROUP, key);

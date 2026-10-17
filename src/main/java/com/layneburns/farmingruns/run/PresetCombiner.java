@@ -22,6 +22,9 @@ import java.util.Set;
  */
 public final class PresetCombiner
 {
+	/** Each combined preset's shares add up to this, so presets weigh the same (and numbers stay small). */
+	private static final int PRESET_TOTAL = 1000;
+
 	private PresetCombiner()
 	{
 	}
@@ -89,19 +92,15 @@ public final class PresetCombiner
 		{
 			return new KindPlan(true, List.of(), pay, routine, skipHarvest, order, amulet);
 		}
-		// Scale each preset's weights so every preset's total is the same: the product of all the totals.
-		long common = 1;
-		for (KindPlan plan : chosen)
-		{
-			common *= totalWeight(plan);
-		}
+		// Scale each preset's weights so every preset's total is the same (PRESET_TOTAL), keeping its own split.
 		List<CropShare> crops = new ArrayList<>();
 		for (KindPlan plan : chosen)
 		{
-			long scale = common / totalWeight(plan);
+			long total = totalWeight(plan);
 			for (CropShare crop : plan.getCrops())
 			{
-				crops.add(new CropShare(crop.getSeedItemId(), (int) (crop.getWeight() * scale), crop.getPatches()));
+				int weight = (int) Math.max(1, Math.round((double) PRESET_TOTAL * Math.max(1, crop.getWeight()) / total));
+				crops.add(new CropShare(crop.getSeedItemId(), weight, crop.getPatches()));
 			}
 		}
 		return new KindPlan(false, List.copyOf(crops), pay, routine, skipHarvest, order, amulet);

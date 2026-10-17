@@ -51,6 +51,21 @@ public class PresetCombinerTest
 	}
 
 	@Test
+	public void manyPresetsKeepSmallNumbers()
+	{
+		// Six presets each sharing herbs between several crops once overflowed the share numbers.
+		List<RunSetup> presets = new ArrayList<>();
+		for (int i = 0; i < 6; i++)
+		{
+			presets.add(herbsOf(ItemID.RANARR_SEED, ItemID.TOADFLAX_SEED, ItemID.SNAPDRAGON_SEED));
+		}
+		for (CropShare crop : PresetCombiner.combine(presets).kindPlan(PatchImplementation.HERB).getCrops())
+		{
+			assertTrue("weight " + crop.getWeight(), crop.getWeight() > 0 && crop.getWeight() <= 1000);
+		}
+	}
+
+	@Test
 	public void runTypesAndSkipsAreJoinedAndAutoKindsStayAuto()
 	{
 		RunSetup trees = RunSetup.EMPTY.withRunTypes(Set.of(RunType.TREE))

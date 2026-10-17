@@ -125,7 +125,8 @@ class PresetsPanel extends JPanel
 			JMenuItem item = new JMenuItem(goal.getName() + (tooLow ? " (needs " + goal.getMinFarmingLevel() + ")"
 				: " (" + goal.getMinFarmingLevel() + ")"));
 			item.setToolTipText(tooltip(goal, farmingLevel));
-			item.setEnabled(!ticked.contains(goalKey(goal.getId())));
+			// Greyed out when already ticked, or when it needs a higher Farming level than yours.
+			item.setEnabled(!ticked.contains(goalKey(goal.getId())) && !tooLow);
 			item.addActionListener(e -> onTick.accept(goalKey(goal.getId()), true));
 			category.add(item);
 		}
