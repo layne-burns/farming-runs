@@ -12,11 +12,11 @@ import static org.junit.Assert.assertTrue;
 import com.google.gson.Gson;
 import com.layneburns.farmingruns.data.DataLoader;
 import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.data.Seed;
 import com.layneburns.farmingruns.vendor.timetracking.CropState;
 import com.layneburns.farmingruns.vendor.timetracking.PatchState;
 import com.layneburns.farmingruns.vendor.timetracking.Produce;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.BeforeClass;
@@ -89,22 +89,34 @@ public class RunProgressTest
 	}
 
 	@Test
-	public void paymentsAreMatchedFromWhatLeftTheInventory()
+	public void guidancePointsOutSeedsCompostThenThePayment()
 	{
-		// Two watermelon allotments, each paid with 10 curry leaves; 25 left the inventory, so both are paid.
-		PlantingPlan.Assignment north = new PlantingPlan.Assignment(data.patch("catherby.allotment_north"),
-			data.seedByItem(5321), false);
-		PlantingPlan.Assignment south = new PlantingPlan.Assignment(data.patch("catherby.allotment_south"),
-			data.seedByItem(5321), false);
-		int melon = data.seedByItem(5321).getPayment().get(0).getItemId();
-		int each = data.seedByItem(5321).getPayment().get(0).getAmount();
-		Map<Integer, Integer> spent = PaymentMatcher.spent(Map.of(melon, 2 * each + 5, 995, 100),
-			Map.of(melon, 5, 995, 100));
-		assertEquals(List.of("catherby.allotment_north", "catherby.allotment_south"),
-			PaymentMatcher.paid(spent, List.of(north, south)));
-		// Only one payment's worth: only the first.
-		assertEquals(List.of("catherby.allotment_north"),
-			PaymentMatcher.paid(Map.of(melon, each), List.of(north, south)));
+		Seed watermelon = data.seedByItem(5321);
+		PlantingPlan.Assignment north = new PlantingPlan.Assignment(data.patch("catherby.allotment_north"), watermelon,
+			false);
+		RunProgress.Stop catherby = new RunProgress.Stop("catherby", List.of(north));
+		RunProgress progress = RunProgress.start(List.of(catherby), Set.of("catherby.allotment_north"));
+		Set<Integer> supercompost = data.getItems().group("supercompost");
+		int payment = watermelon.getPayment().get(0).getItemId();
+
+		RunGuidance.Highlights before = RunGuidance.at(catherby, progress, CompostChoice.SUPERCOMPOST, Set.of(),
+			data.getItems());
+		assertTrue(before.getItems().contains(watermelon.plantItemId()));
+		assertTrue(before.getItems().containsAll(supercompost));
+		assertFalse(before.getItems().contains(payment));
+		assertTrue(before.getNpcs().isEmpty());
+
+		// Composted and planted: now the payment and the gardener.
+		progress = progress.markWorked("catherby.allotment_north");
+		RunGuidance.Highlights planted = RunGuidance.at(catherby, progress, CompostChoice.SUPERCOMPOST,
+			Set.of("catherby.allotment_north"), data.getItems());
+		assertEquals(Set.of(payment), planted.getItems());
+		assertEquals(Set.of(north.getPatch().getGardenerNpcId()), planted.getNpcs());
+
+		// Paid: nothing left to point out.
+		progress = progress.markPaid("catherby.allotment_north");
+		assertEquals(RunGuidance.NONE, RunGuidance.at(progress.currentStop(), progress, CompostChoice.SUPERCOMPOST,
+			Set.of("catherby.allotment_north"), data.getItems()));
 	}
 
 	@Test

@@ -14,7 +14,6 @@ import com.layneburns.farmingruns.data.TeleportChoice;
 import com.layneburns.farmingruns.pathing.ShortestPathClient;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,23 +27,18 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
-import net.runelite.api.Item;
-import net.runelite.api.ItemContainer;
 import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.VarbitChanged;
-import net.runelite.api.gameval.InventoryID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.game.ItemManager;
 
 /**
  * Runs a farming run (SPEC §2.5–2.6): orders the stops from where you are ({@link RoutePlanner}), points Shortest
  * Path at the current stop, and ticks patches off as their varbits show them done ({@link PatchProgress}) and, where
- * the gardener is to be paid, as the payment leaves your inventory ({@link PaymentMatcher}), moving on when a stop is
+ * the gardener is to be paid, when the game says you paid ({@link GuidanceTracker}), moving on when a stop is
  * finished. Farming varbits are shared between regions, so a patch is only read while you're in its
  * region. The thinking is in the pure classes; this is the glue. Client thread, except where noted.
  */
@@ -57,17 +51,14 @@ public class RunController
 	private final GameData data;
 	private final RunSession session;
 	private final ShortestPathClient shortestPath;
-	private final ItemManager itemManager;
 	private final FarmingRunsConfig config;
 	private final PlayerInfo player;
 	/** The region you were in last tick, to notice arriving somewhere. */
 	private int lastRegion = -1;
-	/** Your inventory last time it changed (noted items as unnoted), to see what a payment took. */
-	private Map<Integer, Integer> lastInventory = Map.of();
 
 	@Inject
 	RunController(Client client, ClientThread clientThread, GameData data, RunSession session,
-		ShortestPathClient shortestPath, ItemManager itemManager, FarmingRunsConfig config,
+		ShortestPathClient shortestPath, FarmingRunsConfig config,
 		PlayerInfo player)
 	{
 		this.client = client;
@@ -75,9 +66,10 @@ public class RunController
 		this.data = data;
 		this.session = session;
 		this.shortestPath = shortestPath;
-		this.itemManager = itemManager;
 		this.config = config;
 		this.player = player;
+		// Payments are seen elsewhere; whenever the run moves on, point Shortest Path at where it's up to.
+		session.addListener(() -> clientThread.invokeLater(this::point));
 	}
 
 	/** Starts a run of this plan. Any thread. */
@@ -95,7 +87,6 @@ public class RunController
 			log.debug("[farmrun] route from {}: {}", here, order);
 			session.start(new RunSession.ActiveRun(setup, plan, teleports, System.currentTimeMillis(),
 				RunProgress.start(stops, payFor(setup, plan))));
-			lastInventory = inventory();
 			checkPatchesHere();
 			point();
 		});
@@ -148,33 +139,6 @@ public class RunController
 					check(a);
 				}
 			}
-		}
-		point();
-	}
-
-	@Subscribe
-	public void onItemContainerChanged(ItemContainerChanged event)
-	{
-		if (event.getContainerId() != InventoryID.INV)
-		{
-			return;
-		}
-		Map<Integer, Integer> now = inventory();
-		Map<Integer, Integer> spent = PaymentMatcher.spent(lastInventory, now);
-		lastInventory = now;
-		RunSession.ActiveRun run = session.active();
-		if (run == null || spent.isEmpty())
-		{
-			return;
-		}
-		List<PlantingPlan.Assignment> awaiting = new ArrayList<>();
-		run.getProgress().getStops().forEach(stop -> stop.getPatches().stream()
-			.filter(a -> run.getProgress().isAwaitingPayment(a.getPatch().getId()) && isHere(a.getPatch()))
-			.forEach(awaiting::add));
-		for (String patchId : PaymentMatcher.paid(spent, awaiting))
-		{
-			log.debug("[farmrun] paid for {}", patchId);
-			session.update(p -> p.markPaid(patchId));
 		}
 		point();
 	}
@@ -280,24 +244,6 @@ public class RunController
 			.filter(a -> Protection.shouldPay(a, setup, data, player.getFacts()))
 			.map(a -> a.getPatch().getId())
 			.collect(Collectors.toSet());
-	}
-
-	/** Your inventory now, item id to count, noted items counted as unnoted. */
-	private Map<Integer, Integer> inventory()
-	{
-		Map<Integer, Integer> counts = new HashMap<>();
-		ItemContainer container = client.getItemContainer(InventoryID.INV);
-		if (container != null)
-		{
-			for (Item item : container.getItems())
-			{
-				if (item.getId() > 0 && item.getQuantity() > 0)
-				{
-					counts.merge(itemManager.canonicalize(item.getId()), item.getQuantity(), Integer::sum);
-				}
-			}
-		}
-		return counts;
 	}
 
 	/** True when you're in the patch's region (or one its location also covers). */

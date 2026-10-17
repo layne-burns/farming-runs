@@ -19,6 +19,7 @@ import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.RunePouchWatcher;
 import com.layneburns.farmingruns.state.SetupStore;
+import com.layneburns.farmingruns.run.GuidanceTracker;
 import com.layneburns.farmingruns.run.RunController;
 import com.layneburns.farmingruns.run.TeleportWatcher;
 import com.layneburns.farmingruns.ui.BankHighlightOverlay;
@@ -26,6 +27,8 @@ import com.layneburns.farmingruns.ui.BankRunTab;
 import com.layneburns.farmingruns.ui.BankSearchButton;
 import com.layneburns.farmingruns.ui.SeedVaultFilter;
 import com.layneburns.farmingruns.ui.BankTab;
+import com.layneburns.farmingruns.ui.GardenerOverlay;
+import com.layneburns.farmingruns.ui.RunItemOverlay;
 import com.layneburns.farmingruns.ui.FarmingRunsPanel;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
@@ -124,6 +127,15 @@ public class FarmingRunsPlugin extends Plugin
 	@Inject
 	private TeleportWatcher teleportWatcher;
 
+	@Inject
+	private GuidanceTracker guidanceTracker;
+
+	@Inject
+	private RunItemOverlay runItemOverlay;
+
+	@Inject
+	private GardenerOverlay gardenerOverlay;
+
 	private NavigationButton navigationButton;
 
 	@Override
@@ -138,6 +150,8 @@ public class FarmingRunsPlugin extends Plugin
 			.build();
 		clientToolbar.addNavigation(navigationButton);
 		overlayManager.add(bankHighlightOverlay);
+		overlayManager.add(runItemOverlay);
+		overlayManager.add(gardenerOverlay);
 
 		eventBus.register(itemStore);
 		eventBus.register(containerWatcher);
@@ -153,6 +167,7 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(seedVaultFilter);
 		eventBus.register(runController);
 		eventBus.register(teleportWatcher);
+		eventBus.register(guidanceTracker);
 		bankRunTab.register();
 		itemStore.loadRemembered();
 		locationPrefs.load();
@@ -176,6 +191,7 @@ public class FarmingRunsPlugin extends Plugin
 	protected void shutDown()
 	{
 		runController.stop();
+		eventBus.unregister(guidanceTracker);
 		eventBus.unregister(teleportWatcher);
 		eventBus.unregister(runController);
 		bankSearchButton.hide();
@@ -192,6 +208,8 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.unregister(leprechaunWatcher);
 		eventBus.unregister(containerWatcher);
 		eventBus.unregister(itemStore);
+		overlayManager.remove(gardenerOverlay);
+		overlayManager.remove(runItemOverlay);
 		overlayManager.remove(bankHighlightOverlay);
 		clientToolbar.removeNavigation(navigationButton);
 		navigationButton = null;
