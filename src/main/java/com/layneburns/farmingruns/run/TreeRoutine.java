@@ -19,7 +19,9 @@ public enum TreeRoutine
 	/** Check health, then pay the gardener 200 coins to clear it. */
 	PAY_TO_REMOVE("Check health, pay to remove"),
 	/** Check health, chop it down and dig up the roots (needs an axe). */
-	CHOP_AND_DIG("Check health, chop and dig");
+	CHOP_AND_DIG("Check health, chop and dig"),
+	/** Trees with a crop only: pick it and leave the tree to grow more, planting nothing (harvest runs). */
+	LEAVE_STANDING("Pick, leave the tree");
 
 	/** Trees with a crop to pick before clearing: fruit, calquat fruit, celastrus bark. */
 	private static final Set<PatchImplementation> HARVESTED = Set.of(

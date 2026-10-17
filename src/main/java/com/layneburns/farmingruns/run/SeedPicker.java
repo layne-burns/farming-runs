@@ -64,6 +64,13 @@ public final class SeedPicker
 		for (Map.Entry<PatchImplementation, List<Patch>> entry : byKind.entrySet())
 		{
 			List<Patch> open = new ArrayList<>(entry.getValue());
+			KindPlan plan = setup.kindPlan(entry.getKey());
+			if (plan.harvestOnly(entry.getKey()))
+			{
+				// A harvest run: the trees stay, so nothing is planted (and no seed is short).
+				open.forEach(p -> assignments.add(new PlantingPlan.Assignment(p, null, false)));
+				continue;
+			}
 			if (contract != null)
 			{
 				open.removeIf(p ->
@@ -85,7 +92,6 @@ public final class SeedPicker
 					return true;
 				});
 			}
-			KindPlan plan = setup.kindPlan(entry.getKey());
 			List<Seed> candidates = data.seedsFor(entry.getKey()).stream()
 				.filter(s -> farmingLevel < 0 || s.getLevel() <= farmingLevel)
 				.sorted(Comparator.comparingInt(Seed::getLevel).reversed())

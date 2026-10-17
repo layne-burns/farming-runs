@@ -75,6 +75,7 @@ def main() -> None:
     pages += [t["spell"] for t in teleports_in if "spell" in t]
     pages += [e["page"] for entries in items_in["groups"].values() for e in entries]
     pages += items_in["runes"]
+    pages += list(items_in.get("spells", {}).values())
     texts = page_texts(pages)
 
     rune_ids = {}
@@ -123,9 +124,14 @@ def main() -> None:
     unknown = set(descriptions) - set(groups)
     if unknown:
         raise SystemExit(f"items.in.json: descriptions for unknown groups {sorted(unknown)}")
+    # Non-teleport spells a run can need (Fertile Soil): runes and spellbook from the wiki.
+    spells = {}
+    for spell_id, page in items_in.get("spells", {}).items():
+        book, runes = spell_cost(texts.get(page, ""), page, rune_ids)
+        spells[spell_id] = {"name": page, "spellbook": book, "runes": runes}
     (RESOURCES / "items.json").write_text(json.dumps(
         {"_comment": generated.format("items.in.json"), "groups": groups, "descriptions": descriptions,
-         "runes": rune_ids}, indent="\t", ensure_ascii=False) + "\n",
+         "runes": rune_ids, "spells": spells}, indent="\t", ensure_ascii=False) + "\n",
         encoding="utf-8", newline="\n")
     print(f"wrote teleports.json ({len(teleports)} teleports) and items.json ({len(groups)} groups, "
           f"{len(rune_ids)} runes)")

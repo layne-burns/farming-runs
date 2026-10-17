@@ -1,0 +1,88 @@
+/*
+ * Copyright (c) 2026, Layne Burns <https://github.com/layne-burns>
+ * All rights reserved.
+ *
+ * Licensed under the BSD 2-Clause License; see the LICENSE file in the project root.
+ */
+package com.layneburns.farmingruns.inventory;
+
+import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.data.ItemAmount;
+import com.layneburns.farmingruns.data.Teleport;
+import com.layneburns.farmingruns.data.TeleportChoice;
+import com.layneburns.farmingruns.state.ItemLedger;
+import com.layneburns.farmingruns.state.PlayerFacts;
+import java.util.List;
+import javax.annotation.Nullable;
+
+/**
+ * Picks the teleport a run uses for a location from your ranked list (Locations tab): the first one you own (carried
+ * or stored anywhere), skipping spells from another spellbook. When you own none, the first usable one, so the check
+ * says what's missing. Charges and daily limits aren't known, so they're not counted. Pure: unit tested.
+ */
+public final class TeleportPicker
+{
+	private TeleportPicker()
+	{
+	}
+
+	/** The teleport to use, or null when none of the refs can be used (then you walk). */
+	@Nullable
+	public static TeleportChoice pick(List<String> refs, GameData data, PlayerFacts facts, ItemLedger ledger)
+	{
+		TeleportChoice firstUsable = null;
+		for (String ref : refs)
+		{
+			TeleportChoice choice = data.teleportChoice(ref);
+			if (choice == null || !usable(choice.getMethod(), facts))
+			{
+				continue;
+			}
+			if (owned(choice, facts, ledger))
+			{
+				return choice;
+			}
+			if (firstUsable == null)
+			{
+				firstUsable = choice;
+			}
+		}
+		return firstUsable;
+	}
+
+	/** False only for a spell on a spellbook you're not on (when the spellbook is known). */
+	static boolean usable(Teleport method, PlayerFacts facts)
+	{
+		String book = facts.spellbookName();
+		return method.getSpellbook() == null || book == null || book.equals(method.getSpellbook());
+	}
+
+	/** True when its items are waived by a diary you've done (fairy rings after the elite Lumbridge diary). */
+	public static boolean waived(Teleport method, PlayerFacts facts)
+	{
+		return method.getWaivedByVarbitId() != Teleport.NOT_WAIVED && facts.varbit(method.getWaivedByVarbitId()) > 0;
+	}
+
+	/** You have what it takes somewhere: the item, a cast's runes, a staff (or the diary), or nothing is needed. */
+	static boolean owned(TeleportChoice choice, PlayerFacts facts, ItemLedger ledger)
+	{
+		switch (choice.getMethod().getType())
+		{
+			case ITEM:
+				return ledger.countAny(choice.itemIds()) > 0;
+			case SPELL:
+				for (ItemAmount rune : choice.getMethod().getRunes())
+				{
+					if (ledger.count(rune.getItemId()) < rune.getAmount())
+					{
+						return false;
+					}
+				}
+				return true;
+			case FAIRY_RING:
+				return waived(choice.getMethod(), facts) || ledger.countAny(choice.itemIds()) > 0;
+			default:
+				return true;
+		}
+	}
+}

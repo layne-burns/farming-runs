@@ -17,6 +17,7 @@ import com.layneburns.farmingruns.state.LeprechaunWatcher;
 import com.layneburns.farmingruns.state.LocationPrefs;
 import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PlayerInfo;
+import com.layneburns.farmingruns.state.RunePouchWatcher;
 import com.layneburns.farmingruns.state.SetupStore;
 import com.layneburns.farmingruns.ui.BankTab;
 import com.layneburns.farmingruns.ui.FarmingRunsPanel;
@@ -89,6 +90,9 @@ public class FarmingRunsPlugin extends Plugin
 	@Inject
 	private SetupStore setupStore;
 
+	@Inject
+	private RunePouchWatcher runePouchWatcher;
+
 	private NavigationButton navigationButton;
 
 	@Override
@@ -111,6 +115,7 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(patchStates);
 		eventBus.register(contractService);
 		eventBus.register(setupStore);
+		eventBus.register(runePouchWatcher);
 		itemStore.loadRemembered();
 		locationPrefs.load();
 		setupStore.load();
@@ -121,6 +126,7 @@ public class FarmingRunsPlugin extends Plugin
 			leprechaunWatcher.refresh();
 			playerInfo.refresh();
 			contractService.refresh();
+			runePouchWatcher.refresh();
 		});
 
 		log.debug("[farmrun] started: {} locations, {} patches, {} seeds (patch table from {})",
@@ -131,6 +137,7 @@ public class FarmingRunsPlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
+		eventBus.unregister(runePouchWatcher);
 		eventBus.unregister(setupStore);
 		eventBus.unregister(contractService);
 		eventBus.unregister(patchStates);

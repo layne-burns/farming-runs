@@ -84,6 +84,21 @@ public class SeedPickerTest
 	}
 
 	@Test
+	public void aHarvestRunPlantsNothingAndWarnsOfNothing()
+	{
+		List<Patch> fruitTrees = data.patches().stream().filter(p -> p.getKind() == PatchImplementation.FRUIT_TREE)
+			.collect(Collectors.toList());
+		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.FRUIT_TREE)).withKindPlan(
+			PatchImplementation.FRUIT_TREE, KindPlan.AUTO.withTreeRoutine(TreeRoutine.LEAVE_STANDING));
+		// 20 papaya saplings (5501) held, but a harvest run plants none.
+		PlantingPlan plan = SeedPicker.plan(setup, fruitTrees, Map.of(5501, 20), BUFFERS, 99,
+			data, null);
+		assertEquals(fruitTrees.size(), plan.getAssignments().size());
+		assertEquals(0, plan.plantedCount());
+		assertTrue(plan.getWarnings().isEmpty());
+	}
+
+	@Test
 	public void theContractGetsItsPatchEvenFromTheBuffer()
 	{
 		Patch guildHerb = data.patch("farming_guild.herb");

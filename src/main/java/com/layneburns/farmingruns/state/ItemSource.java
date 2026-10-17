@@ -19,6 +19,7 @@ public enum ItemSource
 	SEED_BOX("Seed box", true),
 	INVENTORY("Inventory", false),
 	EQUIPMENT("Worn", false),
+	RUNE_POUCH("Rune pouch", false),
 	LEPRECHAUN("Tool leprechaun", false);
 
 	private final String displayName;

@@ -71,6 +71,27 @@ class KindCard extends JPanel
 		heading.setForeground(Palette.TEXT);
 		add(left(heading));
 
+		if (isTree)
+		{
+			// First for trees, since it decides the rest: a harvest run plants nothing.
+			TreeRoutine[] choices = (harvests ? List.of(TreeRoutine.values())
+				: List.of(TreeRoutine.PAY_TO_REMOVE, TreeRoutine.CHOP_AND_DIG)).toArray(new TreeRoutine[0]);
+			JComboBox<TreeRoutine> routine = new JComboBox<>(choices);
+			routine.setSelectedItem(plan.getTreeRoutine());
+			routine.setFocusable(false);
+			routine.setToolTipText("What to do with a grown tree. \"Pick, leave the tree\" is a harvest run: the crop is"
+				+ " picked and nothing is planted.");
+			routine.addActionListener(e -> onChange.accept(plan.withTreeRoutine((TreeRoutine) routine.getSelectedItem())));
+			add(left(routine));
+		}
+		if (harvests && plan.getTreeRoutine() == TreeRoutine.LEAVE_STANDING)
+		{
+			add(left(TabPanel.text("Harvest run: pick the crop and leave the tree. Nothing is planted, paid or"
+				+ " cleared.")));
+			setMaximumSize(new Dimension(Integer.MAX_VALUE, getPreferredSize().height));
+			return;
+		}
+
 		JCheckBox auto = check("Auto: best seeds you can spare", plan.isAuto());
 		auto.setToolTipText("Untick to choose the seeds yourself");
 		auto.addActionListener(e ->
@@ -141,14 +162,6 @@ class KindCard extends JPanel
 			harvest.setToolTipText("Pick the crop before paying to remove or chopping the tree");
 			harvest.addActionListener(e -> onChange.accept(plan.withSkipHarvest(!harvest.isSelected())));
 			add(left(harvest));
-		}
-		if (isTree)
-		{
-			JComboBox<TreeRoutine> routine = new JComboBox<>(TreeRoutine.values());
-			routine.setSelectedItem(plan.getTreeRoutine());
-			routine.setFocusable(false);
-			routine.addActionListener(e -> onChange.accept(plan.withTreeRoutine((TreeRoutine) routine.getSelectedItem())));
-			add(left(routine));
 		}
 		setMaximumSize(new Dimension(Integer.MAX_VALUE, getPreferredSize().height));
 	}

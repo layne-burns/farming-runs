@@ -44,5 +44,6 @@
 		"amulet_of_bounty": "Worn while planting allotments: 25% chance to use one seed instead of three (10 charges).",
 		"coins": "Pays gardeners to clear grown trees (200 coins each)."
 	},
+	"spells": {"fertile_soil": "Fertile Soil"},
 	"runes": ["Air rune", "Water rune", "Earth rune", "Fire rune", "Law rune", "Astral rune", "Nature rune", "Soul rune"]
 }

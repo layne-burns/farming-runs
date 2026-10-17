@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * Named groups of item ids from items.json ("spade", "axe", "farmers_boots"...): any id in a group counts as
- * having that item. Also each rune's id.
+ * having that item. Also each rune's id, and the spells a run casts (Fertile Soil).
  */
 @RequiredArgsConstructor
 public final class ItemCatalog
@@ -21,6 +21,8 @@ public final class ItemCatalog
 	/** What each group is for, by group name. */
 	private final Map<String, String> descriptions;
 	private final Map<String, Integer> runes;
+	/** Non-teleport spells a run can cast (Fertile Soil), by id. */
+	private final Map<String, Spell> spells;
 
 	public Set<Integer> group(String name)
 	{
@@ -40,6 +42,16 @@ public final class ItemCatalog
 	public Map<String, Integer> runes()
 	{
 		return runes;
+	}
+
+	public Spell spell(String id)
+	{
+		Spell spell = spells.get(id);
+		if (spell == null)
+		{
+			throw new IllegalArgumentException("no spell " + id + " in items.json");
+		}
+		return spell;
 	}
 
 	/**

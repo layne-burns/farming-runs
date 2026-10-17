@@ -6,6 +6,7 @@
  */
 package com.layneburns.farmingruns.run;
 
+import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
 import java.util.List;
 import javax.annotation.Nullable;
 import lombok.Value;
@@ -41,4 +42,10 @@ public class KindPlan
 	/** Allotments: wear an amulet of bounty while planting; null to follow {@link BountyAmulet}'s default. */
 	@Nullable
 	Boolean amuletOfBounty;
+
+	/** True for a harvest run on this kind: pick the crop, leave the tree, plant nothing. */
+	public boolean harvestOnly(PatchImplementation kind)
+	{
+		return treeRoutine == TreeRoutine.LEAVE_STANDING && TreeRoutine.hasHarvest(kind);
+	}
 }

@@ -110,5 +110,28 @@
 		"Astral rune": 9075,
 		"Nature rune": 561,
 		"Soul rune": 566
+	},
+	"spells": {
+		"fertile_soil": {
+			"name": "Fertile Soil",
+			"spellbook": "Lunar",
+			"runes": [
+				{
+					"rune": "Earth rune",
+					"itemId": 557,
+					"amount": 15
+				},
+				{
+					"rune": "Nature rune",
+					"itemId": 561,
+					"amount": 2
+				},
+				{
+					"rune": "Astral rune",
+					"itemId": 9075,
+					"amount": 3
+				}
+			]
+		}
 	}
 }

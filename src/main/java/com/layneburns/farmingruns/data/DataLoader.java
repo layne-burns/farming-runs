@@ -230,8 +230,15 @@ public final class DataLoader
 		RawData.Items raw = read("items.json", RawData.Items.class);
 		Map<String, Set<Integer>> groups = new HashMap<>();
 		raw.groups.forEach((name, ids) -> groups.put(name, Set.copyOf(ids)));
+		Map<String, Spell> spells = new HashMap<>();
+		if (raw.spells != null)
+		{
+			raw.spells.forEach((id, s) -> spells.put(id, new Spell(id, s.name, s.spellbook, s.runes.stream()
+				.map(r -> new ItemAmount(r.rune, r.itemId, r.amount))
+				.collect(Collectors.toUnmodifiableList()))));
+		}
 		return new ItemCatalog(Map.copyOf(groups), raw.descriptions == null ? Map.of() : Map.copyOf(raw.descriptions),
-			Map.copyOf(raw.runes));
+			Map.copyOf(raw.runes), Map.copyOf(spells));
 	}
 
 	private Map<String, UnlockRule> loadRules()

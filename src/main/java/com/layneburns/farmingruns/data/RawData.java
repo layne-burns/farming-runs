@@ -186,5 +186,13 @@ final class RawData
 		Map<String, List<Integer>> groups;
 		Map<String, String> descriptions;
 		Map<String, Integer> runes;
+		Map<String, RawSpell> spells;
+	}
+
+	static class RawSpell
+	{
+		String name;
+		String spellbook;
+		List<Rune> runes;
 	}
 }

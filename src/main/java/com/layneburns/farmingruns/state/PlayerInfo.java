@@ -7,6 +7,7 @@
 package com.layneburns.farmingruns.state;
 
 import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.data.Teleport;
 import com.layneburns.farmingruns.data.UnlockCondition;
 import com.layneburns.farmingruns.data.UnlockRule;
 import java.util.EnumMap;
@@ -56,8 +57,11 @@ public class PlayerInfo
 	PlayerInfo(Client client, GameData data)
 	{
 		this.client = client;
-		// Only what some rule asks about is read, plus Farming for the seed filters.
+		// Only what some rule asks about is read, plus Farming for the seed filters, plus the varbits that make a
+		// teleport's items unnecessary (the elite Lumbridge diary for fairy rings).
 		skills.add(Skill.FARMING);
+		data.teleports().stream().filter(t -> t.getWaivedByVarbitId() != Teleport.NOT_WAIVED)
+			.forEach(t -> varbits.add(t.getWaivedByVarbitId()));
 		for (UnlockRule rule : data.rules())
 		{
 			for (UnlockCondition condition : rule.getConditions())
