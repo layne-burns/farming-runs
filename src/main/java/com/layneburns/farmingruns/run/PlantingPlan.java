@@ -8,6 +8,8 @@ package com.layneburns.farmingruns.run;
 
 import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.data.Seed;
+import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +34,35 @@ public class PlantingPlan
 	List<Assignment> assignments;
 	/** E.g. "Only 4 Ranarr seed spare for 6 patches: 2 filled with Toadflax seed". */
 	List<String> warnings;
+	/** Trees planned from seed: saplings to grow before the run, by seed. Empty unless "grow saplings" is on. */
+	Map<Seed, Integer> saplingsToGrow;
+
+	public PlantingPlan(List<Assignment> assignments, List<String> warnings, Map<Seed, Integer> saplingsToGrow)
+	{
+		this.assignments = assignments;
+		this.warnings = warnings;
+		this.saplingsToGrow = saplingsToGrow;
+	}
+
+	/** A plan with nothing to grow first. */
+	public PlantingPlan(List<Assignment> assignments, List<String> warnings)
+	{
+		this(assignments, warnings, Map.of());
+	}
+
+	/** E.g. "2 × Magic sapling (from Magic seed)" for each sapling to grow; empty when there's none. */
+	public List<String> growNotes(PatchImplementation kind)
+	{
+		List<String> notes = new ArrayList<>();
+		saplingsToGrow.forEach((seed, count) ->
+		{
+			if (seed.getKind() == kind)
+			{
+				notes.add(count + " × " + seed.getSaplingName() + " (from " + seed.getName() + ")");
+			}
+		});
+		return notes;
+	}
 
 	/** Items to plant, by item id (saplings for trees): seeds per patch times patches. */
 	public Map<Integer, Integer> itemsToPlant()

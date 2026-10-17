@@ -155,6 +155,7 @@ public class RunTab extends TabPanel
 			boolean isTree = seeds.stream().anyMatch(Seed::isPlantedAsSapling);
 			content.add(new KindCard(BankViewBuilder.kindName(kind), setup.kindPlan(kind), seeds, planned,
 				planned.size(), canPay ? PaymentTooltip.build(planned, items.ledger()) : null, isTree, TreeRoutine.hasHarvest(kind),
+				plan.growNotes(kind),
 				kind == PatchImplementation.ALLOTMENT ? BountyAmulet.wanted(setup.kindPlan(kind), planned, data) : null,
 				kp -> update(s -> s.withKindPlan(kind, kp))));
 		}

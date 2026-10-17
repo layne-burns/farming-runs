@@ -13,7 +13,6 @@ import com.layneburns.farmingruns.state.BufferSettings;
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +28,8 @@ import lombok.Value;
  * <li>Chosen crops: patches shared by {@link ShareSplitter} (exact counts, then by weight); patches a crop can't
  * fill (not enough spare) are filled the auto way, with a warning.</li>
  * <li>"Spare" means what you hold beyond your buffer; nothing in the buffer is planted.</li>
+ * <li>Trees count only saplings already grown, unless the kind's "grow saplings" is on: then tree seeds count too
+ * (saplings first), and the plan lists the saplings to grow before the run.</li>
  * </ul>
  */
 public final class SeedPicker
@@ -54,7 +55,7 @@ public final class SeedPicker
 	public static PlantingPlan plan(RunSetup setup, List<Patch> patches, Map<Integer, Integer> held,
 		BufferSettings buffers, int farmingLevel, GameData data, @Nullable Contract contract)
 	{
-		Map<Integer, Integer> left = new HashMap<>(held);
+		Stock stock = new Stock(held, buffers);
 		List<PlantingPlan.Assignment> assignments = new ArrayList<>();
 		List<String> warnings = new ArrayList<>();
 
@@ -65,6 +66,7 @@ public final class SeedPicker
 		{
 			List<Patch> open = new ArrayList<>(entry.getValue());
 			KindPlan plan = setup.kindPlan(entry.getKey());
+			stock.setGrowSaplings(plan.isGrowSaplings());
 			if (plan.harvestOnly(entry.getKey()))
 			{
 				// A harvest run: the trees stay, so nothing is planted (and no seed is short).
@@ -80,7 +82,7 @@ public final class SeedPicker
 						return false;
 					}
 					Seed seed = contract.getSeed();
-					if (take(left, seed, seed.getPerPatch()))
+					if (stock.take(seed, seed.getPerPatch()))
 					{
 						assignments.add(new PlantingPlan.Assignment(p, seed, true));
 					}
@@ -104,7 +106,7 @@ public final class SeedPicker
 					.filter(s -> s != null && (farmingLevel < 0 || s.getLevel() <= farmingLevel))
 					.sorted(Comparator.comparingDouble(FillOrder::xpScore).reversed())
 					.collect(Collectors.toList());
-				fillAuto(open, chosen, left, buffers, assignments);
+				fillAuto(open, chosen, stock, assignments);
 				if (!open.isEmpty())
 				{
 					warnings.add("Not enough of your chosen seeds for " + open.size() + " patch"
@@ -113,9 +115,9 @@ public final class SeedPicker
 			}
 			else if (!plan.isAuto() && !plan.getCrops().isEmpty())
 			{
-				open = fillChosen(plan, open, data, farmingLevel, left, buffers, assignments, warnings);
+				open = fillChosen(plan, open, data, farmingLevel, stock, assignments, warnings);
 			}
-			fillAuto(open, candidates, left, buffers, assignments);
+			fillAuto(open, candidates, stock, assignments);
 			// Whatever is still open has no seed you can spare.
 			if (!open.isEmpty())
 			{
@@ -124,13 +126,12 @@ public final class SeedPicker
 			}
 			open.forEach(p -> assignments.add(new PlantingPlan.Assignment(p, null, false)));
 		}
-		return new PlantingPlan(List.copyOf(assignments), List.copyOf(warnings));
+		return new PlantingPlan(List.copyOf(assignments), List.copyOf(warnings), stock.toGrow());
 	}
 
 	/** Shares patches between your chosen crops; returns the patches still open (short of seeds). */
 	private static List<Patch> fillChosen(KindPlan plan, List<Patch> open, GameData data, int farmingLevel,
-		Map<Integer, Integer> left, BufferSettings buffers, List<PlantingPlan.Assignment> assignments,
-		List<String> warnings)
+		Stock stock, List<PlantingPlan.Assignment> assignments, List<String> warnings)
 	{
 		List<Seed> seeds = new ArrayList<>();
 		List<ShareSplitter.Share> shares = new ArrayList<>();
@@ -147,7 +148,7 @@ public final class SeedPicker
 				continue;
 			}
 			seeds.add(seed);
-			shares.add(new ShareSplitter.Share(crop.getWeight(), crop.getPatches(), capacity(seed, left, buffers)));
+			shares.add(new ShareSplitter.Share(crop.getWeight(), crop.getPatches(), stock.capacity(seed)));
 		}
 		int[] split = ShareSplitter.split(open.size(), shares);
 		int next = 0;
@@ -156,7 +157,7 @@ public final class SeedPicker
 			Seed seed = seeds.get(i);
 			for (int n = 0; n < split[i]; n++)
 			{
-				take(left, seed, seed.getPerPatch());
+				stock.take(seed, seed.getPerPatch());
 				assignments.add(new PlantingPlan.Assignment(open.get(next++), seed, false));
 			}
 			Integer wanted = shares.get(i).getExact();
@@ -175,38 +176,20 @@ public final class SeedPicker
 	}
 
 	/** Fills open patches with the best seeds you can spare, highest level first; filled ones leave {@code open}. */
-	private static void fillAuto(List<Patch> open, List<Seed> candidates, Map<Integer, Integer> left,
-		BufferSettings buffers, List<PlantingPlan.Assignment> assignments)
+	private static void fillAuto(List<Patch> open, List<Seed> candidates, Stock stock,
+		List<PlantingPlan.Assignment> assignments)
 	{
 		int next = 0;
 		for (Seed seed : candidates)
 		{
-			int capacity = capacity(seed, left, buffers);
+			int capacity = stock.capacity(seed);
 			for (int n = 0; n < capacity && next < open.size(); n++)
 			{
-				take(left, seed, seed.getPerPatch());
+				stock.take(seed, seed.getPerPatch());
 				assignments.add(new PlantingPlan.Assignment(open.get(next++), seed, false));
 			}
 		}
 		open.subList(0, next).clear();
-	}
-
-	/** Patches this seed can still fill from what's spare (held beyond the buffer, less what's already used). */
-	private static int capacity(Seed seed, Map<Integer, Integer> left, BufferSettings buffers)
-	{
-		int spare = buffers.spare(seed, left.getOrDefault(seed.plantItemId(), 0));
-		return spare / seed.getPerPatch();
-	}
-
-	private static boolean take(Map<Integer, Integer> left, Seed seed, int amount)
-	{
-		int have = left.getOrDefault(seed.plantItemId(), 0);
-		if (have < amount)
-		{
-			return false;
-		}
-		left.put(seed.plantItemId(), have - amount);
-		return true;
 	}
 
 	private static String kindName(PatchImplementation kind)

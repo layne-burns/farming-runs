@@ -55,11 +55,13 @@ class KindCard extends JPanel
 	 *                   protected (then there's no "pay" box)
 	 * @param isTree   whether a tree routine applies
 	 * @param harvests whether the grown tree has a crop to pick before clearing (fruit trees, calquat, celastrus)
+	 * @param growNotes trees: saplings to grow from seed before the run, e.g. "2 × Magic sapling (from Magic seed)"
 	 * @param amulet   allotments: whether the amulet of bounty will be worn (your choice or the default); null for
 	 *                 other kinds
 	 */
 	KindCard(String title, KindPlan plan, List<Seed> seeds, List<PlantingPlan.Assignment> planned, int patches,
-		@Nullable String payTooltip, boolean isTree, boolean harvests, @Nullable Boolean amulet, Consumer<KindPlan> onChange)
+		@Nullable String payTooltip, boolean isTree, boolean harvests, List<String> growNotes, @Nullable Boolean amulet,
+		Consumer<KindPlan> onChange)
 	{
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(Palette.SURFACE);
@@ -141,6 +143,21 @@ class KindCard extends JPanel
 		JLabel preview = TabPanel.text(preview(planned));
 		preview.setToolTipText("What will be planted, given the seeds you can spare");
 		add(left(preview));
+		if (!growNotes.isEmpty())
+		{
+			JLabel grow = TabPanel.text("Grow first: " + String.join(", ", growNotes));
+			grow.setForeground(Palette.PARTIAL);
+			grow.setToolTipText("Pot these seeds and grow them into saplings before the run");
+			add(left(grow));
+		}
+		if (isTree)
+		{
+			JCheckBox seedsToo = check("Use seeds too (grow saplings first)", plan.isGrowSaplings());
+			seedsToo.setToolTipText("Off: only saplings you've already grown count. On: tree seeds count as well, so"
+				+ " the best tree can be picked from seeds; the card lists the saplings to grow before the run.");
+			seedsToo.addActionListener(e -> onChange.accept(plan.withGrowSaplings(seedsToo.isSelected())));
+			add(left(seedsToo));
+		}
 
 		if (payTooltip != null)
 		{

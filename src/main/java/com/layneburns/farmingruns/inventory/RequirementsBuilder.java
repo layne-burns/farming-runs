@@ -74,7 +74,7 @@ public final class RequirementsBuilder
 		List<String> notes = new ArrayList<>();
 		ItemCatalog items = data.getItems();
 
-		addSeeds(list, assignments);
+		addSeeds(list, assignments, plan.getSaplingsToGrow());
 		addCompost(list, notes, setup.getCompost(), (int) plan.plantedCount(), items, facts);
 		addPayments(list, setup, assignments);
 		addTreeClearing(list, setup, assignments, data, items, treeGrown);
@@ -99,13 +99,16 @@ public final class RequirementsBuilder
 		return new RunRequirements(list.toList(), Map.copyOf(teleports), List.copyOf(notes));
 	}
 
-	private static void addSeeds(RequirementList list, List<PlantingPlan.Assignment> assignments)
+	/** Seeds and saplings by patches; saplings still to be grown from seed say so. */
+	private static void addSeeds(RequirementList list, List<PlantingPlan.Assignment> assignments,
+		Map<Seed, Integer> toGrow)
 	{
 		Map<Seed, Integer> patches = new LinkedHashMap<>();
 		assignments.stream().filter(a -> a.getSeed() != null).forEach(a -> patches.merge(a.getSeed(), 1, Integer::sum));
 		patches.forEach((seed, count) ->
 		{
-			String use = count + " " + kindName(seed.getKind()) + " patch" + (count == 1 ? "" : "es");
+			String use = count + " " + kindName(seed.getKind()) + " patch" + (count == 1 ? "" : "es")
+				+ (toGrow.containsKey(seed) ? " (grow " + toGrow.get(seed) + " from seed first)" : "");
 			list.add(plantName(seed), Set.of(seed.plantItemId()), seed.getPerPatch() * count, Importance.NEED, false,
 				use, true);
 		});

@@ -99,6 +99,31 @@ public class SeedPickerTest
 	}
 
 	@Test
+	public void treeSeedsCountOnlyWhenGrowingSaplingsIsOn()
+	{
+		List<Patch> fruitTrees = data.patches().stream().filter(p -> p.getKind() == PatchImplementation.FRUIT_TREE)
+			.limit(4).collect(Collectors.toList());
+		// 1 papaya sapling (5501) and 5 papaya seeds (5288); 2 saplings are kept back.
+		Map<Integer, Integer> held = Map.of(5501, 1, 5288, 5);
+		RunSetup saplingsOnly = RunSetup.EMPTY.withRunTypes(Set.of(RunType.FRUIT_TREE));
+		PlantingPlan without = SeedPicker.plan(saplingsOnly, fruitTrees, held, BUFFERS, 99, data, null);
+		assertEquals(0, without.plantedCount());
+		assertTrue(without.getSaplingsToGrow().isEmpty());
+
+		RunSetup grow = saplingsOnly.withKindPlan(PatchImplementation.FRUIT_TREE, KindPlan.AUTO.withGrowSaplings(true));
+		PlantingPlan with = SeedPicker.plan(grow, fruitTrees, held, BUFFERS, 99, data, null);
+		// Two of each are kept back: no spare sapling, 3 spare seeds, so 3 patches, all grown from seed.
+		assertEquals(3, with.plantedCount());
+		assertEquals(List.of("3 × Papaya sapling (from Papaya tree seed)"),
+			with.growNotes(PatchImplementation.FRUIT_TREE));
+
+		// 4 saplings and 5 seeds: 2 spare saplings are used first, then 2 of the 3 spare seeds.
+		PlantingPlan both = SeedPicker.plan(grow, fruitTrees, Map.of(5501, 4, 5288, 5), BUFFERS, 99, data, null);
+		assertEquals(4, both.plantedCount());
+		assertEquals(2, (int) both.getSaplingsToGrow().get(data.seedByItem(5288)));
+	}
+
+	@Test
 	public void theContractGetsItsPatchEvenFromTheBuffer()
 	{
 		Patch guildHerb = data.patch("farming_guild.herb");
