@@ -7,6 +7,7 @@
 package com.layneburns.farmingruns.pathing;
 
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -19,8 +20,8 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.PluginManager;
 
 /**
- * The only class that talks to the Shortest Path plugin, over its plugin messages: "path" with a target draws the
- * route there from wherever you are, "clear" removes it. A path can override Shortest Path's settings for that leg:
+ * The only class that talks to the Shortest Path plugin, over its plugin messages: "path" with targets draws the
+ * route to the nearest of them from wherever you are, "clear" removes it. A path can override Shortest Path's settings for that leg:
  * {@link #CARRIED_ONLY} keeps it to the teleport items you carry, with no bank trips. Sends only when the
  * target changes, and again after a logout or world hop, when Shortest Path may have dropped it. Nothing comes back,
  * so it can't tell whether Shortest Path is listening; {@link #isAvailable()} checks it's installed and on.
@@ -40,7 +41,7 @@ public class ShortestPathClient
 	private final PluginManager pluginManager;
 	/** What was last sent: a target, or null for "clear". Starts as "clear" so we never wipe a path you set yourself. */
 	@Nullable
-	private WorldPoint sent;
+	private Set<WorldPoint> sent;
 	private boolean sentCarriedOnly;
 	private boolean sentAnything;
 
@@ -52,20 +53,22 @@ public class ShortestPathClient
 	}
 
 	/**
-	 * Draws the path to {@code target}, unless that's already the path.
+	 * Draws the path to the nearest of {@code targets}, unless that's already the path.
 	 *
 	 * @param carriedOnly use only the teleport items you carry and no bank trips, instead of your own settings
 	 */
-	public void target(WorldPoint target, boolean carriedOnly)
+	public void target(Set<WorldPoint> targets, boolean carriedOnly)
 	{
-		if (target.equals(sent) && carriedOnly == sentCarriedOnly && sentAnything)
+		if (targets.isEmpty() || (targets.equals(sent) && carriedOnly == sentCarriedOnly && sentAnything))
 		{
 			return;
 		}
+		// One point as itself; several as a set, where Shortest Path goes to the nearest.
+		Object target = targets.size() == 1 ? targets.iterator().next() : Set.copyOf(targets);
 		eventBus.post(new PluginMessage(NAMESPACE, "path", carriedOnly
 			? Map.of("target", target, "config", CARRIED_ONLY) : Map.of("target", target)));
-		log.debug("[sp] path to {}{}", target, carriedOnly ? " (carried items only)" : "");
-		sent = target;
+		log.debug("[sp] path to {}{}", targets, carriedOnly ? " (carried items only)" : "");
+		sent = Set.copyOf(targets);
 		sentCarriedOnly = carriedOnly;
 		sentAnything = true;
 	}
@@ -88,9 +91,9 @@ public class ShortestPathClient
 		sentAnything = false;
 	}
 
-	/** The last target sent, for debug info; null when cleared. */
+	/** The last targets sent, for debug info; null when cleared. */
 	@Nullable
-	public WorldPoint lastTarget()
+	public Set<WorldPoint> lastTarget()
 	{
 		return sent;
 	}

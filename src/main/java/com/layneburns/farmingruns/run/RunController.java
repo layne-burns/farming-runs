@@ -15,6 +15,7 @@ import com.layneburns.farmingruns.pathing.ShortestPathClient;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.Player;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
@@ -243,7 +245,7 @@ public class RunController
 		RunProgress.Stop stop = run.getProgress().currentStop();
 		if (stop != null)
 		{
-			shortestPath.target(data.location(stop.getLocationId()).getTarget(), config.pathCarriedOnly());
+			shortestPath.target(targets(stop, run.getProgress()), config.pathCarriedOnly());
 			return;
 		}
 		if (shortestPath.lastTarget() != null)
@@ -252,6 +254,23 @@ public class RunController
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Farming run complete.", null);
 			log.debug("[farmrun] finished");
 		}
+	}
+
+	/**
+	 * Where to head at a stop: the patches there still to do (Shortest Path picks the nearest), so a big place like the
+	 * Farming Guild leads to the right patch. The location's own target when no patch has a tile.
+	 */
+	private Set<WorldPoint> targets(RunProgress.Stop stop, RunProgress progress)
+	{
+		Set<WorldPoint> tiles = new HashSet<>();
+		for (PlantingPlan.Assignment a : stop.getPatches())
+		{
+			if (!progress.isPatchDone(a.getPatch().getId()) && a.getPatch().getTile() != null)
+			{
+				tiles.add(a.getPatch().getTile());
+			}
+		}
+		return tiles.isEmpty() ? Set.of(data.location(stop.getLocationId()).getTarget()) : tiles;
 	}
 
 	/** Patches the gardener is to be paid to protect ({@link Protection}). */
