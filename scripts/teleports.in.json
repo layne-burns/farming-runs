@@ -37,6 +37,7 @@
 			{"id": "salvager_overlook", "name": "Salvager Overlook"}, {"id": "sunset_coast", "name": "Sunset Coast"}, {"id": "tal_teklan", "name": "Tal Teklan"}]},
 		{"id": "teleport_crystal", "name": "Teleport crystal", "group": "Items", "type": "item", "items": [{"page": "Teleport crystal"}], "destinations": [
 			{"id": "lletya", "name": "Lletya"}, {"id": "prifddinas", "name": "Prifddinas"}]},
+		{"id": "book_of_the_dead", "name": "Book of the dead", "group": "Items", "type": "item", "items": [{"page": "Book of the dead"}, {"page": "Kharedst's memoirs"}], "destinations": [{"id": "hosidius", "name": "Hosidius (Lunch by the Lancalliums)"}, {"id": "piscarilius", "name": "Piscarilius (The Fisher's Flute)"}, {"id": "shayzien", "name": "Shayzien (History and Hearsay)"}, {"id": "lovakengj", "name": "Lovakengj (Jewellery of Jubilation)"}, {"id": "arceuus", "name": "Arceuus (A Dark Disposition)"}]},
 		{"id": "stony_basalt", "name": "Stony basalt (Troll Stronghold)", "group": "Items", "type": "item", "items": [{"page": "Stony basalt"}], "usedUp": true},
 		{"id": "icy_basalt", "name": "Icy basalt (Weiss)", "group": "Items", "type": "item", "items": [{"page": "Icy basalt"}], "usedUp": true},
 		{"id": "farming_cape", "name": "Farming cape (Farming Guild)", "group": "Items", "type": "item", "items": [{"page": "Farming cape"}]},

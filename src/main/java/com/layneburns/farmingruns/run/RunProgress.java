@@ -13,9 +13,11 @@ import javax.annotation.Nullable;
 import lombok.Value;
 
 /**
- * Where a run is up to (SPEC §2.5–2.6): its stops in order, which patches are done, which stops you skipped, and the
- * current stop. When every patch at the current stop is done it moves on by itself to the next stop that isn't done
- * or skipped. Immutable: each change returns a new one. Pure: unit tested.
+ * Where a run is up to (SPEC §2.5–2.6): its stops in order, which patches are worked (planted, picked or cleared,
+ * as their varbits show), which still wait for the gardener's payment, which stops you skipped, and the current
+ * stop. A patch is done when it's worked and paid for (if it's to be paid for). When every patch at the current stop
+ * is done it moves on by itself to the next stop that isn't done or skipped. Immutable: each change returns a new
+ * one. Pure: unit tested.
  */
 @Value
 public class RunProgress
@@ -32,17 +34,30 @@ public class RunProgress
 	public static final int FINISHED = -1;
 
 	List<Stop> stops;
-	Set<String> donePatches;
+	/** Patches whose varbit shows the work done. */
+	Set<String> workedPatches;
+	/** Patches to be paid for whose payment hasn't been seen yet. */
+	Set<String> awaitingPayment;
 	Set<String> skippedStops;
 	/** Index into {@link #stops}, or {@link #FINISHED}. */
 	int current;
 
-	/** A fresh run at its first stop (moving past any stop that's already done). */
+	/** A fresh run with nothing to pay for. */
 	public static RunProgress start(List<Stop> stops)
 	{
-		RunProgress progress = new RunProgress(List.copyOf(stops), Set.of(), Set.of(), stops.isEmpty() ? FINISHED : 0);
-		return progress.currentStop() != null && progress.isDone(progress.currentStop()) ? progress.advanced()
-			: progress;
+		return start(stops, Set.of());
+	}
+
+	/**
+	 * A fresh run at its first stop (moving past any stop that's already done).
+	 *
+	 * @param payFor patch ids whose crop the gardener is to be paid to protect
+	 */
+	public static RunProgress start(List<Stop> stops, Set<String> payFor)
+	{
+		RunProgress progress = new RunProgress(List.copyOf(stops), Set.of(), Set.copyOf(payFor), Set.of(),
+			stops.isEmpty() ? FINISHED : 0);
+		return settle(progress);
 	}
 
 	@Nullable
@@ -58,7 +73,18 @@ public class RunProgress
 
 	public boolean isDone(Stop stop)
 	{
-		return stop.getPatches().stream().allMatch(a -> donePatches.contains(a.getPatch().getId()));
+		return stop.getPatches().stream().allMatch(a -> isPatchDone(a.getPatch().getId()));
+	}
+
+	/** Worked, and paid for if it's to be paid for. */
+	public boolean isPatchDone(String patchId)
+	{
+		return workedPatches.contains(patchId) && !awaitingPayment.contains(patchId);
+	}
+
+	public boolean isAwaitingPayment(String patchId)
+	{
+		return awaitingPayment.contains(patchId);
 	}
 
 	public boolean isSkipped(Stop stop)
@@ -72,18 +98,28 @@ public class RunProgress
 		return stops.stream().filter(this::isDone).count();
 	}
 
-	/** A patch is finished; moves on if that finishes the current stop. */
-	public RunProgress markDone(String patchId)
+	/** A patch's varbit shows the work done; moves on if that finishes the current stop. */
+	public RunProgress markWorked(String patchId)
 	{
-		if (donePatches.contains(patchId))
+		if (workedPatches.contains(patchId))
 		{
 			return this;
 		}
-		Set<String> done = new HashSet<>(donePatches);
-		done.add(patchId);
-		RunProgress next = new RunProgress(stops, Set.copyOf(done), skippedStops, current);
-		Stop at = next.currentStop();
-		return at != null && next.isDone(at) ? next.advanced() : next;
+		Set<String> worked = new HashSet<>(workedPatches);
+		worked.add(patchId);
+		return settle(new RunProgress(stops, Set.copyOf(worked), awaitingPayment, skippedStops, current));
+	}
+
+	/** A patch's payment has been seen; moves on if that finishes the current stop. */
+	public RunProgress markPaid(String patchId)
+	{
+		if (!awaitingPayment.contains(patchId))
+		{
+			return this;
+		}
+		Set<String> awaiting = new HashSet<>(awaitingPayment);
+		awaiting.remove(patchId);
+		return settle(new RunProgress(stops, workedPatches, Set.copyOf(awaiting), skippedStops, current));
 	}
 
 	/** Leaves a stop out; moves on if it was the current one. */
@@ -91,7 +127,7 @@ public class RunProgress
 	{
 		Set<String> skipped = new HashSet<>(skippedStops);
 		skipped.add(locationId);
-		RunProgress next = new RunProgress(stops, donePatches, Set.copyOf(skipped), current);
+		RunProgress next = new RunProgress(stops, workedPatches, awaitingPayment, Set.copyOf(skipped), current);
 		Stop at = currentStop();
 		return at != null && at.getLocationId().equals(locationId) ? next.advanced() : next;
 	}
@@ -105,10 +141,17 @@ public class RunProgress
 			{
 				Set<String> skipped = new HashSet<>(skippedStops);
 				skipped.remove(locationId);
-				return new RunProgress(stops, donePatches, Set.copyOf(skipped), i);
+				return new RunProgress(stops, workedPatches, awaitingPayment, Set.copyOf(skipped), i);
 			}
 		}
 		return this;
+	}
+
+	/** Moves on when the current stop has just been finished. */
+	private static RunProgress settle(RunProgress next)
+	{
+		Stop at = next.currentStop();
+		return at != null && next.isDone(at) ? next.advanced() : next;
 	}
 
 	/** The next stop after the current one that's neither done nor skipped, looking from the top again if needed. */
@@ -121,9 +164,9 @@ public class RunProgress
 			Stop stop = stops.get(i);
 			if (!isDone(stop) && !isSkipped(stop))
 			{
-				return new RunProgress(stops, donePatches, skippedStops, i);
+				return new RunProgress(stops, workedPatches, awaitingPayment, skippedStops, i);
 			}
 		}
-		return new RunProgress(stops, donePatches, skippedStops, FINISHED);
+		return new RunProgress(stops, workedPatches, awaitingPayment, skippedStops, FINISHED);
 	}
 }

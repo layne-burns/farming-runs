@@ -19,6 +19,7 @@ import com.layneburns.farmingruns.run.BountyAmulet;
 import com.layneburns.farmingruns.run.CompostChoice;
 import com.layneburns.farmingruns.run.KindPlan;
 import com.layneburns.farmingruns.run.PlantingPlan;
+import com.layneburns.farmingruns.run.Protection;
 import com.layneburns.farmingruns.run.RunSetup;
 import com.layneburns.farmingruns.run.TreeRoutine;
 import com.layneburns.farmingruns.state.ItemLedger;
@@ -77,7 +78,7 @@ public final class RequirementsBuilder
 
 		addSeeds(list, assignments, plan.getSaplingsToGrow());
 		addCompost(list, notes, setup.getCompost(), (int) plan.plantedCount(), items, facts);
-		addPayments(list, setup, assignments);
+		addPayments(list, setup, assignments, data, facts);
 		addTreeClearing(list, setup, assignments, data, items, treeGrown);
 
 		list.add("Spade", items.group("spade"), 1, Importance.NEED, true, "harvesting and clearing", false);
@@ -160,14 +161,14 @@ public final class RequirementsBuilder
 		}
 	}
 
-	/** The gardener's payment for each protectable crop, where the kind's plan pays and the patch has a gardener. */
-	private static void addPayments(RequirementList list, RunSetup setup, List<PlantingPlan.Assignment> assignments)
+	/** The gardener's payment for each patch that's to be paid for ({@link Protection}). */
+	private static void addPayments(RequirementList list, RunSetup setup, List<PlantingPlan.Assignment> assignments,
+		GameData data, PlayerFacts facts)
 	{
 		for (PlantingPlan.Assignment a : assignments)
 		{
 			Seed seed = a.getSeed();
-			if (seed == null || !seed.canBeProtected() || !a.getPatch().hasGardener()
-				|| !setup.kindPlan(a.getPatch().getKind()).isPay())
+			if (!Protection.shouldPay(a, setup, data, facts))
 			{
 				continue;
 			}

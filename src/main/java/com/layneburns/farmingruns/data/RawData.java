@@ -64,6 +64,8 @@ final class RawData
 	{
 		List<String> teleports;
 		String unlock;
+		/** A rule that, once met, makes the location's patches disease-free (no payment needed). */
+		String diseaseFree;
 		String note;
 		Map<String, String> patchUnlocks;
 	}

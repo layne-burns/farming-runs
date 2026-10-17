@@ -81,6 +81,10 @@ public final class DataLoader
 			{
 				requireKey(rules, set.unlock, "location_settings.json " + raw.id + ": unlock");
 			}
+			if (set.diseaseFree != null)
+			{
+				requireKey(rules, set.diseaseFree, "location_settings.json " + raw.id + ": diseaseFree");
+			}
 			Map<String, String> patchUnlocks = set.patchUnlocks == null ? Map.of() : set.patchUnlocks;
 
 			List<Patch> patches = new ArrayList<>();
@@ -110,7 +114,7 @@ public final class DataLoader
 			}
 			locations.put(raw.id, new Location(raw.id, raw.name, raw.regionId, List.copyOf(raw.extraRegionIds),
 				point(raw.target), List.copyOf(patches), List.copyOf(set.teleports), set.unlock, set.note,
-				List.copyOf(raw.wikiTeleports)));
+				set.diseaseFree, List.copyOf(raw.wikiTeleports)));
 		}
 		for (String id : settings.keySet())
 		{

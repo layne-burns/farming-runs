@@ -16,6 +16,8 @@ import com.layneburns.farmingruns.vendor.timetracking.CropState;
 import com.layneburns.farmingruns.vendor.timetracking.PatchState;
 import com.layneburns.farmingruns.vendor.timetracking.Produce;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -49,11 +51,11 @@ public class RunProgressTest
 	@Test
 	public void movesOnWhenEveryPatchAtTheStopIsDone()
 	{
-		RunProgress progress = run().markDone("catherby.herb");
+		RunProgress progress = run().markWorked("catherby.herb");
 		assertEquals("catherby", progress.currentStop().getLocationId());
-		progress = progress.markDone("catherby.allotment_north");
+		progress = progress.markWorked("catherby.allotment_north");
 		assertEquals("falador", progress.currentStop().getLocationId());
-		progress = progress.markDone("falador.herb").markDone("ardougne.herb");
+		progress = progress.markWorked("falador.herb").markWorked("ardougne.herb");
 		assertTrue(progress.isFinished());
 		assertEquals(3, progress.doneCount());
 	}
@@ -63,15 +65,46 @@ public class RunProgressTest
 	{
 		RunProgress progress = run().skip("catherby");
 		assertEquals("falador", progress.currentStop().getLocationId());
-		progress = progress.goTo("ardougne").markDone("ardougne.herb");
+		progress = progress.goTo("ardougne").markWorked("ardougne.herb");
 		// After Ardougne, back round to the first stop that isn't done or skipped: Falador.
 		assertEquals("falador", progress.currentStop().getLocationId());
-		progress = progress.markDone("falador.herb");
+		progress = progress.markWorked("falador.herb");
 		assertTrue(progress.isFinished());
 		// A skipped stop can still be picked again.
 		progress = progress.goTo("catherby");
 		assertEquals("catherby", progress.currentStop().getLocationId());
 		assertFalse(progress.isSkipped(progress.currentStop()));
+	}
+
+	@Test
+	public void aPaidPatchWaitsForItsPayment()
+	{
+		RunProgress progress = RunProgress.start(List.of(stop("catherby", "catherby.allotment_north"),
+			stop("falador", "falador.herb")), Set.of("catherby.allotment_north"));
+		progress = progress.markWorked("catherby.allotment_north");
+		assertEquals("catherby", progress.currentStop().getLocationId());
+		assertTrue(progress.isAwaitingPayment("catherby.allotment_north"));
+		progress = progress.markPaid("catherby.allotment_north");
+		assertEquals("falador", progress.currentStop().getLocationId());
+	}
+
+	@Test
+	public void paymentsAreMatchedFromWhatLeftTheInventory()
+	{
+		// Two watermelon allotments, each paid with 10 curry leaves; 25 left the inventory, so both are paid.
+		PlantingPlan.Assignment north = new PlantingPlan.Assignment(data.patch("catherby.allotment_north"),
+			data.seedByItem(5321), false);
+		PlantingPlan.Assignment south = new PlantingPlan.Assignment(data.patch("catherby.allotment_south"),
+			data.seedByItem(5321), false);
+		int melon = data.seedByItem(5321).getPayment().get(0).getItemId();
+		int each = data.seedByItem(5321).getPayment().get(0).getAmount();
+		Map<Integer, Integer> spent = PaymentMatcher.spent(Map.of(melon, 2 * each + 5, 995, 100),
+			Map.of(melon, 5, 995, 100));
+		assertEquals(List.of("catherby.allotment_north", "catherby.allotment_south"),
+			PaymentMatcher.paid(spent, List.of(north, south)));
+		// Only one payment's worth: only the first.
+		assertEquals(List.of("catherby.allotment_north"),
+			PaymentMatcher.paid(Map.of(melon, each), List.of(north, south)));
 	}
 
 	@Test

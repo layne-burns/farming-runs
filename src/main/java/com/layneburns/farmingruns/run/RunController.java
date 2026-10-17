@@ -6,15 +6,20 @@
  */
 package com.layneburns.farmingruns.run;
 
+import com.layneburns.farmingruns.FarmingRunsConfig;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.Location;
 import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.data.TeleportChoice;
 import com.layneburns.farmingruns.pathing.ShortestPathClient;
+import com.layneburns.farmingruns.state.PlayerInfo;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -22,17 +27,23 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
 import net.runelite.api.Player;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.gameval.InventoryID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.game.ItemManager;
 
 /**
  * Runs a farming run (SPEC §2.5–2.6): orders the stops from where you are ({@link RoutePlanner}), points Shortest
- * Path at the current stop, and ticks patches off as their varbits show them done ({@link PatchProgress}), moving on
- * when a stop is finished. Farming varbits are shared between regions, so a patch is only read while you're in its
+ * Path at the current stop, and ticks patches off as their varbits show them done ({@link PatchProgress}) and, where
+ * the gardener is to be paid, as the payment leaves your inventory ({@link PaymentMatcher}), moving on when a stop is
+ * finished. Farming varbits are shared between regions, so a patch is only read while you're in its
  * region. The thinking is in the pure classes; this is the glue. Client thread, except where noted.
  */
 @Slf4j
@@ -44,18 +55,27 @@ public class RunController
 	private final GameData data;
 	private final RunSession session;
 	private final ShortestPathClient shortestPath;
+	private final ItemManager itemManager;
+	private final FarmingRunsConfig config;
+	private final PlayerInfo player;
 	/** The region you were in last tick, to notice arriving somewhere. */
 	private int lastRegion = -1;
+	/** Your inventory last time it changed (noted items as unnoted), to see what a payment took. */
+	private Map<Integer, Integer> lastInventory = Map.of();
 
 	@Inject
 	RunController(Client client, ClientThread clientThread, GameData data, RunSession session,
-		ShortestPathClient shortestPath)
+		ShortestPathClient shortestPath, ItemManager itemManager, FarmingRunsConfig config,
+		PlayerInfo player)
 	{
 		this.client = client;
 		this.clientThread = clientThread;
 		this.data = data;
 		this.session = session;
 		this.shortestPath = shortestPath;
+		this.itemManager = itemManager;
+		this.config = config;
+		this.player = player;
 	}
 
 	/** Starts a run of this plan. Any thread. */
@@ -72,7 +92,8 @@ public class RunController
 			order.forEach(id -> stops.add(new RunProgress.Stop(id, List.copyOf(byLocation.get(id)))));
 			log.debug("[farmrun] route from {}: {}", here, order);
 			session.start(new RunSession.ActiveRun(setup, plan, teleports, System.currentTimeMillis(),
-				RunProgress.start(stops)));
+				RunProgress.start(stops, payFor(setup, plan))));
+			lastInventory = inventory();
 			checkPatchesHere();
 			point();
 		});
@@ -130,6 +151,33 @@ public class RunController
 	}
 
 	@Subscribe
+	public void onItemContainerChanged(ItemContainerChanged event)
+	{
+		if (event.getContainerId() != InventoryID.INV)
+		{
+			return;
+		}
+		Map<Integer, Integer> now = inventory();
+		Map<Integer, Integer> spent = PaymentMatcher.spent(lastInventory, now);
+		lastInventory = now;
+		RunSession.ActiveRun run = session.active();
+		if (run == null || spent.isEmpty())
+		{
+			return;
+		}
+		List<PlantingPlan.Assignment> awaiting = new ArrayList<>();
+		run.getProgress().getStops().forEach(stop -> stop.getPatches().stream()
+			.filter(a -> run.getProgress().isAwaitingPayment(a.getPatch().getId()) && isHere(a.getPatch()))
+			.forEach(awaiting::add));
+		for (String patchId : PaymentMatcher.paid(spent, awaiting))
+		{
+			log.debug("[farmrun] paid for {}", patchId);
+			session.update(p -> p.markPaid(patchId));
+		}
+		point();
+	}
+
+	@Subscribe
 	public void onGameStateChanged(GameStateChanged event)
 	{
 		if (event.getGameState() == GameState.LOGGED_IN && session.active() != null)
@@ -180,7 +228,7 @@ public class RunController
 		int value = client.getVarbitValue(patch.getVarbitId());
 		if (PatchProgress.isDone(a, patch.getKind().forVarbitValue(value)))
 		{
-			session.update(p -> p.markDone(patch.getId()));
+			session.update(p -> p.markWorked(patch.getId()));
 		}
 	}
 
@@ -195,7 +243,7 @@ public class RunController
 		RunProgress.Stop stop = run.getProgress().currentStop();
 		if (stop != null)
 		{
-			shortestPath.target(data.location(stop.getLocationId()).getTarget());
+			shortestPath.target(data.location(stop.getLocationId()).getTarget(), config.pathCarriedOnly());
 			return;
 		}
 		if (shortestPath.lastTarget() != null)
@@ -204,6 +252,33 @@ public class RunController
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Farming run complete.", null);
 			log.debug("[farmrun] finished");
 		}
+	}
+
+	/** Patches the gardener is to be paid to protect ({@link Protection}). */
+	private Set<String> payFor(RunSetup setup, PlantingPlan plan)
+	{
+		return plan.getAssignments().stream()
+			.filter(a -> Protection.shouldPay(a, setup, data, player.getFacts()))
+			.map(a -> a.getPatch().getId())
+			.collect(Collectors.toSet());
+	}
+
+	/** Your inventory now, item id to count, noted items counted as unnoted. */
+	private Map<Integer, Integer> inventory()
+	{
+		Map<Integer, Integer> counts = new HashMap<>();
+		ItemContainer container = client.getItemContainer(InventoryID.INV);
+		if (container != null)
+		{
+			for (Item item : container.getItems())
+			{
+				if (item.getId() > 0 && item.getQuantity() > 0)
+				{
+					counts.merge(itemManager.canonicalize(item.getId()), item.getQuantity(), Integer::sum);
+				}
+			}
+		}
+		return counts;
 	}
 
 	/** True when you're in the patch's region (or one its location also covers). */

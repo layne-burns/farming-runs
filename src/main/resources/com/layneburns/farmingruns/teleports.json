@@ -435,6 +435,39 @@
 			]
 		},
 		{
+			"id": "book_of_the_dead",
+			"name": "Book of the dead",
+			"group": "Items",
+			"type": "item",
+			"itemIds": [
+				21760,
+				25818
+			],
+			"usedUp": false,
+			"destinations": [
+				{
+					"id": "hosidius",
+					"name": "Hosidius (Lunch by the Lancalliums)"
+				},
+				{
+					"id": "piscarilius",
+					"name": "Piscarilius (The Fisher's Flute)"
+				},
+				{
+					"id": "shayzien",
+					"name": "Shayzien (History and Hearsay)"
+				},
+				{
+					"id": "lovakengj",
+					"name": "Lovakengj (Jewellery of Jubilation)"
+				},
+				{
+					"id": "arceuus",
+					"name": "Arceuus (A Dark Disposition)"
+				}
+			]
+		},
+		{
 			"id": "stony_basalt",
 			"name": "Stony basalt (Troll Stronghold)",
 			"group": "Items",

@@ -44,7 +44,7 @@ public interface FarmingRunsConfig extends Config
 	@ConfigItem(
 		keyName = "saplingBuffer",
 		name = "Saplings",
-		description = "Saplings of each tree type to keep back",
+		description = "Saplings of each tree type to keep back (and tree seeds, when a tree card grows saplings from seed)",
 		position = 2,
 		section = buffers
 	)
@@ -65,6 +65,18 @@ public interface FarmingRunsConfig extends Config
 	default int otherBuffer()
 	{
 		return 3;
+	}
+
+	@ConfigItem(
+		keyName = "pathCarriedOnly",
+		name = "Paths use only what you carry",
+		description = "Shortest Path's route to each stop uses only the teleport items you carry and no trips to the"
+			+ " bank, so it matches the inventory check. Off: your own Shortest Path settings.",
+		position = 10
+	)
+	default boolean pathCarriedOnly()
+	{
+		return true;
 	}
 
 	@ConfigItem(

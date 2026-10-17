@@ -7,6 +7,7 @@
 package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.data.ItemAmount;
+import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.data.Seed;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.state.ItemLedger;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * The tooltip on a kind card's "Pay the gardener" box: for each crop being planted, what the gardener wants per
@@ -26,17 +28,23 @@ final class PaymentTooltip
 	{
 	}
 
-	static String build(List<PlantingPlan.Assignment> planned, ItemLedger ledger)
+	/** @param diseaseFree whether a patch can't catch disease for you (no payment needed) */
+	static String build(List<PlantingPlan.Assignment> planned, ItemLedger ledger, Predicate<Patch> diseaseFree)
 	{
 		Map<Seed, Integer> patches = new LinkedHashMap<>();
 		int noGardener = 0;
+		int free = 0;
 		for (PlantingPlan.Assignment a : planned)
 		{
 			if (a.getSeed() == null || !a.getSeed().canBeProtected())
 			{
 				continue;
 			}
-			if (a.getPatch().hasGardener())
+			if (diseaseFree.test(a.getPatch()))
+			{
+				free++;
+			}
+			else if (a.getPatch().hasGardener())
 			{
 				patches.merge(a.getSeed(), 1, Integer::sum);
 			}
@@ -64,6 +72,11 @@ final class PaymentTooltip
 					.append("you have ").append(have).append("</font>").append(where(ledger, pay.getItemId()));
 			}
 		});
+		if (free > 0)
+		{
+			html.append("<br>").append(free).append(free == 1 ? " patch is" : " patches are")
+				.append(" disease-free for you, so no payment is needed.");
+		}
 		if (noGardener > 0)
 		{
 			html.append("<br>").append(noGardener).append(noGardener == 1 ? " patch has" : " patches have")

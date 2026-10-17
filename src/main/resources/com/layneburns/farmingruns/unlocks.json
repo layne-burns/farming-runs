@@ -6,6 +6,7 @@
 		"making_friends_with_my_arm": {"name": "Making Friends with My Arm", "all": [{"quest": "MAKING_FRIENDS_WITH_MY_ARM"}]},
 		"great_brain_robbery": {"name": "The Great Brain Robbery (started)", "all": [{"quest": "THE_GREAT_BRAIN_ROBBERY", "started": true}]},
 		"morytania_elite": {"name": "Elite Morytania diary", "all": [{"varbit": "MORYTANIA_DIARY_ELITE_COMPLETE"}]},
+		"kourend_easy": {"name": "Easy Kourend & Kebos diary", "all": [{"varbit": "KOUREND_DIARY_EASY_COMPLETE"}]},
 		"song_of_the_elves": {"name": "Song of the Elves", "all": [{"quest": "SONG_OF_THE_ELVES"}]},
 		"bone_voyage": {"name": "Bone Voyage", "all": [{"quest": "BONE_VOYAGE"}]},
 		"mournings_end_started": {"name": "Mourning's End Part I (started)", "all": [{"quest": "MOURNINGS_END_PART_I", "started": true}]},

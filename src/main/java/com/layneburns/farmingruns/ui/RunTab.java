@@ -18,6 +18,7 @@ import com.layneburns.farmingruns.run.GoalSetups;
 import com.layneburns.farmingruns.run.KindPlan;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.PresetCombiner;
+import com.layneburns.farmingruns.run.Protection;
 import com.layneburns.farmingruns.run.RunPlanService;
 import com.layneburns.farmingruns.pathing.ShortestPathClient;
 import com.layneburns.farmingruns.run.RunController;
@@ -163,7 +164,8 @@ public class RunTab extends TabPanel
 			boolean canPay = seeds.stream().anyMatch(Seed::canBeProtected);
 			boolean isTree = seeds.stream().anyMatch(Seed::isPlantedAsSapling);
 			content.add(new KindCard(BankViewBuilder.kindName(kind), setup.kindPlan(kind), seeds, planned,
-				planned.size(), canPay ? PaymentTooltip.build(planned, items.ledger()) : null, isTree,
+				planned.size(), canPay ? PaymentTooltip.build(planned, items.ledger(),
+					p -> Protection.isDiseaseFree(p, data, player.getFacts())) : null, isTree,
 				TreeRoutine.hasHarvest(kind), kindNotes(setup, plan, kind, planned),
 				kind == PatchImplementation.ALLOTMENT ? BountyAmulet.wanted(setup.kindPlan(kind), planned, data) : null,
 				collapsed, kp -> update(s -> s.withKindPlan(kind, kp))));

@@ -31,6 +31,9 @@ public class Location
 	String unlockRuleId;
 	@Nullable
 	String note;
+	/** Once this rule is met the patches here can't catch disease, so paying the gardener is pointless; null if never. */
+	@Nullable
+	String diseaseFreeRuleId;
 	/** The wiki's suggested teleports, best first, shown as hints in the panel. */
 	List<String> wikiTeleports;
 }

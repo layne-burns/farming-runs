@@ -57,7 +57,7 @@ final class StopList
 		boolean done = progress.isDone(stop);
 		boolean skipped = !done && progress.isSkipped(stop);
 		long patchesDone = stop.getPatches().stream()
-			.filter(a -> progress.getDonePatches().contains(a.getPatch().getId())).count();
+			.filter(a -> progress.isPatchDone(a.getPatch().getId())).count();
 
 		String mark = done ? "✓" : current ? "▶" : skipped ? "–" : String.valueOf(number);
 		JLabel name = new JLabel(mark + "  " + data.location(stop.getLocationId()).getName());
@@ -117,13 +117,18 @@ final class StopList
 		StringBuilder html = new StringBuilder("<html>");
 		for (PlantingPlan.Assignment a : stop.getPatches())
 		{
-			boolean patchDone = progress.getDonePatches().contains(a.getPatch().getId());
+			String id = a.getPatch().getId();
+			boolean patchDone = progress.isPatchDone(id);
+			boolean unpaid = progress.getWorkedPatches().contains(id) && progress.isAwaitingPayment(id);
 			String kind = a.getPatch().getKind().name().toLowerCase().replace('_', ' ');
 			String what = a.isKeptStanding() ? "pick, leave standing"
 				: a.getSeed() == null ? "harvest" : "plant " + a.getSeed().getName();
 			html.append(patchDone ? "✓ " : "• ").append(kind)
 				.append(a.getPatch().getName().isEmpty() ? "" : " (" + a.getPatch().getName() + ")")
-				.append(": ").append(what).append("<br>");
+				.append(": ").append(what)
+				.append(unpaid ? " — <font color='" + Palette.hex(Palette.PARTIAL) + "'>pay the gardener</font>"
+					: progress.isAwaitingPayment(id) ? ", then pay the gardener" : "")
+				.append("<br>");
 		}
 		return html.append("</html>").toString();
 	}

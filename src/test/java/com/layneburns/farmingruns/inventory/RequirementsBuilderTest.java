@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import net.runelite.api.gameval.VarbitID;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -160,6 +161,20 @@ public class RequirementsBuilderTest
 			p -> true, false);
 		assertNotNull(find(withCape, cape));
 		assertNull(find(withCape, tablet));
+	}
+
+	@Test
+	public void hosidiusNeedsNoPaymentAfterTheEasyKourendDiary()
+	{
+		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.ALLOTMENT))
+			.withKindPlan(PatchImplementation.ALLOTMENT, KindPlan.AUTO.withPay(true));
+		Seed watermelon = data.seedByItem(5321);
+		int payment = watermelon.getPayment().get(0).getItemId();
+		PlantingPlan hosidius = plan(watermelon, "hosidius.allotment_north_east");
+		assertNotNull(find(build(setup, hosidius), payment));
+		PlayerFacts diary = new PlayerFacts(true, Map.of(), Map.of(VarbitID.KOUREND_DIARY_EASY_COMPLETE, 1), Map.of(), 0);
+		assertNull(find(RequirementsBuilder.build(setup, hosidius, defaults, data, diary, ItemLedger.EMPTY, p -> true,
+			false), payment));
 	}
 
 	@Test
