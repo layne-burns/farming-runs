@@ -20,6 +20,7 @@ import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.RunePouchWatcher;
 import com.layneburns.farmingruns.state.SetupStore;
 import com.layneburns.farmingruns.run.RunController;
+import com.layneburns.farmingruns.run.TeleportWatcher;
 import com.layneburns.farmingruns.ui.BankHighlightOverlay;
 import com.layneburns.farmingruns.ui.BankRunTab;
 import com.layneburns.farmingruns.ui.BankSearchButton;
@@ -116,6 +117,9 @@ public class FarmingRunsPlugin extends Plugin
 	@Inject
 	private RunController runController;
 
+	@Inject
+	private TeleportWatcher teleportWatcher;
+
 	private NavigationButton navigationButton;
 
 	@Override
@@ -143,6 +147,7 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(bankRunTab);
 		eventBus.register(bankSearchButton);
 		eventBus.register(runController);
+		eventBus.register(teleportWatcher);
 		bankRunTab.register();
 		itemStore.loadRemembered();
 		locationPrefs.load();
@@ -166,6 +171,7 @@ public class FarmingRunsPlugin extends Plugin
 	protected void shutDown()
 	{
 		runController.stop();
+		eventBus.unregister(teleportWatcher);
 		eventBus.unregister(runController);
 		bankSearchButton.hide();
 		eventBus.unregister(bankSearchButton);
