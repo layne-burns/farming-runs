@@ -7,10 +7,7 @@
 package com.layneburns.farmingruns.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.function.BiFunction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -28,7 +25,7 @@ import net.runelite.client.ui.components.IconTextField;
 class BankToolbar extends JPanel
 {
 	private final IconTextField search = new IconTextField();
-	private final JButton filtersButton = new JButton();
+	private final JButton filtersButton = TabPanel.button("Filters", "Filter the seed list (they combine)");
 	private final Runnable onChange;
 	private BankFilters filters = BankFilters.NONE;
 
@@ -74,25 +71,6 @@ class BankToolbar extends JPanel
 			"Only seeds whose spare (after the buffer) fills at least one patch. Green: every patch; yellow: some.",
 			BankFilters::withEnoughForRun));
 		menu.add(filterItem("Can plant", "Only seeds at or below your Farming level.", BankFilters::withCanPlant));
-		filtersButton.setFocusable(false);
-		filtersButton.setBackground(Palette.SURFACE);
-		filtersButton.setForeground(Color.WHITE);
-		filtersButton.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
-		filtersButton.addMouseListener(new MouseAdapter()
-		{
-			@Override
-			public void mouseEntered(MouseEvent e)
-			{
-				filtersButton.setBackground(Palette.SURFACE_HOVER);
-			}
-
-			@Override
-			public void mouseExited(MouseEvent e)
-			{
-				filtersButton.setBackground(Palette.SURFACE);
-			}
-		});
-		filtersButton.setToolTipText("Filter the seed list (they combine)");
 		filtersButton.addActionListener(e -> menu.show(filtersButton, 0, filtersButton.getHeight()));
 		updateButtonText();
 

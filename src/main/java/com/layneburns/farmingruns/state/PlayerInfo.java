@@ -6,21 +6,37 @@
  */
 package com.layneburns.farmingruns.state;
 
+import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.data.UnlockCondition;
+import com.layneburns.farmingruns.data.UnlockRule;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.Quest;
+import net.runelite.api.QuestState;
 import net.runelite.api.Skill;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.events.StatChanged;
+import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.eventbus.Subscribe;
 
 /**
- * Facts about the player that the panel needs. For now just the real (unboosted) Farming level; phase 3 adds
- * quests, diaries and spellbook for the unlock rules.
+ * Reads what the unlock rules need about the player (quests, diary varbits, skill levels, spellbook) into a
+ * {@link PlayerFacts}. Read once on the first game tick after login, again when a skill levels up, and on request
+ * (the Locations tab's Refresh). Quest states come from a game script, so reading is done on the client thread.
  */
+@Slf4j
 @Singleton
 public class PlayerInfo
 {
@@ -28,18 +44,48 @@ public class PlayerInfo
 	public static final int UNKNOWN = -1;
 
 	private final Client client;
+	private final Set<Quest> quests = new HashSet<>();
+	private final Set<Integer> varbits = new HashSet<>();
+	private final Set<Skill> skills = new HashSet<>();
 	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
-	private volatile int farmingLevel = UNKNOWN;
+	private volatile PlayerFacts facts = PlayerFacts.UNKNOWN;
+	/** Set at login; the facts are read on the next tick, once the game has sent them. */
+	private boolean readOnNextTick;
 
 	@Inject
-	PlayerInfo(Client client)
+	PlayerInfo(Client client, GameData data)
 	{
 		this.client = client;
+		// Only what some rule asks about is read, plus Farming for the seed filters.
+		skills.add(Skill.FARMING);
+		for (UnlockRule rule : data.rules())
+		{
+			for (UnlockCondition condition : rule.getConditions())
+			{
+				if (condition.getQuest() != null)
+				{
+					quests.add(condition.getQuest());
+				}
+				if (condition.getSkill() != null)
+				{
+					skills.add(condition.getSkill());
+				}
+				if (condition.getVarbitId() != UnlockCondition.NO_VARBIT)
+				{
+					varbits.add(condition.getVarbitId());
+				}
+			}
+		}
+	}
+
+	public PlayerFacts getFacts()
+	{
+		return facts;
 	}
 
 	public int getFarmingLevel()
 	{
-		return farmingLevel;
+		return facts.isKnown() ? facts.level(Skill.FARMING) : UNKNOWN;
 	}
 
 	public void addListener(Runnable listener)
@@ -48,37 +94,81 @@ public class PlayerInfo
 	}
 
 	@Subscribe
-	public void onStatChanged(StatChanged event)
+	public void onGameStateChanged(GameStateChanged event)
 	{
-		if (event.getSkill() == Skill.FARMING)
+		if (event.getGameState() == GameState.LOGGED_IN)
 		{
-			setFarmingLevel(event.getLevel());
+			readOnNextTick = true;
+		}
+		else if (event.getGameState() == GameState.LOGIN_SCREEN)
+		{
+			setFacts(PlayerFacts.UNKNOWN);
 		}
 	}
 
 	@Subscribe
-	public void onGameStateChanged(GameStateChanged event)
+	public void onGameTick(GameTick event)
 	{
-		if (event.getGameState() == GameState.LOGIN_SCREEN)
+		if (readOnNextTick)
 		{
-			setFarmingLevel(UNKNOWN);
+			readOnNextTick = false;
+			refresh();
 		}
 	}
 
-	/** Reads the level now (for when the plugin starts while logged in). Client thread. */
+	@Subscribe
+	public void onVarbitChanged(VarbitChanged event)
+	{
+		// Switching spellbook, or finishing a diary tier mid-session.
+		if (facts.isKnown() && (event.getVarbitId() == VarbitID.SPELLBOOK || varbits.contains(event.getVarbitId())))
+		{
+			refresh();
+		}
+	}
+
+	@Subscribe
+	public void onStatChanged(StatChanged event)
+	{
+		if (facts.isKnown() && skills.contains(event.getSkill()) && event.getLevel() != facts.level(event.getSkill()))
+		{
+			refresh();
+		}
+	}
+
+	/** Reads everything now. Client thread only; does nothing when not logged in. */
 	public void refresh()
 	{
-		if (client.getGameState() == GameState.LOGGED_IN)
+		if (client.getGameState() != GameState.LOGGED_IN)
 		{
-			setFarmingLevel(client.getRealSkillLevel(Skill.FARMING));
+			return;
 		}
+		Map<Quest, QuestState> questStates = new EnumMap<>(Quest.class);
+		for (Quest quest : quests)
+		{
+			questStates.put(quest, quest.getState(client));
+		}
+		Map<Integer, Integer> varbitValues = new HashMap<>();
+		for (int varbit : varbits)
+		{
+			varbitValues.put(varbit, client.getVarbitValue(varbit));
+		}
+		Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		for (Skill skill : skills)
+		{
+			levels.put(skill, client.getRealSkillLevel(skill));
+		}
+		PlayerFacts read = new PlayerFacts(true, Map.copyOf(questStates), Map.copyOf(varbitValues), Map.copyOf(levels),
+			client.getVarbitValue(VarbitID.SPELLBOOK));
+		log.debug("[unlock] read {} quests, {} varbits, Farming {}, spellbook {}", questStates.size(),
+			varbitValues.size(), read.level(Skill.FARMING), read.spellbookName());
+		setFacts(read);
 	}
 
-	private void setFarmingLevel(int level)
+	private void setFacts(PlayerFacts read)
 	{
-		if (level != farmingLevel)
+		if (!read.equals(facts))
 		{
-			farmingLevel = level;
+			facts = read;
 			listeners.forEach(Runnable::run);
 		}
 	}

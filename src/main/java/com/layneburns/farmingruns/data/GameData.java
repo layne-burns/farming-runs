@@ -125,6 +125,11 @@ public final class GameData
 		return require(teleports, id, "teleport");
 	}
 
+	public Collection<UnlockRule> rules()
+	{
+		return rules.values();
+	}
+
 	public UnlockRule rule(String id)
 	{
 		return require(rules, id, "unlock rule");

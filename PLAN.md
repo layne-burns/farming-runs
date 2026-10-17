@@ -46,7 +46,10 @@ data/                    (pure) loads resources/*.json into immutable records, c
 
 state/                   the only package that reads the client (varbits, containers, config)
   PlayerInfo             levels, spellbook, diary tiers, quests → simple snapshot object
-  UnlockService          evaluates UnlockRule per location + manual overrides (profile config)
+  UnlockEvaluator        (pure) which conditions of a rule you don't meet yet
+  LocationStatus         (pure) unlocked / locked / unknown, the reasons, and your override
+  LocationPrefs          your unlock overrides and teleport choice per location, saved to the RS profile
+  UnlockService          status per location and patch; usable patches per kind (the Bank's "full run")
   ItemSource             (pure) bank, seed vault, seed box (remembered), inventory, worn, leprechaun (live)
   StorageSnapshot        (pure) tracked item counts in one place + when they were seen
   ItemLedger             (pure, immutable) counts across all sources
@@ -55,7 +58,8 @@ state/                   the only package that reads the client (varbits, contai
   LeprechaunDecoder      (pure) FARMING_TOOLS_* varbits → counts, using the game's own client-script arithmetic
   LeprechaunWatcher      re-decodes when those varbits change
   BufferSettings         (pure) seeds kept back per type: allotment / sapling / other
-  PlayerInfo             real Farming level (phase 3 adds quests, diaries, spellbook)
+  PlayerFacts            (pure, immutable) quests, diary varbits, levels, spellbook, read in one go
+  PlayerInfo             reads PlayerFacts on the first tick after login, on level-ups, spellbook/diary changes, Recheck
   PatchStates            reads Time Tracking's config + vendored decode → PatchStatus (ready / ready in / dead…)
   ReadyPredictor         (pure) next-ready-time maths, adapted from Time Tracking's prediction
   ContractService        current contract → seed + Farming Guild patch, if not yet planted
@@ -93,7 +97,10 @@ ui/
   DarkScrollBarUI        RuneLite's scroll bar with a dark grey handle
   SectionPanel, ItemRow, TabPanel, FitWidthPanel   shared look: collapsible sections with kind sub-headings,
                          two-line icon rows, dark background, lists that never scroll sideways
-  LocationsTab           unlock state + reason, override box, teleport dropdown, patch ready times
+  LocationsTab           search + Recheck; Locked / Unlocked sections of LocationRows
+  LocationsView, LocationsViewBuilder  (pure) per location: status text, patch kinds, teleport choices + spellbook
+                         warning, per-patch status, note, wiki hints
+  LocationRow            a location: click to open teleport choice, unlock override, patches
   NotReadyDialog, StartAnywayDialog
   PatchOutlineOverlay    outlines to-do patches at the current stop (match by varbit)
   OverheadReminder       pay / compost / tree-step text over the player
@@ -126,8 +133,8 @@ The tool leprechaun needs no data file: its encoding is the game's own `farming_
 |---|---|---|---|---|
 | 0 | **Scaffold** ✅ | `git init`, remote, build, checkstyle, launcher; an empty plugin with a three-tab panel; vendored timetracking plus its sync script; README | The build compiles; the plugin loads in the test harness | The panel appears with three empty tabs |
 | 1 | **Data** ✅ | All the §3 files, their scripts and `DataLoader` | `DataIntegrityTest`, `CostTableTest` | The plugin starts (data loads); the tabs are dark |
-| 2 | **Seed log and leprechaun** | `ItemStore`, `ContainerWatcher`, `LeprechaunWatcher`, `BankTab` (via the pure `BankViewBuilder`), buffer settings, profile persistence | `LeprechaunDecoderTest`, `ItemLedgerTest`, `BankViewBuilderTest` | Counts match the bank, vault and seed box after opening each, and the leprechaun matches its Exchange screen. **Verify:** is the seed-box container sent at login or only once opened? What do bottomless bucket types 2–4 mean (log line `[leprechaun]`)? |
-| 3 | **Unlocks** | `PlayerInfo`, `UnlockService`, `LocationsTab` with overrides and teleport dropdown | Rule evaluation on fake `PlayerInfo` | Prifddinas is locked (SotE) and everything else unlocked; overrides survive a relog |
+| 2 | **Seed log and leprechaun** ✅ | `ItemStore`, `ContainerWatcher`, `LeprechaunWatcher`, `BankTab` (via the pure `BankViewBuilder`), buffer settings, profile persistence | `LeprechaunDecoderTest`, `ItemLedgerTest`, `BankViewBuilderTest` | Counts match the bank, vault and seed box after opening each, and the leprechaun matches its Exchange screen. **Verify:** is the seed-box container sent at login or only once opened? What do bottomless bucket types 2–4 mean (log line `[leprechaun]`)? |
+| 3 | **Unlocks** | `PlayerFacts`/`PlayerInfo`, `UnlockEvaluator`, `LocationPrefs`, `UnlockService`, `LocationsTab` (via `LocationsViewBuilder`); Bank "full run" uses unlocked patches. POH nexus / jewellery box tick boxes moved to phase 6, where teleports are checked | `UnlockEvaluatorTest`, `LocationsViewBuilderTest` | Prifddinas is locked (SotE) and everything else unlocked; overrides and teleport choices survive a relog |
 | 4 | **Patch states** | `PatchStates`, `ReadyPredictor`, ready times in `LocationsTab` | Decode and predict on recorded Time Tracking values | Ready times match Time Tracking's own Farming tab |
 | 5 | **Run setup** | `RunSetup`, `PresetStore`, `SeedPicker`, `ContractService`, `RunTab` setup form | Picker: best spare seed, buffers 9/2/3, mixing, contract override, manual mode | Auto picks look right; save, load and relog a preset |
 | 6 | **Start checks** | `RunRequirements`, `ItemCounts`, `InventoryChecker`, `BankHighlightOverlay`, `NotReadyDialog`, `StartAnywayDialog` | Requirements per routine, payment and compost; leprechaun counts as available; missing counts | Remove an item → it's listed and highlighted in the bank → "Start anyway" works |

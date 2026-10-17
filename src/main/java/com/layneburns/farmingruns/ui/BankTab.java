@@ -12,6 +12,7 @@ import com.layneburns.farmingruns.state.BufferSettings;
 import com.layneburns.farmingruns.state.ItemStore;
 import com.layneburns.farmingruns.state.LeprechaunWatcher;
 import com.layneburns.farmingruns.state.PlayerInfo;
+import com.layneburns.farmingruns.state.UnlockService;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.util.HashMap;
@@ -41,6 +42,7 @@ public class BankTab extends TabPanel
 	private final ItemStore store;
 	private final LeprechaunWatcher leprechaun;
 	private final PlayerInfo player;
+	private final UnlockService unlocks;
 	private final FarmingRunsConfig config;
 	private final ItemManager itemManager;
 
@@ -54,13 +56,14 @@ public class BankTab extends TabPanel
 	private final AtomicBoolean redrawQueued = new AtomicBoolean();
 
 	@Inject
-	BankTab(GameData data, ItemStore store, LeprechaunWatcher leprechaun, PlayerInfo player,
+	BankTab(GameData data, ItemStore store, LeprechaunWatcher leprechaun, PlayerInfo player, UnlockService unlocks,
 		FarmingRunsConfig config, ItemManager itemManager)
 	{
 		this.data = data;
 		this.store = store;
 		this.leprechaun = leprechaun;
 		this.player = player;
+		this.unlocks = unlocks;
 		this.config = config;
 		this.itemManager = itemManager;
 
@@ -79,6 +82,7 @@ public class BankTab extends TabPanel
 
 		store.addListener(this::refresh);
 		player.addListener(this::refresh);
+		unlocks.addListener(this::refresh);
 		refresh();
 	}
 
@@ -118,7 +122,7 @@ public class BankTab extends TabPanel
 	{
 		redrawQueued.set(false);
 		BankView view = BankViewBuilder.build(data, store.ledger(), BufferSettings.from(config),
-			data.patchCountsByKind(), leprechaun.getBottomlessBucketUses(), System.currentTimeMillis());
+			unlocks.usablePatchCounts(), leprechaun.getBottomlessBucketUses(), System.currentTimeMillis());
 
 		seenLine.removeAll();
 		for (String seen : view.getSeen())

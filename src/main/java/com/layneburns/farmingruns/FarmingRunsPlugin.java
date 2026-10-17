@@ -13,6 +13,7 @@ import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.state.ContainerWatcher;
 import com.layneburns.farmingruns.state.ItemStore;
 import com.layneburns.farmingruns.state.LeprechaunWatcher;
+import com.layneburns.farmingruns.state.LocationPrefs;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.ui.BankTab;
 import com.layneburns.farmingruns.ui.FarmingRunsPanel;
@@ -73,6 +74,9 @@ public class FarmingRunsPlugin extends Plugin
 	@Inject
 	private PlayerInfo playerInfo;
 
+	@Inject
+	private LocationPrefs locationPrefs;
+
 	private NavigationButton navigationButton;
 
 	@Override
@@ -91,7 +95,9 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(containerWatcher);
 		eventBus.register(leprechaunWatcher);
 		eventBus.register(playerInfo);
+		eventBus.register(locationPrefs);
 		itemStore.loadRemembered();
+		locationPrefs.load();
 		// If the plugin starts while logged in, read what the client already has.
 		clientThread.invokeLater(() ->
 		{
@@ -108,6 +114,7 @@ public class FarmingRunsPlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
+		eventBus.unregister(locationPrefs);
 		eventBus.unregister(playerInfo);
 		eventBus.unregister(leprechaunWatcher);
 		eventBus.unregister(containerWatcher);

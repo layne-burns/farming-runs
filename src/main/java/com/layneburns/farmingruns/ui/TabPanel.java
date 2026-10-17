@@ -7,8 +7,12 @@
 package com.layneburns.farmingruns.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -45,6 +49,32 @@ abstract class TabPanel extends JPanel
 		bar.setBackground(Palette.BACKGROUND);
 		bar.setUnitIncrement(16);
 		return scroll;
+	}
+
+	/** A dark grey button with white text that lightens on hover, matching the search box. */
+	static JButton button(String text, String tooltip)
+	{
+		JButton button = new JButton(text);
+		button.setToolTipText(tooltip);
+		button.setFocusable(false);
+		button.setBackground(Palette.SURFACE);
+		button.setForeground(Color.WHITE);
+		button.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+		button.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				button.setBackground(Palette.SURFACE_HOVER);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				button.setBackground(Palette.SURFACE);
+			}
+		});
+		return button;
 	}
 
 	/** A text label in the panel's standard light grey, readable on the dark background. */
