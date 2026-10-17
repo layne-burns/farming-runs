@@ -152,14 +152,15 @@ class LocationRow extends JPanel
 		}
 	}
 
-	/** Green: something to do (harvest, plant); yellow: growing; red: diseased or dead; grey: not seen. */
+	/** Green: ready to harvest; white: empty; yellow: growing; red: diseased or dead; grey: not seen. */
 	private static Color readinessColour(PatchStatus.Readiness readiness)
 	{
 		switch (readiness)
 		{
 			case READY:
-			case EMPTY:
 				return Palette.FULL;
+			case EMPTY:
+				return Palette.TEXT;
 			case GROWING:
 				return Palette.PARTIAL;
 			case DISEASED:
