@@ -51,14 +51,15 @@ class KindCard extends JPanel
 	 * @param seeds    the seeds of this kind, best first
 	 * @param planned  this kind's assignments in the current planting plan
 	 * @param patches  patches of this kind the run visits
-	 * @param canPay   whether any seed of this kind can be protected
+	 * @param payTooltip what the gardeners want and how much you have; null when no seed of this kind can be
+	 *                   protected (then there's no "pay" box)
 	 * @param isTree   whether a tree routine applies
 	 * @param harvests whether the grown tree has a crop to pick before clearing (fruit trees, calquat, celastrus)
 	 * @param amulet   allotments: whether the amulet of bounty will be worn (your choice or the default); null for
 	 *                 other kinds
 	 */
 	KindCard(String title, KindPlan plan, List<Seed> seeds, List<PlantingPlan.Assignment> planned, int patches,
-		boolean canPay, boolean isTree, boolean harvests, @Nullable Boolean amulet, Consumer<KindPlan> onChange)
+		@Nullable String payTooltip, boolean isTree, boolean harvests, @Nullable Boolean amulet, Consumer<KindPlan> onChange)
 	{
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(Palette.SURFACE);
@@ -141,9 +142,10 @@ class KindCard extends JPanel
 		preview.setToolTipText("What will be planted, given the seeds you can spare");
 		add(left(preview));
 
-		if (canPay)
+		if (payTooltip != null)
 		{
 			JCheckBox pay = check("Pay the gardener to protect", plan.isPay());
+			pay.setToolTipText(payTooltip);
 			pay.addActionListener(e -> onChange.accept(plan.withPay(pay.isSelected())));
 			add(left(pay));
 		}

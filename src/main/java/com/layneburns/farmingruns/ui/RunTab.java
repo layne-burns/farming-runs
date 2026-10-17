@@ -11,16 +11,19 @@ import com.layneburns.farmingruns.data.GoalPreset;
 import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.data.RunType;
 import com.layneburns.farmingruns.data.Seed;
+import com.layneburns.farmingruns.inventory.RunCheckService;
 import com.layneburns.farmingruns.run.BountyAmulet;
 import com.layneburns.farmingruns.run.CompostChoice;
 import com.layneburns.farmingruns.run.GoalSetups;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.PresetCombiner;
 import com.layneburns.farmingruns.run.RunPlanService;
+import com.layneburns.farmingruns.run.RunSession;
 import com.layneburns.farmingruns.run.RunSetup;
 import com.layneburns.farmingruns.run.TreeRoutine;
 import com.layneburns.farmingruns.state.ContractService;
 import com.layneburns.farmingruns.state.ItemStore;
+import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.SetupStore;
 import com.layneburns.farmingruns.state.UnlockService;
@@ -50,11 +53,13 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import net.runelite.client.game.ItemManager;
 
 /**
  * Run tab (SPEC §2.3): presets at the top, then the run types, a card per patch kind (seeds, payment, tree routine),
  * compost, patches to skip, and what the plan comes to. Every edit becomes a new {@link RunSetup}, saved by
- * {@link SetupStore}; the plan is worked out by {@link RunPlanService}. Start arrives in phase 6.
+ * {@link SetupStore}; the plan is worked out by {@link RunPlanService}. Patches still growing are left out until
+ * Start asks about them; the Inventory section checks your items for the rest, and Start runs {@link StartFlow}.
  */
 @Singleton
 public class RunTab extends TabPanel
@@ -64,6 +69,10 @@ public class RunTab extends TabPanel
 	private final RunPlanService planner;
 	private final UnlockService unlocks;
 	private final PlayerInfo player;
+	private final ItemStore items;
+	private final RunCheckService checks;
+	private final RunSession session;
+	private final ItemManager itemManager;
 
 	private final FitWidthPanel content = new FitWidthPanel();
 	/** Goals and presets ticked (see PresetsPanel's keys), in the order ticked: the first one's compost wins. */
@@ -73,20 +82,27 @@ public class RunTab extends TabPanel
 
 	@Inject
 	RunTab(GameData data, SetupStore setups, RunPlanService planner, UnlockService unlocks, ItemStore items,
-		PlayerInfo player, ContractService contract)
+		PlayerInfo player, ContractService contract, RunCheckService checks, RunSession session, PatchStates states,
+		ItemManager itemManager)
 	{
 		this.data = data;
 		this.setups = setups;
 		this.planner = planner;
 		this.unlocks = unlocks;
 		this.player = player;
+		this.items = items;
+		this.checks = checks;
+		this.session = session;
+		this.itemManager = itemManager;
 		add(scrollPane(content), BorderLayout.CENTER);
-		// Redraw when the setup, your items, unlocks, level or contract change.
+		// Redraw when the setup, your items, unlocks, level, contract, patch states or the run change.
 		setups.addListener(this::refresh);
 		items.addListener(this::refresh);
 		unlocks.addListener(this::refresh);
 		player.addListener(this::refresh);
 		contract.addListener(this::refresh);
+		states.addListener(this::refresh);
+		session.addListener(this::refresh);
 		refresh();
 	}
 
@@ -108,8 +124,17 @@ public class RunTab extends TabPanel
 	{
 		redrawQueued.set(false);
 		RunSetup setup = setups.current();
-		PlantingPlan plan = planner.plan(setup);
+		long now = System.currentTimeMillis() / 1000;
+		int growing = checks.notReady(setup, now).size();
+		RunCheckService.Check check = checks.check(setup, checks.readyPatches(setup, now), now);
+		PlantingPlan plan = check.getPlan();
 		content.removeAll();
+
+		RunSession.ActiveRun active = session.active();
+		if (active != null)
+		{
+			content.add(activeRun(active));
+		}
 
 		SectionPanel presets = section("Presets");
 		presets.addRow(new PresetsPanel(data.goals(), setups.presets().keySet(), ticked, player.getFarmingLevel(),
@@ -129,7 +154,7 @@ public class RunTab extends TabPanel
 			boolean canPay = seeds.stream().anyMatch(Seed::canBeProtected);
 			boolean isTree = seeds.stream().anyMatch(Seed::isPlantedAsSapling);
 			content.add(new KindCard(BankViewBuilder.kindName(kind), setup.kindPlan(kind), seeds, planned,
-				planned.size(), canPay, isTree, TreeRoutine.hasHarvest(kind),
+				planned.size(), canPay ? PaymentTooltip.build(planned, items.ledger()) : null, isTree, TreeRoutine.hasHarvest(kind),
 				kind == PatchImplementation.ALLOTMENT ? BountyAmulet.wanted(setup.kindPlan(kind), planned, data) : null,
 				kp -> update(s -> s.withKindPlan(kind, kp))));
 		}
@@ -145,11 +170,15 @@ public class RunTab extends TabPanel
 		if (!setup.getRunTypes().isEmpty())
 		{
 			content.add(skipList(setup));
-			content.add(summary(plan));
+			content.add(summary(plan, growing));
+			SectionPanel inventory = section("Inventory");
+			CheckSection.fill(inventory, check, itemManager);
+			content.add(inventory);
 		}
 
-		JButton start = button("Start run", "Checks your inventory and starts the run (coming in phase 6)");
-		start.setEnabled(false);
+		JButton start = button("Start run", "Asks about patches that aren't ready, checks your items, then starts");
+		start.setEnabled(active == null && !setup.getRunTypes().isEmpty());
+		start.addActionListener(e -> StartFlow.start(this, setups.current(), checks, session, data));
 		JPanel startRow = new JPanel(new BorderLayout());
 		startRow.setBackground(Palette.BACKGROUND);
 		startRow.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
@@ -234,10 +263,15 @@ public class RunTab extends TabPanel
 	}
 
 	/** What the plan comes to: patches, contract, and anything to know. */
-	private SectionPanel summary(PlantingPlan plan)
+	private SectionPanel summary(PlantingPlan plan, int growing)
 	{
 		SectionPanel section = section("Plan");
 		section.addRow(text(plan.plantedCount() + " of " + plan.getAssignments().size() + " patches get a seed."));
+		if (growing > 0)
+		{
+			section.addRow(text(growing + " patch" + (growing == 1 ? " is" : "es are") + " still growing and left out;"
+				+ " Start asks whether to visit " + (growing == 1 ? "it" : "them") + " anyway."));
+		}
 		String contract = planner.contractNote();
 		if (contract != null)
 		{
@@ -249,6 +283,18 @@ public class RunTab extends TabPanel
 			label.setForeground(Palette.PARTIAL);
 			section.addRow(label);
 		}
+		return section;
+	}
+
+	/** The run in progress: how big it is, and Stop. (Phase 7 lists the stops here.) */
+	private SectionPanel activeRun(RunSession.ActiveRun run)
+	{
+		SectionPanel section = section("Run in progress");
+		section.addRow(text(run.patches().size() + " patches at " + run.locationCount() + " locations."
+			+ " Routing to each stop arrives in phase 7."));
+		JButton stop = button("Stop run", "Ends the run");
+		stop.addActionListener(e -> session.stop());
+		section.addRow(fill(stop));
 		return section;
 	}
 

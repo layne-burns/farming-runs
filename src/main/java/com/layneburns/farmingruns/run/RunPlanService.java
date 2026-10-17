@@ -58,8 +58,14 @@ public class RunPlanService
 
 	public PlantingPlan plan(RunSetup setup)
 	{
-		return SeedPicker.plan(setup, patches(setup), held(), BufferSettings.from(config), player.getFarmingLevel(),
-			data, contract.unplanted());
+		return plan(setup, patches(setup));
+	}
+
+	/** The plan for just these patches (e.g. leaving out the ones still growing). */
+	public PlantingPlan plan(RunSetup setup, List<Patch> patches)
+	{
+		return SeedPicker.plan(setup, patches, held(), BufferSettings.from(config), player.getFarmingLevel(), data,
+			contract.unplanted());
 	}
 
 	/** The patches the run visits: usable, of a kind a chosen run type covers, and not skipped. */

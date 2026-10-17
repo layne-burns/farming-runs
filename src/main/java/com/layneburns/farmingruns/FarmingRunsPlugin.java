@@ -19,6 +19,7 @@ import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.RunePouchWatcher;
 import com.layneburns.farmingruns.state.SetupStore;
+import com.layneburns.farmingruns.ui.BankHighlightOverlay;
 import com.layneburns.farmingruns.ui.BankTab;
 import com.layneburns.farmingruns.ui.FarmingRunsPanel;
 import java.awt.image.BufferedImage;
@@ -34,6 +35,7 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
+import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ImageUtil;
 
 /**
@@ -93,6 +95,12 @@ public class FarmingRunsPlugin extends Plugin
 	@Inject
 	private RunePouchWatcher runePouchWatcher;
 
+	@Inject
+	private OverlayManager overlayManager;
+
+	@Inject
+	private BankHighlightOverlay bankHighlightOverlay;
+
 	private NavigationButton navigationButton;
 
 	@Override
@@ -106,6 +114,7 @@ public class FarmingRunsPlugin extends Plugin
 			.panel(panel)
 			.build();
 		clientToolbar.addNavigation(navigationButton);
+		overlayManager.add(bankHighlightOverlay);
 
 		eventBus.register(itemStore);
 		eventBus.register(containerWatcher);
@@ -146,6 +155,7 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.unregister(leprechaunWatcher);
 		eventBus.unregister(containerWatcher);
 		eventBus.unregister(itemStore);
+		overlayManager.remove(bankHighlightOverlay);
 		clientToolbar.removeNavigation(navigationButton);
 		navigationButton = null;
 		log.debug("[farmrun] stopped");
