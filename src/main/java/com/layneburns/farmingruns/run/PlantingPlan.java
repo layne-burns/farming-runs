@@ -29,6 +29,32 @@ public class PlantingPlan
 		Seed seed;
 		/** True for the Farming Guild patch your farming contract needs. */
 		boolean contract;
+		/** True when the tree there is picked and left standing (harvest runs, "keep standing" types). */
+		boolean keptStanding;
+		/** The tree left standing, if known. */
+		@Nullable
+		Seed standing;
+
+		public Assignment(Patch patch, @Nullable Seed seed, boolean contract, boolean keptStanding,
+			@Nullable Seed standing)
+		{
+			this.patch = patch;
+			this.seed = seed;
+			this.contract = contract;
+			this.keptStanding = keptStanding;
+			this.standing = standing;
+		}
+
+		public Assignment(Patch patch, @Nullable Seed seed, boolean contract)
+		{
+			this(patch, seed, contract, false, null);
+		}
+
+		/** A tree picked and left standing. */
+		static Assignment kept(Patch patch, @Nullable Seed standing)
+		{
+			return new Assignment(patch, null, false, true, standing);
+		}
 	}
 
 	List<Assignment> assignments;
@@ -76,6 +102,12 @@ public class PlantingPlan
 			}
 		}
 		return items;
+	}
+
+	/** Trees picked and left standing. */
+	public long keptCount()
+	{
+		return assignments.stream().filter(Assignment::isKeptStanding).count();
 	}
 
 	/** Patches that get a seed. */

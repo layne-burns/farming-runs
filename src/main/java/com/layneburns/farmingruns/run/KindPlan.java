@@ -7,7 +7,9 @@
 package com.layneburns.farmingruns.run;
 
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
+import com.layneburns.farmingruns.data.Seed;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 import lombok.Value;
 import lombok.With;
@@ -23,7 +25,7 @@ public class KindPlan
 {
 	/** Auto: the best seeds you can spare. */
 	public static final KindPlan AUTO = new KindPlan(true, List.of(), false, TreeRoutine.PAY_TO_REMOVE, false,
-		FillOrder.SHARES, null, false);
+		FillOrder.SHARES, null, false, Set.of());
 
 	/** True: pick the best seeds you can spare. False: use {@link #crops}. */
 	boolean auto;
@@ -47,6 +49,18 @@ public class KindPlan
 	 * default (and in older saves).
 	 */
 	boolean growSaplings;
+	/**
+	 * Trees with a crop: seed item ids of the trees to pick and leave standing; patches growing anything else are
+	 * cleared and replanted. "Pick, leave the tree" keeps every type.
+	 */
+	Set<Integer> keepStanding;
+
+	/** True when a patch of this kind growing {@code standing} (null if unknown) is picked and left, not replanted. */
+	public boolean keeps(PatchImplementation kind, @Nullable Seed standing)
+	{
+		return harvestOnly(kind) || (TreeRoutine.hasHarvest(kind) && standing != null
+			&& keepStanding.contains(standing.getItemId()));
+	}
 
 	/** True for a harvest run on this kind: pick the crop, leave the tree, plant nothing. */
 	public boolean harvestOnly(PatchImplementation kind)

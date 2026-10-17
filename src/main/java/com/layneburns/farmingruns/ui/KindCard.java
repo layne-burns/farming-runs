@@ -55,12 +55,12 @@ class KindCard extends JPanel
 	 *                   protected (then there's no "pay" box)
 	 * @param isTree   whether a tree routine applies
 	 * @param harvests whether the grown tree has a crop to pick before clearing (fruit trees, calquat, celastrus)
-	 * @param growNotes trees: saplings to grow from seed before the run, e.g. "2 × Magic sapling (from Magic seed)"
+	 * @param notes    things to know, shown in yellow, e.g. "Grow first: 2 × Magic sapling (from Magic seed)"
 	 * @param amulet   allotments: whether the amulet of bounty will be worn (your choice or the default); null for
 	 *                 other kinds
 	 */
 	KindCard(String title, KindPlan plan, List<Seed> seeds, List<PlantingPlan.Assignment> planned, int patches,
-		@Nullable String payTooltip, boolean isTree, boolean harvests, List<String> growNotes, @Nullable Boolean amulet,
+		@Nullable String payTooltip, boolean isTree, boolean harvests, List<String> notes, @Nullable Boolean amulet,
 		Consumer<KindPlan> onChange)
 	{
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -82,10 +82,14 @@ class KindCard extends JPanel
 			JComboBox<TreeRoutine> routine = new JComboBox<>(choices);
 			routine.setSelectedItem(plan.getTreeRoutine());
 			routine.setFocusable(false);
-			routine.setToolTipText("What to do with a grown tree. \"Pick, leave the tree\" is a harvest run: the crop is"
-				+ " picked and nothing is planted.");
+			routine.setToolTipText("What to do with a grown tree before replanting. \"Pick, leave the tree\" is a harvest"
+				+ " run for every tree; to keep only some types, tick them below instead.");
 			routine.addActionListener(e -> onChange.accept(plan.withTreeRoutine((TreeRoutine) routine.getSelectedItem())));
 			add(left(routine));
+		}
+		if (harvests && plan.getTreeRoutine() != TreeRoutine.LEAVE_STANDING && seeds.size() > 1)
+		{
+			add(new KeepStandingPanel(plan, seeds, onChange));
 		}
 		if (harvests && plan.getTreeRoutine() == TreeRoutine.LEAVE_STANDING)
 		{
@@ -143,12 +147,11 @@ class KindCard extends JPanel
 		JLabel preview = TabPanel.text(preview(planned));
 		preview.setToolTipText("What will be planted, given the seeds you can spare");
 		add(left(preview));
-		if (!growNotes.isEmpty())
+		for (String note : notes)
 		{
-			JLabel grow = TabPanel.text("Grow first: " + String.join(", ", growNotes));
-			grow.setForeground(Palette.PARTIAL);
-			grow.setToolTipText("Pot these seeds and grow them into saplings before the run");
-			add(left(grow));
+			JLabel label = TabPanel.text(note);
+			label.setForeground(Palette.PARTIAL);
+			add(left(label));
 		}
 		if (isTree)
 		{
@@ -269,10 +272,16 @@ class KindCard extends JPanel
 	static String preview(List<PlantingPlan.Assignment> planned)
 	{
 		Map<String, Integer> counts = new LinkedHashMap<>();
+		Map<String, Integer> kept = new LinkedHashMap<>();
 		int empty = 0;
 		for (PlantingPlan.Assignment a : planned)
 		{
-			if (a.getSeed() == null)
+			if (a.isKeptStanding())
+			{
+				kept.merge(a.getStanding() == null ? "tree" : KeepStandingPanel.treeName(a.getStanding()), 1,
+					Integer::sum);
+			}
+			else if (a.getSeed() == null)
 			{
 				empty++;
 			}
@@ -286,6 +295,11 @@ class KindCard extends JPanel
 		if (empty > 0)
 		{
 			parts.add(empty + " with no seed");
+		}
+		if (!kept.isEmpty())
+		{
+			parts.add("left standing: " + kept.entrySet().stream().map(e -> e.getValue() + " " + e.getKey())
+				.collect(Collectors.joining(", ")));
 		}
 		return parts.isEmpty() ? "Nothing to plant" : String.join(", ", parts);
 	}

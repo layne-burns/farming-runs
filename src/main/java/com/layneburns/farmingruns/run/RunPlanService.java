@@ -15,6 +15,8 @@ import com.layneburns.farmingruns.state.ContractService;
 import com.layneburns.farmingruns.state.ItemLedger;
 import com.layneburns.farmingruns.state.ItemSource;
 import com.layneburns.farmingruns.state.ItemStore;
+import com.layneburns.farmingruns.state.PatchStates;
+import com.layneburns.farmingruns.state.PatchStatus;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.UnlockService;
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
@@ -43,10 +45,11 @@ public class RunPlanService
 	private final PlayerInfo player;
 	private final ContractService contract;
 	private final FarmingRunsConfig config;
+	private final PatchStates states;
 
 	@Inject
 	RunPlanService(GameData data, UnlockService unlocks, ItemStore items, PlayerInfo player, ContractService contract,
-		FarmingRunsConfig config)
+		FarmingRunsConfig config, PatchStates states)
 	{
 		this.data = data;
 		this.unlocks = unlocks;
@@ -54,6 +57,7 @@ public class RunPlanService
 		this.player = player;
 		this.contract = contract;
 		this.config = config;
+		this.states = states;
 	}
 
 	public PlantingPlan plan(RunSetup setup)
@@ -65,7 +69,24 @@ public class RunPlanService
 	public PlantingPlan plan(RunSetup setup, List<Patch> patches)
 	{
 		return SeedPicker.plan(setup, patches, held(), BufferSettings.from(config), player.getFarmingLevel(), data,
-			contract.unplanted());
+			contract.unplanted(), this::standing);
+	}
+
+	/**
+	 * The tree growing in a patch, from Time Tracking: null when it's empty, dead (to be cleared anyway) or not seen.
+	 */
+	public Seed standing(Patch patch)
+	{
+		PatchStatus status = states.status(patch, System.currentTimeMillis() / 1000);
+		switch (status.getReadiness())
+		{
+			case READY:
+			case GROWING:
+			case DISEASED:
+				return status.getCrop() == null ? null : data.seedForCrop(patch.getKind(), status.getCrop());
+			default:
+				return null;
+		}
 	}
 
 	/** The patches the run visits: usable, of a kind a chosen run type covers, and not skipped. */

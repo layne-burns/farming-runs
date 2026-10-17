@@ -27,7 +27,7 @@ public class SetupJsonTest
 			.withRunTypes(Set.of(RunType.HERB, RunType.TREE))
 			.withKindPlan(PatchImplementation.HERB, new KindPlan(false,
 				List.of(CropShare.even(ItemID.RANARR_SEED), new CropShare(ItemID.SNAPDRAGON_SEED, 1, 4)), false,
-				TreeRoutine.PAY_TO_REMOVE, false, FillOrder.MOST_XP, null, true))
+				TreeRoutine.PAY_TO_REMOVE, false, FillOrder.MOST_XP, null, true, Set.of(5288)))
 			.withKindPlan(PatchImplementation.ALLOTMENT, KindPlan.AUTO.withAmuletOfBounty(false))
 			.withKindPlan(PatchImplementation.TREE, KindPlan.AUTO.withPay(true).withTreeRoutine(TreeRoutine.CHOP_AND_DIG))
 			.withKindPlan(PatchImplementation.FRUIT_TREE, KindPlan.AUTO.withSkipHarvest(true))

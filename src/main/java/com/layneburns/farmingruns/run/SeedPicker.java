@@ -16,6 +16,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.Value;
@@ -24,6 +25,7 @@ import lombok.Value;
  * Decides what to plant in each patch of a run (SPEC §2.3). Pure: unit tested.
  * <ul>
  * <li>A farming contract's seed goes in its Farming Guild patch first; the buffer doesn't apply to it.</li>
+ * <li>Trees with a crop that are kept standing (a harvest run, or a type you keep) are picked and left.</li>
  * <li>Auto: the highest-level seeds you can plant and spare, mixing in the next best when one runs short.</li>
  * <li>Chosen crops: patches shared by {@link ShareSplitter} (exact counts, then by weight); patches a crop can't
  * fill (not enough spare) are filled the auto way, with a warning.</li>
@@ -55,6 +57,17 @@ public final class SeedPicker
 	public static PlantingPlan plan(RunSetup setup, List<Patch> patches, Map<Integer, Integer> held,
 		BufferSettings buffers, int farmingLevel, GameData data, @Nullable Contract contract)
 	{
+		return plan(setup, patches, held, buffers, farmingLevel, data, contract, p -> null);
+	}
+
+	/**
+	 * @param standing the tree growing in each patch (from Time Tracking), or null when it's empty, dead or unknown;
+	 *                 trees of a type the kind keeps standing are picked and left
+	 */
+	public static PlantingPlan plan(RunSetup setup, List<Patch> patches, Map<Integer, Integer> held,
+		BufferSettings buffers, int farmingLevel, GameData data, @Nullable Contract contract,
+		Function<Patch, Seed> standing)
+	{
 		Stock stock = new Stock(held, buffers);
 		List<PlantingPlan.Assignment> assignments = new ArrayList<>();
 		List<String> warnings = new ArrayList<>();
@@ -67,12 +80,6 @@ public final class SeedPicker
 			List<Patch> open = new ArrayList<>(entry.getValue());
 			KindPlan plan = setup.kindPlan(entry.getKey());
 			stock.setGrowSaplings(plan.isGrowSaplings());
-			if (plan.harvestOnly(entry.getKey()))
-			{
-				// A harvest run: the trees stay, so nothing is planted (and no seed is short).
-				open.forEach(p -> assignments.add(new PlantingPlan.Assignment(p, null, false)));
-				continue;
-			}
 			if (contract != null)
 			{
 				open.removeIf(p ->
@@ -94,6 +101,18 @@ public final class SeedPicker
 					return true;
 				});
 			}
+			// Trees picked and left standing (a harvest run, or a type you keep) get no seed and need none.
+			PatchImplementation kind = entry.getKey();
+			open.removeIf(p ->
+			{
+				Seed tree = standing.apply(p);
+				if (!plan.keeps(kind, tree))
+				{
+					return false;
+				}
+				assignments.add(PlantingPlan.Assignment.kept(p, tree));
+				return true;
+			});
 			List<Seed> candidates = data.seedsFor(entry.getKey()).stream()
 				.filter(s -> farmingLevel < 0 || s.getLevel() <= farmingLevel)
 				.sorted(Comparator.comparingInt(Seed::getLevel).reversed())

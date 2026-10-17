@@ -97,6 +97,17 @@ public final class GameData
 		return seedsByItem.get(itemId);
 	}
 
+	/**
+	 * The seed for a crop as Time Tracking names it ("Papaya" → Papaya tree seed, "Pineapple" → Pineapple seed), or
+	 * null if none of the kind's seeds matches.
+	 */
+	public Seed seedForCrop(PatchImplementation kind, String crop)
+	{
+		String prefix = crop.toLowerCase() + " ";
+		return seeds.stream().filter(s -> s.getKind() == kind && s.getName().toLowerCase().startsWith(prefix))
+			.findFirst().orElse(null);
+	}
+
 	/** Seeds for a kind of patch, lowest level first. */
 	public List<Seed> seedsFor(PatchImplementation kind)
 	{

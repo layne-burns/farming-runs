@@ -14,8 +14,10 @@ import com.layneburns.farmingruns.data.DataLoader;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.data.RunType;
+import com.layneburns.farmingruns.data.Seed;
 import com.layneburns.farmingruns.state.BufferSettings;
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -121,6 +123,29 @@ public class SeedPickerTest
 		PlantingPlan both = SeedPicker.plan(grow, fruitTrees, Map.of(5501, 4, 5288, 5), BUFFERS, 99, data, null);
 		assertEquals(4, both.plantedCount());
 		assertEquals(2, (int) both.getSaplingsToGrow().get(data.seedByItem(5288)));
+	}
+
+	@Test
+	public void treesOfAKeptTypeAreLeftStandingAndTheRestReplanted()
+	{
+		List<Patch> fruitTrees = data.patches().stream().filter(p -> p.getKind() == PatchImplementation.FRUIT_TREE)
+			.sorted((a, b) -> a.getId().compareTo(b.getId())).limit(4).collect(Collectors.toList());
+		Seed papaya = data.seedByItem(5288);
+		Seed apple = data.seedForCrop(PatchImplementation.FRUIT_TREE, "Apple");
+		// Growing: papaya, papaya, apple, unknown. Keep papaya standing.
+		Map<Patch, Seed> growing = new HashMap<>();
+		growing.put(fruitTrees.get(0), papaya);
+		growing.put(fruitTrees.get(1), papaya);
+		growing.put(fruitTrees.get(2), apple);
+		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.FRUIT_TREE)).withKindPlan(
+			PatchImplementation.FRUIT_TREE, KindPlan.AUTO.withKeepStanding(Set.of(papaya.getItemId())));
+		PlantingPlan plan = SeedPicker.plan(setup, fruitTrees, Map.of(5501, 20), BUFFERS, 99, data, null,
+			growing::get);
+		assertEquals(2, plan.keptCount());
+		assertEquals(2, plan.plantedCount());
+		assertTrue(plan.getAssignments().stream().filter(PlantingPlan.Assignment::isKeptStanding)
+			.allMatch(a -> a.getStanding() == papaya));
+		assertTrue(plan.getWarnings().isEmpty());
 	}
 
 	@Test

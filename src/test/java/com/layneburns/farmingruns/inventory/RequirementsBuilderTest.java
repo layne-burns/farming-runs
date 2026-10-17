@@ -115,8 +115,10 @@ public class RequirementsBuilderTest
 		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.FRUIT_TREE))
 			.withKindPlan(PatchImplementation.FRUIT_TREE, KindPlan.AUTO.withPay(true)
 				.withTreeRoutine(TreeRoutine.LEAVE_STANDING));
-		// The seed picker plants nothing on a harvest run.
-		RunRequirements needs = build(setup, plan(null, "gnome_stronghold.fruit_tree"));
+		// The seed picker keeps the tree standing and plants nothing.
+		PlantingPlan kept = new PlantingPlan(List.of(new PlantingPlan.Assignment(
+			data.patch("gnome_stronghold.fruit_tree"), null, false, true, null)), List.of());
+		RunRequirements needs = build(setup, kept);
 		assertNull(find(needs, PINEAPPLE));
 		assertNull(find(needs, data.getItems().group("coins").iterator().next()));
 		assertNotNull(needs.getTeleports().get("gnome_stronghold"));

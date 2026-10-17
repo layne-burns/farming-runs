@@ -179,7 +179,7 @@ public final class RequirementsBuilder
 		}
 	}
 
-	/** 200 coins per grown tree the gardener removes, or an axe to chop them yourself. Harvest runs clear nothing. */
+	/** 200 coins per grown tree the gardener removes, or an axe to chop them yourself. Trees kept standing aren't cleared. */
 	private static void addTreeClearing(RequirementList list, RunSetup setup, List<PlantingPlan.Assignment> assignments,
 		GameData data, ItemCatalog items, Predicate<Patch> treeGrown)
 	{
@@ -189,7 +189,7 @@ public final class RequirementsBuilder
 		{
 			Patch patch = a.getPatch();
 			KindPlan plan = setup.kindPlan(patch.getKind());
-			if (!isTree(patch.getKind(), data) || plan.harvestOnly(patch.getKind()) || !treeGrown.test(patch))
+			if (!isTree(patch.getKind(), data) || a.isKeptStanding() || !treeGrown.test(patch))
 			{
 				continue;
 			}

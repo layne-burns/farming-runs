@@ -9,10 +9,12 @@ package com.layneburns.farmingruns.data;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import com.google.gson.Gson;
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
+import com.layneburns.farmingruns.vendor.timetracking.Produce;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -183,5 +185,19 @@ public class DataIntegrityTest
 			assertFalse("empty item group " + group, data.getItems().group(group).isEmpty());
 		}
 		assertTrue(data.getItems().group("spade").contains(ItemID.SPADE));
+	}
+
+	@Test
+	public void everyTreeTimeTrackingNamesHasASeed()
+	{
+		Set<PatchImplementation> kept = Set.of(PatchImplementation.FRUIT_TREE, PatchImplementation.CALQUAT,
+			PatchImplementation.CELASTRUS);
+		for (Produce produce : Produce.values())
+		{
+			if (produce.getPatchImplementation() != null && kept.contains(produce.getPatchImplementation()))
+			{
+				assertNotNull(produce.getName(), data.seedForCrop(produce.getPatchImplementation(), produce.getName()));
+			}
+		}
 	}
 }
