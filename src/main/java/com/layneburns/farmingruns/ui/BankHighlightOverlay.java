@@ -14,14 +14,15 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.WidgetItem;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.WidgetItemOverlay;
 
 /**
- * In the bank, outlines the items the inventory check says to take out (SPEC §2.4), with how many in the bottom
- * right corner, so they're easy to find and grab.
+ * In the bank and seed vault, outlines the items the inventory check says to take out (SPEC §2.4), with how many
+ * in the bottom right corner, so they're easy to find and grab.
  */
 @Singleton
 public class BankHighlightOverlay extends WidgetItemOverlay
@@ -37,6 +38,7 @@ public class BankHighlightOverlay extends WidgetItemOverlay
 		this.checks = checks;
 		this.itemManager = itemManager;
 		showOnBank();
+		showOnInterfaces(InterfaceID.SEED_VAULT);
 	}
 
 	@Override

@@ -24,6 +24,7 @@ import com.layneburns.farmingruns.run.TeleportWatcher;
 import com.layneburns.farmingruns.ui.BankHighlightOverlay;
 import com.layneburns.farmingruns.ui.BankRunTab;
 import com.layneburns.farmingruns.ui.BankSearchButton;
+import com.layneburns.farmingruns.ui.SeedVaultFilter;
 import com.layneburns.farmingruns.ui.BankTab;
 import com.layneburns.farmingruns.ui.FarmingRunsPanel;
 import java.awt.image.BufferedImage;
@@ -115,6 +116,9 @@ public class FarmingRunsPlugin extends Plugin
 	private BankSearchButton bankSearchButton;
 
 	@Inject
+	private SeedVaultFilter seedVaultFilter;
+
+	@Inject
 	private RunController runController;
 
 	@Inject
@@ -146,6 +150,7 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(runePouchWatcher);
 		eventBus.register(bankRunTab);
 		eventBus.register(bankSearchButton);
+		eventBus.register(seedVaultFilter);
 		eventBus.register(runController);
 		eventBus.register(teleportWatcher);
 		bankRunTab.register();
@@ -174,6 +179,7 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.unregister(teleportWatcher);
 		eventBus.unregister(runController);
 		bankSearchButton.hide();
+		eventBus.unregister(seedVaultFilter);
 		eventBus.unregister(bankSearchButton);
 		bankRunTab.unregister();
 		eventBus.unregister(bankRunTab);

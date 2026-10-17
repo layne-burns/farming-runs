@@ -27,8 +27,9 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
 
 /**
- * A raised "Farm Run Items" button down the right of the chatbox while you search the bank, so the run's bank tab
- * is one click away without the side panel. It shows only when the run check has something to take from the bank, and is hidden again when
+ * A raised "Farm Run Items" button down the right of the chatbox while you search the bank or seed vault, so the run's
+ * items are one click away without the side panel: in the bank it opens the run's tab, in the seed vault it switches
+ * {@link SeedVaultFilter} on (and "Show All Seeds" off again). It shows only when the run check has something to take from the bank, and is hidden again when
  * the search closes (the chatbox's prompt area is shared with other prompts). Client thread.
  */
 @Singleton
@@ -36,6 +37,8 @@ public class BankSearchButton
 {
 	/** Two lines, centred on the button. */
 	private static final String LABEL = "Farm Run<br>Items";
+	/** In the seed vault with the filter on: back to every seed. */
+	private static final String SHOW_ALL = "Show All<br>Seeds";
 	/** The button's width: clear of the prompt's centred text even in the fixed-size chatbox. */
 	private static final int WIDTH = 84;
 	/** Gap between the button and the chatbox frame, on every side. */
@@ -54,18 +57,21 @@ public class BankSearchButton
 	private final ClientThread clientThread;
 	private final BankRunTab bankRunTab;
 	private final RunCheckService checks;
+	private final SeedVaultFilter vault;
 	/** Our widgets in the chatbox prompt layer, or null when not added (or the game rebuilt the layer). */
 	private final List<Widget> parts = new ArrayList<>();
 	private Widget face;
 	private Widget text;
 
 	@Inject
-	BankSearchButton(Client client, ClientThread clientThread, BankRunTab bankRunTab, RunCheckService checks)
+	BankSearchButton(Client client, ClientThread clientThread, BankRunTab bankRunTab, RunCheckService checks,
+		SeedVaultFilter vault)
 	{
 		this.client = client;
 		this.clientThread = clientThread;
 		this.bankRunTab = bankRunTab;
 		this.checks = checks;
+		this.vault = vault;
 	}
 
 	@Subscribe
@@ -87,10 +93,12 @@ public class BankSearchButton
 	private void update()
 	{
 		boolean searching = client.getVarcIntValue(VarClientID.MESLAYERMODE) == InputType.SEARCH.getType()
-			&& isBankOpen() && !checks.bankItems().isEmpty();
+			&& (isBankOpen() || vault.isVaultOpen()) && (!checks.bankItems().isEmpty() || vault.isOn());
 		if (searching)
 		{
 			add();
+			// In the seed vault the button switches the filter; once it's on, it switches it off again.
+			text.setText(vault.isVaultOpen() && vault.isOn() ? SHOW_ALL : LABEL);
 		}
 		setHidden(!searching);
 	}
@@ -120,7 +128,17 @@ public class BankSearchButton
 		text.setYTextAlignment(WidgetTextAlignment.CENTER);
 		text.setHasListener(true);
 		text.setAction(0, "Show");
-		text.setOnOpListener((JavaScriptCallback) e -> bankRunTab.openFromSearch());
+		text.setOnOpListener((JavaScriptCallback) e ->
+		{
+			if (vault.isVaultOpen())
+			{
+				vault.toggleFromSearch();
+			}
+			else
+			{
+				bankRunTab.openFromSearch();
+			}
+		});
 		text.setOnMouseOverListener((JavaScriptCallback) e -> hover(true));
 		text.setOnMouseLeaveListener((JavaScriptCallback) e -> hover(false));
 		text.revalidate();
