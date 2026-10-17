@@ -40,7 +40,8 @@ vendor/timetracking/     RuneLite's PatchImplementation, Produce, PatchState, Cr
                          them for a given RuneLite tag, so updates are a script run plus a diff.
 
 data/                    (pure) loads resources/*.json into immutable records, checks references
-  RunType                the run types (Herb, Allotment, ..., Special trees, Special), each a set of patch kinds;
+  RunType                the run types (Herb, Allotment, ..., Special trees, Cactus, then Mushroom, Belladonna,
+                         Grapes, Seaweed, Coral, Hespori, Anima each on their own), each a set of patch kinds;
                          groups the Locations tab and the run setup
   GameData               facade: getLocation(id), patchesAt(loc), seed(itemId), teleport(id)…
   DataLoader             Gson loading + validation errors that name the file and entry

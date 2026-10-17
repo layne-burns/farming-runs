@@ -30,9 +30,14 @@ public enum RunType
 	SPECIAL_TREES("Special trees", Set.of(PatchImplementation.CALQUAT, PatchImplementation.CELASTRUS,
 		PatchImplementation.REDWOOD, PatchImplementation.SPIRIT_TREE, PatchImplementation.CRYSTAL_TREE)),
 	CACTUS("Cactus", Set.of(PatchImplementation.CACTUS)),
-	SPECIAL("Special", Set.of(PatchImplementation.MUSHROOM, PatchImplementation.BELLADONNA,
-		PatchImplementation.GRAPES, PatchImplementation.SEAWEED, PatchImplementation.CORAL,
-		PatchImplementation.HESPORI, PatchImplementation.ANIMA));
+	// The special patches are each their own run type: they're rarely done together.
+	MUSHROOM("Mushroom", Set.of(PatchImplementation.MUSHROOM)),
+	BELLADONNA("Belladonna", Set.of(PatchImplementation.BELLADONNA)),
+	GRAPES("Grapes", Set.of(PatchImplementation.GRAPES)),
+	SEAWEED("Seaweed", Set.of(PatchImplementation.SEAWEED)),
+	CORAL("Coral", Set.of(PatchImplementation.CORAL)),
+	HESPORI("Hespori", Set.of(PatchImplementation.HESPORI)),
+	ANIMA("Anima", Set.of(PatchImplementation.ANIMA));
 
 	private final String title;
 	private final Set<PatchImplementation> kinds;
