@@ -44,6 +44,17 @@ public final class InventoryChecker
 		int toWithdraw;
 		/** How many you don't have anywhere. */
 		int shortBy;
+		/** How many are in the bank and vault (and a seed box left in the bank). */
+		int banked;
+
+		/**
+		 * How many to take out of the bank when you'd rather not use the leprechaun: everything not carried, as far
+		 * as the bank has it. 0 when the bank has none or you carry enough.
+		 */
+		public int fromBank()
+		{
+			return Math.min(banked, Math.max(0, requirement.getAmount() - carried));
+		}
 
 		/** A missing thing you need: worth a "Start anyway?" question. */
 		public boolean blocksStart()
@@ -82,7 +93,7 @@ public final class InventoryChecker
 			: toWithdraw > 0 ? Status.WITHDRAW
 			: fromLeprechaun > 0 ? Status.FROM_LEPRECHAUN
 			: Status.OK;
-		return new Line(r, status, carried, fromLeprechaun, toWithdraw, shortBy);
+		return new Line(r, status, carried, fromLeprechaun, toWithdraw, shortBy, banked);
 	}
 
 	private static int count(ItemLedger ledger, Set<Integer> ids, ItemSource source)

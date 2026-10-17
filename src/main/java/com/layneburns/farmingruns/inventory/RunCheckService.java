@@ -21,7 +21,7 @@ import com.layneburns.farmingruns.state.PlayerInfo;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -32,7 +32,7 @@ import lombok.Value;
  * Joins a run setup to what's known about you and checks your items for it (SPEC §2.4): which patches are still
  * growing, the plan for the rest, what that needs, and where each thing is. The thinking is in the pure
  * {@link RequirementsBuilder} and {@link InventoryChecker}; this gathers their inputs. Also remembers what the last
- * check said to withdraw, for the bank highlight.
+ * check said to take from the bank, for the bank highlight and the "Show in bank" tab.
  */
 @Singleton
 public class RunCheckService
@@ -63,8 +63,12 @@ public class RunCheckService
 	private final PlayerInfo player;
 	private final ItemStore items;
 	private final PatchStates states;
-	/** Items the last check said to take from the bank. Read by the bank overlay on the client thread. */
-	private volatile Set<Integer> toWithdraw = Set.of();
+	/**
+	 * Items the last check said you could take from the bank, with how many: what you'd otherwise withdraw, plus tools
+	 * and compost the leprechaun also has (you may grab them from either). Read on the client thread by the bank.
+	 */
+	private volatile Map<Integer, Integer> bankItems = Map.of();
+	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
 	@Inject
 	RunCheckService(GameData data, RunPlanService planner, LocationPrefs prefs, PlayerInfo player, ItemStore items,
@@ -118,21 +122,38 @@ public class RunCheckService
 			ledger, grown);
 		List<InventoryChecker.Line> lines = InventoryChecker.check(requirements.getRequirements(), ledger,
 			data.getItems().group("seed_box"));
-		toWithdraw = lines.stream().filter(l -> l.getToWithdraw() > 0)
-			.flatMap(l -> l.getRequirement().getItemIds().stream()).collect(Collectors.toUnmodifiableSet());
+		setBankItems(lines);
 		return new Check(plan, requirements, lines);
 	}
 
-	/** Item ids the last check said to withdraw: the bank highlights these. */
-	public Set<Integer> toWithdraw()
+	/** Item id to how many to take, from the last check: the bank highlights these and the run tab shows them. */
+	public Map<Integer, Integer> bankItems()
 	{
-		return toWithdraw;
+		return bankItems;
 	}
 
-	/** Forgets the highlight (e.g. when a run is stopped). */
-	public void clearHighlight()
+	/** Called when {@link #bankItems()} changes. */
+	public void addListener(Runnable listener)
 	{
-		toWithdraw = Set.of();
+		listeners.add(listener);
+	}
+
+	private void setBankItems(List<InventoryChecker.Line> lines)
+	{
+		Map<Integer, Integer> items = new HashMap<>();
+		for (InventoryChecker.Line line : lines)
+		{
+			int count = line.fromBank();
+			if (count > 0)
+			{
+				line.getRequirement().getItemIds().forEach(id -> items.merge(id, count, Math::max));
+			}
+		}
+		if (!items.equals(bankItems))
+		{
+			bankItems = Map.copyOf(items);
+			listeners.forEach(Runnable::run);
+		}
 	}
 
 	/** Growing, with time still to go (a crop whose time has passed is "ready, probably", so it counts as ready). */

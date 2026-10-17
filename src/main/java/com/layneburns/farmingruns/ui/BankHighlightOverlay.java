@@ -8,6 +8,7 @@ package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.inventory.RunCheckService;
 import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -15,10 +16,12 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.widgets.WidgetItem;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.WidgetItemOverlay;
 
 /**
- * Outlines, in the bank, the items the inventory check says to withdraw (SPEC §2.4), so they're easy to find.
+ * In the bank, outlines the items the inventory check says to take out (SPEC §2.4), with how many in the bottom
+ * right corner, so they're easy to find and grab.
  */
 @Singleton
 public class BankHighlightOverlay extends WidgetItemOverlay
@@ -39,13 +42,24 @@ public class BankHighlightOverlay extends WidgetItemOverlay
 	@Override
 	public void renderItemOverlay(Graphics2D graphics, int itemId, WidgetItem widgetItem)
 	{
-		// A quantity of 0 is a bank placeholder: nothing there to withdraw.
-		if (widgetItem.getQuantity() <= 0 || !checks.toWithdraw().contains(itemId))
+		Integer take = checks.bankItems().get(itemId);
+		// A quantity of 0 is a bank placeholder: nothing there to take.
+		if (take == null || widgetItem.getQuantity() <= 0)
 		{
 			return;
 		}
 		Rectangle bounds = widgetItem.getCanvasBounds();
 		BufferedImage outline = itemManager.getItemOutline(itemId, widgetItem.getQuantity(), OUTLINE);
 		graphics.drawImage(outline, (int) bounds.getX(), (int) bounds.getY(), null);
+
+		String text = "×" + take;
+		graphics.setFont(FontManager.getRunescapeSmallFont());
+		FontMetrics metrics = graphics.getFontMetrics();
+		int x = (int) bounds.getMaxX() - metrics.stringWidth(text);
+		int y = (int) bounds.getMaxY();
+		graphics.setColor(Color.BLACK);
+		graphics.drawString(text, x + 1, y + 1);
+		graphics.setColor(OUTLINE);
+		graphics.drawString(text, x, y);
 	}
 }

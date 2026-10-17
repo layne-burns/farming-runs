@@ -73,6 +73,7 @@ public class RunTab extends TabPanel
 	private final RunCheckService checks;
 	private final RunSession session;
 	private final ItemManager itemManager;
+	private final BankRunTab bankRunTab;
 
 	private final FitWidthPanel content = new FitWidthPanel();
 	/** Goals and presets ticked (see PresetsPanel's keys), in the order ticked: the first one's compost wins. */
@@ -83,7 +84,7 @@ public class RunTab extends TabPanel
 	@Inject
 	RunTab(GameData data, SetupStore setups, RunPlanService planner, UnlockService unlocks, ItemStore items,
 		PlayerInfo player, ContractService contract, RunCheckService checks, RunSession session, PatchStates states,
-		ItemManager itemManager)
+		ItemManager itemManager, BankRunTab bankRunTab)
 	{
 		this.data = data;
 		this.setups = setups;
@@ -94,6 +95,7 @@ public class RunTab extends TabPanel
 		this.checks = checks;
 		this.session = session;
 		this.itemManager = itemManager;
+		this.bankRunTab = bankRunTab;
 		add(scrollPane(content), BorderLayout.CENTER);
 		// Redraw when the setup, your items, unlocks, level, contract, patch states or the run change.
 		setups.addListener(this::refresh);
@@ -173,7 +175,7 @@ public class RunTab extends TabPanel
 			content.add(skipList(setup));
 			content.add(summary(plan, growing));
 			SectionPanel inventory = section("Inventory");
-			CheckSection.fill(inventory, check, itemManager);
+			CheckSection.fill(inventory, check, itemManager, bankRunTab::show);
 			content.add(inventory);
 		}
 

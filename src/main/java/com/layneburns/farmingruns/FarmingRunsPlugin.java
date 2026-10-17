@@ -20,6 +20,7 @@ import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.RunePouchWatcher;
 import com.layneburns.farmingruns.state.SetupStore;
 import com.layneburns.farmingruns.ui.BankHighlightOverlay;
+import com.layneburns.farmingruns.ui.BankRunTab;
 import com.layneburns.farmingruns.ui.BankTab;
 import com.layneburns.farmingruns.ui.FarmingRunsPanel;
 import java.awt.image.BufferedImage;
@@ -32,7 +33,9 @@ import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.banktags.BankTagsPlugin;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -43,6 +46,7 @@ import net.runelite.client.util.ImageUtil;
  * the packages described in PLAN.md §2 (data, state, run, inventory, pathing, ui).
  */
 @Slf4j
+@PluginDependency(BankTagsPlugin.class)
 @PluginDescriptor(
 	name = "Farming Runs",
 	description = "Plans farming runs: seed log, unlocks, inventory checks, route ordering and Shortest Path guidance",
@@ -101,6 +105,9 @@ public class FarmingRunsPlugin extends Plugin
 	@Inject
 	private BankHighlightOverlay bankHighlightOverlay;
 
+	@Inject
+	private BankRunTab bankRunTab;
+
 	private NavigationButton navigationButton;
 
 	@Override
@@ -125,6 +132,8 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(contractService);
 		eventBus.register(setupStore);
 		eventBus.register(runePouchWatcher);
+		eventBus.register(bankRunTab);
+		bankRunTab.register();
 		itemStore.loadRemembered();
 		locationPrefs.load();
 		setupStore.load();
@@ -146,6 +155,8 @@ public class FarmingRunsPlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
+		bankRunTab.unregister();
+		eventBus.unregister(bankRunTab);
 		eventBus.unregister(runePouchWatcher);
 		eventBus.unregister(setupStore);
 		eventBus.unregister(contractService);

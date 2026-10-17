@@ -10,11 +10,16 @@ import com.layneburns.farmingruns.inventory.InventoryChecker.Line;
 import com.layneburns.farmingruns.inventory.InventoryChecker.Status;
 import com.layneburns.farmingruns.inventory.Requirement;
 import com.layneburns.farmingruns.inventory.RunCheckService.Check;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import net.runelite.client.game.ItemManager;
 
 /**
@@ -27,7 +32,8 @@ final class CheckSection
 	{
 	}
 
-	static void fill(SectionPanel section, Check check, ItemManager itemManager)
+	/** @param showInBank opens the bank tab of things to take out */
+	static void fill(SectionPanel section, Check check, ItemManager itemManager, Runnable showInBank)
 	{
 		List<Line> lines = check.getLines();
 		if (lines.isEmpty())
@@ -36,6 +42,18 @@ final class CheckSection
 			return;
 		}
 		section.addRow(summary(lines));
+		if (lines.stream().anyMatch(l -> l.fromBank() > 0))
+		{
+			JButton show = TabPanel.button("Show in bank", "Opens a bank tab with just what to take out, each with"
+				+ " how many (needs the Bank Tags plugin). If the bank is closed, it opens when you next open the bank.");
+			show.addActionListener(e -> showInBank.run());
+			JPanel row = new JPanel(new BorderLayout());
+			row.setBackground(Palette.BACKGROUND);
+			row.add(show, BorderLayout.CENTER);
+			row.setAlignmentX(Component.LEFT_ALIGNMENT);
+			row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
+			section.addRow(row);
+		}
 		for (String note : check.getRequirements().getNotes())
 		{
 			JLabel label = TabPanel.text("⚠ " + note);
@@ -91,7 +109,7 @@ final class CheckSection
 		}
 		if (withdraw > 0)
 		{
-			text.append(text.length() > 0 ? " · " : "").append(withdraw).append(" to withdraw (highlighted in the bank)");
+			text.append(text.length() > 0 ? " · " : "").append(withdraw).append(" to withdraw");
 		}
 		JLabel label = TabPanel.text(text.toString());
 		label.setForeground(missing > 0 ? Palette.NONE : Palette.PARTIAL);
