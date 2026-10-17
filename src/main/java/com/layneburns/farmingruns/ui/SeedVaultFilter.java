@@ -7,6 +7,8 @@
 package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.inventory.RunCheckService;
+import com.layneburns.farmingruns.run.SeedPicker;
+import com.layneburns.farmingruns.state.ContractService;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -37,17 +39,22 @@ import net.runelite.client.eventbus.Subscribe;
 @Singleton
 public class SeedVaultFilter
 {
+	/** Room for the line between your contract seed and the rest. */
+	private static final int SEPARATOR_GAP = 10;
+
 	private final Client client;
 	private final ClientThread clientThread;
 	private final RunCheckService checks;
+	private final ContractService contracts;
 	private boolean on;
 	/** Widgets we changed, with their original x, y and hidden state, to put back. */
 	private final Map<Widget, int[]> original = new HashMap<>();
 	private int originalScrollHeight = -1;
 
 	@Inject
-	SeedVaultFilter(Client client, ClientThread clientThread, RunCheckService checks)
+	SeedVaultFilter(Client client, ClientThread clientThread, RunCheckService checks, ContractService contracts)
 	{
+		this.contracts = contracts;
 		this.client = client;
 		this.clientThread = clientThread;
 		this.checks = checks;
@@ -153,48 +160,74 @@ public class SeedVaultFilter
 		List<Integer> xs = new ArrayList<>(columns);
 		order.sort(Comparator.comparingInt((Integer i) -> items[i].getOriginalY()).thenComparingInt(i -> items[i].getOriginalX()));
 
-		int shown = 0;
+		// Your farming contract's seed gets a row of its own, then a line, then the rest of the run's seeds.
+		SeedPicker.Contract contract = contracts.unplanted();
+		int contractSeed = contract == null ? -1 : contract.getSeed().getItemId();
+		List<Integer> first = new ArrayList<>();
+		List<Integer> rest = new ArrayList<>();
 		for (int i : order)
 		{
 			Widget item = items[i];
-			Widget name = names.length == items.length ? names[i] : null;
 			if (wanted.contains(item.getItemId()) && item.getItemQuantity() > 0)
 			{
-				int x = xs.get(shown % xs.size());
-				int y = top + (shown / xs.size()) * rowHeight;
-				if (name != null)
-				{
-					move(name, x + name.getOriginalX() - item.getOriginalX(), y + name.getOriginalY() - item.getOriginalY(),
-						false);
-				}
-				move(item, x, y, false);
-				shown++;
+				(item.getItemId() == contractSeed ? first : rest).add(i);
 			}
 			else
 			{
 				hide(item);
-				if (name != null)
+				if (names.length == items.length)
 				{
-					hide(name);
+					hide(names[i]);
 				}
 			}
+		}
+		Widget[] lines = children(InterfaceID.SeedVault.CATEGORY_LINES);
+		for (Widget line : lines)
+		{
+			hide(line);
 		}
 		for (Widget heading : children(InterfaceID.SeedVault.CATEGORY_HEADERS))
 		{
 			hide(heading);
 		}
-		for (Widget line : children(InterfaceID.SeedVault.CATEGORY_LINES))
+		int y = place(first, items, names, xs, top, rowHeight);
+		if (!first.isEmpty() && !rest.isEmpty() && lines.length > 0)
 		{
-			hide(line);
+			// One of the vault's own heading lines, moved between the two groups.
+			move(lines[0], lines[0].getOriginalX(), y + SEPARATOR_GAP / 2, false);
+			y += SEPARATOR_GAP;
 		}
+		y = place(rest, items, names, xs, y, rowHeight);
+		int shown = first.size() + rest.size();
 		if (originalScrollHeight < 0)
 		{
 			originalScrollHeight = list.getScrollHeight();
 		}
 		list.setScrollY(0);
-		list.setScrollHeight(Math.max(list.getHeight(), top + ((shown + xs.size() - 1) / xs.size()) * rowHeight));
+		list.setScrollHeight(Math.max(list.getHeight(), y));
 		list.revalidateScroll();
 		log.debug("[farmrun] seed vault: showing {} of {} seeds", shown, order.size());
+	}
+
+	/** Lays items out in the grid from {@code y}, a row at a time; returns the y below the last row. */
+	private int place(List<Integer> which, Widget[] items, Widget[] names, List<Integer> xs, int y, int rowHeight)
+	{
+		int n = 0;
+		for (int i : which)
+		{
+			Widget item = items[i];
+			int x = xs.get(n % xs.size());
+			int rowY = y + (n / xs.size()) * rowHeight;
+			if (names.length == items.length)
+			{
+				Widget name = names[i];
+				move(name, x + name.getOriginalX() - item.getOriginalX(), rowY + name.getOriginalY() - item.getOriginalY(),
+					false);
+			}
+			move(item, x, rowY, false);
+			n++;
+		}
+		return y + ((n + xs.size() - 1) / xs.size()) * rowHeight;
 	}
 
 	/** Puts every widget we changed back as the vault drew it. */
