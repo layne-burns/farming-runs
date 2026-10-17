@@ -12,6 +12,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import com.google.gson.Gson;
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import net.runelite.api.gameval.ItemID;
@@ -40,6 +41,16 @@ public class DataIntegrityTest
 		{
 			assertFalse("no seeds for " + patch.getKind() + " (" + patch.getId() + ")",
 				data.seedsFor(patch.getKind()).isEmpty());
+		}
+	}
+
+	@Test
+	public void everyPatchKindIsInExactlyOneRunType()
+	{
+		for (Patch patch : data.patches())
+		{
+			long types = Arrays.stream(RunType.values()).filter(t -> t.covers(patch.getKind())).count();
+			assertEquals(patch.getKind() + " should be in one run type", 1, types);
 		}
 	}
 

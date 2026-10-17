@@ -7,11 +7,14 @@
 package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.data.RunType;
 import com.layneburns.farmingruns.state.LocationPrefs;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.UnlockService;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,8 +25,11 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -31,9 +37,10 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.ui.components.IconTextField;
 
 /**
- * Locations tab (SPEC §2.1): every farming location, whether you've unlocked it and why, the teleport it uses
- * (changeable), and an override for when the rules get it wrong. What to show is decided by
- * {@link LocationsViewBuilder}; this class draws it and passes your choices to {@link LocationPrefs}.
+ * Locations tab (SPEC §2.1): farming locations grouped by run type (choose which in the "Types" dropdown), with
+ * locked ones last. Open a location to see why it's locked or not, change its teleport, or override its unlock.
+ * What to show is decided by {@link LocationsViewBuilder}; this class draws it and passes your choices to
+ * {@link LocationPrefs}.
  */
 @Singleton
 public class LocationsTab extends TabPanel
@@ -45,9 +52,12 @@ public class LocationsTab extends TabPanel
 	private final ClientThread clientThread;
 
 	private final IconTextField search = new IconTextField();
+	private final JButton typesButton = button("Types", "Choose which run types to list");
+	private final List<JCheckBoxMenuItem> typeItems = new ArrayList<>();
+	private final Set<RunType> runTypes = EnumSet.allOf(RunType.class);
 	private final JLabel summary = new JLabel();
 	private final FitWidthPanel content = new FitWidthPanel();
-	/** Which locations are open, kept across redraws. */
+	/** Which locations are open, by section and location, kept across redraws. */
 	private final Set<String> expanded = new HashSet<>();
 	private final Map<String, Boolean> collapsed = new HashMap<>();
 	private final AtomicBoolean redrawQueued = new AtomicBoolean();
@@ -105,23 +115,83 @@ public class LocationsTab extends TabPanel
 		});
 		search.addClearListener(this::refresh);
 
+		JPopupMenu menu = typesMenu();
+		typesButton.addActionListener(e -> menu.show(typesButton, 0, typesButton.getHeight()));
+
+		JPanel searchRow = new JPanel(new BorderLayout(4, 0));
+		searchRow.setBackground(Palette.BACKGROUND);
+		searchRow.add(search, BorderLayout.CENTER);
+		searchRow.add(typesButton, BorderLayout.EAST);
+
 		JButton recheck = button("Recheck", "Read your quests, diaries and levels again (done automatically at login)");
 		recheck.addActionListener(e -> clientThread.invoke(player::refresh));
-
-		JPanel row = new JPanel(new BorderLayout(4, 0));
-		row.setBackground(Palette.BACKGROUND);
-		row.add(search, BorderLayout.CENTER);
-		row.add(recheck, BorderLayout.EAST);
-
 		summary.setForeground(Palette.SECONDARY_TEXT);
-		summary.setBorder(BorderFactory.createEmptyBorder(4, 0, 2, 0));
+		JPanel summaryRow = new JPanel(new BorderLayout(4, 0));
+		summaryRow.setBackground(Palette.BACKGROUND);
+		summaryRow.setBorder(BorderFactory.createEmptyBorder(4, 0, 2, 0));
+		summaryRow.add(summary, BorderLayout.CENTER);
+		summaryRow.add(recheck, BorderLayout.EAST);
 
 		JPanel top = new JPanel(new BorderLayout());
 		top.setBackground(Palette.BACKGROUND);
 		top.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 0));
-		top.add(row, BorderLayout.NORTH);
-		top.add(summary, BorderLayout.SOUTH);
+		top.add(searchRow, BorderLayout.NORTH);
+		top.add(summaryRow, BorderLayout.SOUTH);
 		return top;
+	}
+
+	/** "All", "None", then a tick box per run type; the menu stays open while ticking. */
+	private JPopupMenu typesMenu()
+	{
+		JPopupMenu menu = new JPopupMenu();
+		JMenuItem all = new JMenuItem("All");
+		all.addActionListener(e -> setAllTypes(true));
+		JMenuItem none = new JMenuItem("None");
+		none.addActionListener(e -> setAllTypes(false));
+		menu.add(all);
+		menu.add(none);
+		menu.addSeparator();
+		for (RunType type : RunType.values())
+		{
+			JCheckBoxMenuItem item = new JCheckBoxMenuItem(type.getTitle(), runTypes.contains(type));
+			item.putClientProperty("CheckBoxMenuItem.doNotCloseOnMouseClick", true);
+			item.addActionListener(e ->
+			{
+				if (item.isSelected())
+				{
+					runTypes.add(type);
+				}
+				else
+				{
+					runTypes.remove(type);
+				}
+				typesChanged();
+			});
+			typeItems.add(item);
+			menu.add(item);
+		}
+		return menu;
+	}
+
+	private void setAllTypes(boolean on)
+	{
+		if (on)
+		{
+			runTypes.addAll(EnumSet.allOf(RunType.class));
+		}
+		else
+		{
+			runTypes.clear();
+		}
+		typeItems.forEach(item -> item.setSelected(on));
+		typesChanged();
+	}
+
+	private void typesChanged()
+	{
+		int count = runTypes.size();
+		typesButton.setText(count == RunType.values().length ? "Types" : "Types (" + count + ")");
+		refresh();
 	}
 
 	private void redraw()
@@ -129,44 +199,45 @@ public class LocationsTab extends TabPanel
 		redrawQueued.set(false);
 		String query = search.getText().trim();
 		LocationsView view = LocationsViewBuilder.build(data, unlocks::status, unlocks::patchRuleStatus,
-			prefs::teleportFor, player.getFacts().spellbookName(), query);
+			prefs::teleportFor, player.getFacts().spellbookName(), query, Set.copyOf(runTypes));
 
 		summary.setText(view.getSummary());
 		content.removeAll();
-		addSection("Locked", view.getLocked(), !query.isEmpty());
-		addSection("Unlocked", view.getUnlocked(), !query.isEmpty());
-		if (view.getLocked().isEmpty() && view.getUnlocked().isEmpty())
+		for (LocationsView.Section section : view.getSections())
 		{
-			content.add(text("No location matches \"" + query + "\"."));
+			content.add(sectionPanel(section, !query.isEmpty()));
+		}
+		if (view.getSections().isEmpty())
+		{
+			content.add(text(runTypes.isEmpty() ? "No run types chosen: pick some under Types."
+				: "No location matches \"" + query + "\"."));
 		}
 		revalidate();
 		repaint();
 	}
 
-	private void addSection(String title, List<LocationsView.Entry> entries, boolean searching)
+	private SectionPanel sectionPanel(LocationsView.Section section, boolean searching)
 	{
-		if (entries.isEmpty())
-		{
-			return;
-		}
-		String heading = title + " (" + entries.size() + ")";
-		SectionPanel section = new SectionPanel(heading, !searching && collapsed.getOrDefault(title, false),
-			state -> collapsed.put(title, state));
-		for (LocationsView.Entry entry : entries)
+		String key = section.getKey();
+		SectionPanel panel = new SectionPanel(section.getTitle(), !searching && collapsed.getOrDefault(key, false),
+			state -> collapsed.put(key, state));
+		for (LocationsView.Entry entry : section.getEntries())
 		{
 			String id = entry.getId();
-			section.addRow(new LocationRow(entry, expanded.contains(id),
+			// Keyed by section too: opening Catherby under Herb leaves it closed under Allotment.
+			String openKey = key + "/" + id;
+			panel.addRow(new LocationRow(entry, expanded.contains(openKey),
 				() ->
 				{
-					if (!expanded.remove(id))
+					if (!expanded.remove(openKey))
 					{
-						expanded.add(id);
+						expanded.add(openKey);
 					}
 					refresh();
 				},
 				teleportId -> prefs.setTeleport(id, teleportId),
 				unlocked -> prefs.setOverride(id, unlocked)));
 		}
-		content.add(section);
+		return panel;
 	}
 }

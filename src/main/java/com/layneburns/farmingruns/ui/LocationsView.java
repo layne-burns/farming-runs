@@ -19,9 +19,18 @@ public class LocationsView
 {
 	/** E.g. "41 of 43 locations unlocked", or a prompt to log in. */
 	String summary;
-	/** Locked locations first (they're the ones to look at), then the rest; each list sorted by name. */
-	List<Entry> locked;
-	List<Entry> unlocked;
+	/** One section per chosen run type, then "Locked" last; empty sections are left out. */
+	List<Section> sections;
+
+	@Value
+	public static class Section
+	{
+		/** E.g. "Herb (9)" or "Locked (1)". */
+		String title;
+		/** Stays the same when the count changes: remembers collapsed/opened state across redraws. */
+		String key;
+		List<Entry> entries;
+	}
 
 	@Value
 	public static class Entry

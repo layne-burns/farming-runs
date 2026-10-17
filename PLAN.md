@@ -40,6 +40,8 @@ vendor/timetracking/     RuneLite's PatchImplementation, Produce, PatchState, Cr
                          them for a given RuneLite tag, so updates are a script run plus a diff.
 
 data/                    (pure) loads resources/*.json into immutable records, checks references
+  RunType                the run types (Herb, Allotment, ..., Special trees, Special), each a set of patch kinds;
+                         groups the Locations tab and the run setup
   GameData               facade: getLocation(id), patchesAt(loc), seed(itemId), teleport(id)…
   DataLoader             Gson loading + validation errors that name the file and entry
   Location, PatchDef, SeedDef, PaymentDef, TeleportDef, UnlockRule, ToolDef, CostTable   (records)
@@ -97,7 +99,7 @@ ui/
   DarkScrollBarUI        RuneLite's scroll bar with a dark grey handle
   SectionPanel, ItemRow, TabPanel, FitWidthPanel   shared look: collapsible sections with kind sub-headings,
                          two-line icon rows, dark background, lists that never scroll sideways
-  LocationsTab           search + Recheck; Locked / Unlocked sections of LocationRows
+  LocationsTab           search, Types dropdown (multi-select), Recheck; a section per run type, Locked last
   LocationsView, LocationsViewBuilder  (pure) per location: status text, patch kinds, teleport choices + spellbook
                          warning, per-patch status, note, wiki hints
   LocationRow            a location: click to open teleport choice, unlock override, patches
