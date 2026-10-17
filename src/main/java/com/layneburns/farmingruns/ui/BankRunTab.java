@@ -63,14 +63,14 @@ public class BankRunTab
 
 	public void unregister()
 	{
-		clientThread.invoke(this::close);
+		clientThread.invokeLater(this::close);
 		tagManager.unregisterTag(TAG);
 	}
 
 	/** Opens the tab now if the bank is open, else when it next opens. Safe from any thread. */
 	public void show()
 	{
-		clientThread.invoke(() ->
+		clientThread.invokeLater(() ->
 		{
 			if (isBankOpen())
 			{
@@ -83,11 +83,17 @@ public class BankRunTab
 		});
 	}
 
-	/** From the bank search's button: closes the search, then opens the tab. Client thread. */
+	/**
+	 * From the bank search's button: closes the search, then opens the tab. The click arrives inside a game script,
+	 * and the bank can't be redrawn until that finishes, so this waits for it.
+	 */
 	void openFromSearch()
 	{
-		bankSearch.reset(true);
-		open();
+		clientThread.invokeLater(() ->
+		{
+			bankSearch.reset(true);
+			clientThread.invokeLater(this::open);
+		});
 	}
 
 	@Subscribe
@@ -106,7 +112,8 @@ public class BankRunTab
 	{
 		if (event.getGroupId() == InterfaceID.BANKMAIN)
 		{
-			close();
+			// The bank closes inside a game script; redrawing it from here would crash the client.
+			clientThread.invokeLater(this::close);
 		}
 	}
 
@@ -116,7 +123,7 @@ public class BankRunTab
 		bankTags.openBankTag(TAG, OPTIONS);
 	}
 
-	/** Back to your normal bank, if ours is the open tab. Client thread. */
+	/** Back to your normal bank, if ours is the open tab. Client thread, never from inside a game script. */
 	private void close()
 	{
 		if (TAG.equals(bankTags.getActiveTag()))
@@ -128,7 +135,7 @@ public class BankRunTab
 	/** Redraws the bank when what's needed changes, so items you now carry enough of drop out of the tab. */
 	private void relayout()
 	{
-		clientThread.invoke(() ->
+		clientThread.invokeLater(() ->
 		{
 			if (isBankOpen() && TAG.equals(bankTags.getActiveTag()))
 			{
