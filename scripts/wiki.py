@@ -52,10 +52,18 @@ def page_texts(titles):
     return texts
 
 
-def first_infobox_id(text: str):
-    """The first id in an Infobox Item (a page's main version), or None."""
-    ids = re.findall(r"^\|id1?\s*=\s*(\d+)", text, re.M)
-    return int(ids[0]) if ids else None
+def infobox_id(text: str, name: str):
+    """The id of the item called `name` on its page: the version whose nameN matches (so "Tomatoes(5)" is the
+    full basket, not the page's first version, Tomatoes(1)), else the page's only or first id. None if none."""
+    box = re.search(r"\{\{Infobox Item\n(.*?)\n\}\}", text, re.S)
+    text = box.group(1) if box else text
+    names = dict(re.findall(r"^\|name(\d+)\s*=\s*(.+?)\s*$", text, re.M))
+    ids = dict(re.findall(r"^\|id(\d*)\s*=\s*(\d+)", text, re.M))
+    for number, version_name in names.items():
+        if version_name.lower() == name.lower() and number in ids:
+            return int(ids[number])
+    first = ids.get("") or ids.get("1")
+    return int(first) if first else None
 
 
 def infobox_ids(text: str, exclude_versions=()):

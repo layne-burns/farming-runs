@@ -93,6 +93,15 @@ public class DataIntegrityTest
 	}
 
 	@Test
+	public void containerPaymentsAreFullBasketsAndSacks()
+	{
+		// The wiki lists every fill level on one page; payment must be the full one, not Tomatoes(1).
+		assertEquals(ItemID.BASKET_TOMATO_5, data.seedByItem(ItemID.ACORN).getPayment().get(0).getItemId());
+		assertEquals(ItemID.SACK_POTATO_10, data.seedByItem(ItemID.ONION_SEED).getPayment().get(0).getItemId());
+		assertEquals(ItemID.BASKET_APPLE_5, data.seedByItem(ItemID.WILLOW_SEED).getPayment().get(0).getItemId());
+	}
+
+	@Test
 	public void knownPatches()
 	{
 		Patch catherbyHerb = data.patch("catherby.herb");

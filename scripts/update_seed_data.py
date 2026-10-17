@@ -12,7 +12,7 @@ import json
 import re
 from pathlib import Path
 
-from wiki import first_infobox_id, page_texts, raw_page
+from wiki import infobox_id, page_texts, raw_page
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "src/main/resources/com/layneburns/farmingruns/seeds.json"
@@ -41,7 +41,8 @@ AMOUNT = re.compile(r"(?:×|\{\{x\}\}|(?<=\]\])\s*x|(?<=\]\]s)\s*x)\s*(\d+)")
 def item_ids(names):
     """Item id (the main version's) of each named item page."""
     texts = page_texts(names)
-    return {name: first_infobox_id(text) for name, text in texts.items() if first_infobox_id(text)}
+    ids = {name: infobox_id(text, name) for name, text in texts.items()}
+    return {name: item_id for name, item_id in ids.items() if item_id}
 
 
 def sapling_name(seed: str) -> str:

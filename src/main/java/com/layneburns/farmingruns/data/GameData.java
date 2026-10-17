@@ -9,8 +9,10 @@ package com.layneburns.farmingruns.data;
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 
@@ -34,6 +36,7 @@ public final class GameData
 	/** The RuneLite release the patch table was generated from. */
 	@Getter
 	private final String runeliteTag;
+	private final Set<Integer> trackedItemIds;
 
 	GameData(Map<String, Location> locations, List<Seed> seeds, Map<String, Teleport> teleports,
 		Map<String, UnlockRule> rules, CostTable costs, ItemCatalog items, String runeliteTag)
@@ -58,6 +61,7 @@ public final class GameData
 		this.costs = costs;
 		this.items = items;
 		this.runeliteTag = runeliteTag;
+		this.trackedItemIds = collectTracked(this.seeds, teleports, items);
 	}
 
 	public Collection<Location> locations()
@@ -113,6 +117,39 @@ public final class GameData
 	public UnlockRule rule(String id)
 	{
 		return require(rules, id, "unlock rule");
+	}
+
+	/**
+	 * Every item a farming run cares about: seeds, saplings, payments, tools, compost, outfit, teleport items and
+	 * runes. Only these are recorded from the bank and other containers.
+	 */
+	public Set<Integer> trackedItemIds()
+	{
+		return trackedItemIds;
+	}
+
+	private static Set<Integer> collectTracked(List<Seed> seeds, Map<String, Teleport> teleports, ItemCatalog items)
+	{
+		Set<Integer> ids = new HashSet<>();
+		for (Seed seed : seeds)
+		{
+			ids.add(seed.getItemId());
+			if (seed.isPlantedAsSapling())
+			{
+				ids.add(seed.getSaplingItemId());
+			}
+			seed.getPayment().forEach(p -> ids.add(p.getItemId()));
+		}
+		for (Teleport teleport : teleports.values())
+		{
+			ids.addAll(teleport.getItemIds());
+		}
+		for (String group : items.groupNames())
+		{
+			ids.addAll(items.group(group));
+		}
+		ids.addAll(items.runes().values());
+		return Set.copyOf(ids);
 	}
 
 	private static <K, V> V require(Map<K, V> map, K key, String what)

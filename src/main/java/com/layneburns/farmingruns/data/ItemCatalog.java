@@ -39,4 +39,21 @@ public final class ItemCatalog
 	{
 		return runes;
 	}
+
+	/**
+	 * A readable name from the group an item belongs to ("magic_secateurs" becomes "Magic secateurs"), or null if
+	 * it's in no group. Lets the panel name tools without asking the game client.
+	 */
+	public String displayName(int itemId)
+	{
+		for (Map.Entry<String, Set<Integer>> group : groups.entrySet())
+		{
+			if (group.getValue().contains(itemId))
+			{
+				String words = group.getKey().replace('_', ' ');
+				return Character.toUpperCase(words.charAt(0)) + words.substring(1);
+			}
+		}
+		return null;
+	}
 }

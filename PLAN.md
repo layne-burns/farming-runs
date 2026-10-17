@@ -47,8 +47,14 @@ data/                    (pure) loads resources/*.json into immutable records, c
 state/                   the only package that reads the client (varbits, containers, config)
   PlayerInfo             levels, spellbook, diary tiers, quests → simple snapshot object
   UnlockService          evaluates UnlockRule per location + manual overrides (profile config)
-  SeedLog                bank & vault snapshots (saved to RS profile), live inventory & seed box
-  Leprechaun             live tool/compost counts from FARMING_TOOLS_* varbits
+  ItemSource             (pure) bank, seed vault, seed box (remembered), inventory, worn, leprechaun (live)
+  StorageSnapshot        (pure) tracked item counts in one place + when they were seen
+  ItemLedger             (pure, immutable) counts across all sources
+  ItemStore              holds the current ledger; saves bank/vault/seed box to the RS profile; tells listeners
+  ContainerWatcher       item containers → snapshots (noted items and placeholders made plain)
+  LeprechaunDecoder      (pure) FARMING_TOOLS_* varbits → counts, using the game's own client-script arithmetic
+  LeprechaunWatcher      re-decodes when those varbits change
+  BufferSettings         (pure) seeds kept back per type: allotment / sapling / other
   PatchStates            reads Time Tracking's config + vendored decode → PatchStatus (ready / ready in / dead…)
   ReadyPredictor         (pure) next-ready-time maths, adapted from Time Tracking's prediction
   ContractService        current contract → seed + Farming Guild patch, if not yet planted
@@ -74,7 +80,10 @@ pathing/
 ui/
   FarmingRunsPanel       side panel with tabs: Run, Bank, Locations
   RunTab                 setup form → Start; during a run, the ordered stop list with skip/go-next
-  BankTab                seed log (total / spare / where), run supplies, leprechaun section
+  BankTab                draws BankView; redraws on item or buffer changes
+  BankView, BankViewBuilder  (pure) what the Bank tab lists: seeds by kind (total / spare / where), compost,
+                         payments (and what they protect), teleport items, leprechaun
+  SectionPanel, ItemRow, TabPanel   shared look: collapsible sections, icon rows, dark background
   LocationsTab           unlock state + reason, override box, teleport dropdown, patch ready times
   NotReadyDialog, StartAnywayDialog
   PatchOutlineOverlay    outlines to-do patches at the current stop (match by varbit)
@@ -98,7 +107,7 @@ Each external dependency has exactly one home: SP is `pathing`; game state is `s
 | `unlocks.json` | Hand | Named rules: quest (finished or started), varbit (diary tiers), skill level | Edited directly |
 | `costs.tsv` | Hand | `arrive` ticks per location, plus `link` ticks between neighbours (walks, spirit-tree hops) | Edited directly; tuned in phase 9 |
 
-The tool leprechaun's varbit encoding (how each `FARMING_TOOLS_*` value maps to a count) moved to phase 2, where it can be checked in game against the leprechaun's Exchange screen.
+The tool leprechaun needs no data file: its encoding is the game's own `farming_tools_getstored` client script (runelite/cs2-scripts), coded in `LeprechaunDecoder`.
 
 `DataLoader` checks every reference between files when the plugin starts, so a bad edit stops the plugin with a message naming the file and entry. `DataIntegrityTest` loads the real files and adds cross-file checks: every patch kind has seeds, no two patches share a Time Tracking key, every patch has a tile, saplings map back to their seeds, and spot checks against known in-game values.
 
@@ -107,8 +116,8 @@ The tool leprechaun's varbit encoding (how each `FARMING_TOOLS_*` value maps to 
 | # | Phase | Delivers | Unit tests | In-game check |
 |---|---|---|---|---|
 | 0 | **Scaffold** ✅ | `git init`, remote, build, checkstyle, launcher; an empty plugin with a three-tab panel; vendored timetracking plus its sync script; README | The build compiles; the plugin loads in the test harness | The panel appears with three empty tabs |
-| 1 | **Data** | All the §3 files, their scripts and `DataLoader` | `DataIntegrityTest`, `CostTableTest` | The plugin starts (data loads); the tabs are dark |
-| 2 | **Seed log and leprechaun** | `SeedLog`, `Leprechaun`, `BankTab`, profile persistence | Snapshot merge, buffer arithmetic | Counts match the bank, vault and seed box after opening each, and the leprechaun matches its Exchange screen. **Verify:** is the seed-box container sent at login, or only once opened? |
+| 1 | **Data** ✅ | All the §3 files, their scripts and `DataLoader` | `DataIntegrityTest`, `CostTableTest` | The plugin starts (data loads); the tabs are dark |
+| 2 | **Seed log and leprechaun** | `ItemStore`, `ContainerWatcher`, `LeprechaunWatcher`, `BankTab` (via the pure `BankViewBuilder`), buffer settings, profile persistence | `LeprechaunDecoderTest`, `ItemLedgerTest`, `BankViewBuilderTest` | Counts match the bank, vault and seed box after opening each, and the leprechaun matches its Exchange screen. **Verify:** is the seed-box container sent at login or only once opened? What do bottomless bucket types 2–4 mean (log line `[leprechaun]`)? |
 | 3 | **Unlocks** | `PlayerInfo`, `UnlockService`, `LocationsTab` with overrides and teleport dropdown | Rule evaluation on fake `PlayerInfo` | Prifddinas is locked (SotE) and everything else unlocked; overrides survive a relog |
 | 4 | **Patch states** | `PatchStates`, `ReadyPredictor`, ready times in `LocationsTab` | Decode and predict on recorded Time Tracking values | Ready times match Time Tracking's own Farming tab |
 | 5 | **Run setup** | `RunSetup`, `PresetStore`, `SeedPicker`, `ContractService`, `RunTab` setup form | Picker: best spare seed, buffers 9/2/3, mixing, contract override, manual mode | Auto picks look right; save, load and relog a preset |

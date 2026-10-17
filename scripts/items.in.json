@@ -8,6 +8,7 @@
 		"magic_secateurs": [{"page": "Magic secateurs"}],
 		"gardening_trowel": [{"page": "Gardening trowel"}],
 		"plant_cure": [{"page": "Plant cure"}],
+		"bucket": [{"page": "Bucket"}],
 		"axe": [{"page": "Bronze axe"}, {"page": "Iron axe"}, {"page": "Steel axe"}, {"page": "Black axe"}, {"page": "Mithril axe"}, {"page": "Adamant axe"}, {"page": "Rune axe"}, {"page": "Dragon axe"}, {"page": "Crystal axe"}, {"page": "Infernal axe"}, {"page": "3rd age axe"}],
 		"compost": [{"page": "Compost"}],
 		"supercompost": [{"page": "Supercompost"}],

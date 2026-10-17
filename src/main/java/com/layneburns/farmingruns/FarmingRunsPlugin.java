@@ -10,12 +10,20 @@ import com.google.gson.Gson;
 import com.google.inject.Provides;
 import com.layneburns.farmingruns.data.DataLoader;
 import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.state.ContainerWatcher;
+import com.layneburns.farmingruns.state.ItemStore;
+import com.layneburns.farmingruns.state.LeprechaunWatcher;
+import com.layneburns.farmingruns.ui.BankTab;
 import com.layneburns.farmingruns.ui.FarmingRunsPanel;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.eventbus.EventBus;
+import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
@@ -38,10 +46,28 @@ public class FarmingRunsPlugin extends Plugin
 	private ClientToolbar clientToolbar;
 
 	@Inject
-	private FarmingRunsPanel panel;
+	private ClientThread clientThread;
+
+	@Inject
+	private EventBus eventBus;
 
 	@Inject
 	private GameData gameData;
+
+	@Inject
+	private FarmingRunsPanel panel;
+
+	@Inject
+	private BankTab bankTab;
+
+	@Inject
+	private ItemStore itemStore;
+
+	@Inject
+	private ContainerWatcher containerWatcher;
+
+	@Inject
+	private LeprechaunWatcher leprechaunWatcher;
 
 	private NavigationButton navigationButton;
 
@@ -56,16 +82,41 @@ public class FarmingRunsPlugin extends Plugin
 			.panel(panel)
 			.build();
 		clientToolbar.addNavigation(navigationButton);
+
+		eventBus.register(itemStore);
+		eventBus.register(containerWatcher);
+		eventBus.register(leprechaunWatcher);
+		itemStore.loadRemembered();
+		// If the plugin starts while logged in, read what the client already has.
+		clientThread.invokeLater(() ->
+		{
+			containerWatcher.readCurrent();
+			leprechaunWatcher.refresh();
+		});
+
 		log.debug("[farmrun] started: {} locations, {} patches, {} seeds (patch table from {})",
-			gameData.locations().size(), gameData.patches().size(), gameData.seeds().size(), gameData.getRuneliteTag());
+			gameData.locations().size(), gameData.patches().size(), gameData.seeds().size(),
+			gameData.getRuneliteTag());
 	}
 
 	@Override
 	protected void shutDown()
 	{
+		eventBus.unregister(leprechaunWatcher);
+		eventBus.unregister(containerWatcher);
+		eventBus.unregister(itemStore);
 		clientToolbar.removeNavigation(navigationButton);
 		navigationButton = null;
 		log.debug("[farmrun] stopped");
+	}
+
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event)
+	{
+		if (FarmingRunsConfig.GROUP.equals(event.getGroup()))
+		{
+			bankTab.refresh();
+		}
 	}
 
 	/** The game data, loaded and checked once. A broken data file stops the plugin here with a clear message. */
