@@ -61,9 +61,13 @@ public class BankViewBuilderTest
 	{
 		ItemLedger ledger = ItemLedger.EMPTY.with(ItemSource.BANK,
 			new StorageSnapshot(Map.of(ItemID.PLANTPOT_MAGIC_TREE_SAPLING, 3, ItemID.MAGIC_TREE_SEED, 5), NOW));
-		BankView.Row magic = row(build(ledger).getSections(), "Trees", "Tree", "Magic seed");
-		assertEquals("3", magic.getValue());
-		assertEquals("saplings · 1 spare · 5 seeds", magic.getDetail());
+		List<BankView.Section> sections = build(ledger).getSections();
+		BankView.Row saplings = row(sections, "Trees", "Tree saplings", "Magic sapling");
+		assertEquals("3", saplings.getValue());
+		assertEquals("1 spare", saplings.getDetail());
+		BankView.Row seeds = row(sections, "Trees", "Tree seeds", "Magic seed");
+		assertEquals("5", seeds.getValue());
+		assertEquals(null, seeds.getDetail());
 	}
 
 	@Test
@@ -122,7 +126,7 @@ public class BankViewBuilderTest
 		// A kind name finds every seed of that kind, and nothing else.
 		List<BankView.Section> fruit = view.search("fruit");
 		assertEquals(1, fruit.size());
-		assertEquals("Fruit tree", fruit.get(0).getGroups().get(0).getTitle());
+		assertEquals("Fruit tree saplings", fruit.get(0).getGroups().get(0).getTitle());
 		assertEquals(1, fruit.get(0).getGroups().get(0).getRows().size());
 
 		// Every word must match.

@@ -8,6 +8,7 @@ package com.layneburns.farmingruns.data;
 
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
 import java.util.List;
+import javax.annotation.Nullable;
 import lombok.Value;
 
 /** A seed: the kind of patch it goes in, its level, how many go in a patch, and the gardener's payment. */
@@ -25,6 +26,9 @@ public class Seed
 	int perPatch;
 	/** For trees: the sapling actually planted, else {@link #NO_SAPLING}. */
 	int saplingItemId;
+	/** For trees: the sapling's name, e.g. "Apple sapling"; null for seeds planted directly. */
+	@Nullable
+	String saplingName;
 	/** The gardener's protection payment; empty when the crop can't be protected. */
 	List<ItemAmount> payment;
 

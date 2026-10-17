@@ -21,8 +21,10 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import net.runelite.api.gameval.ItemID;
 
 /**
@@ -90,13 +92,18 @@ public final class BankViewBuilder
 			List<BankView.Group> groups = new ArrayList<>();
 			for (PatchImplementation kind : kinds)
 			{
-				List<BankView.Row> rows = data.seedsFor(kind).stream()
-					.map(seed -> seedRow(seed, ledger, buffers))
-					.filter(row -> row != null)
-					.collect(Collectors.toList());
-				if (!rows.isEmpty())
+				List<Seed> seeds = data.seedsFor(kind);
+				if (seeds.stream().anyMatch(Seed::isPlantedAsSapling))
 				{
-					groups.add(new BankView.Group(kindName(kind), rows));
+					// Trees: saplings (what gets planted) and seeds (still to be potted) are listed apart.
+					addGroup(groups, kindName(kind) + " saplings", seeds.stream()
+						.map(seed -> saplingRow(seed, ledger, buffers)));
+					addGroup(groups, kindName(kind) + " seeds", seeds.stream()
+						.map(seed -> treeSeedRow(seed, ledger)));
+				}
+				else
+				{
+					addGroup(groups, kindName(kind), seeds.stream().map(seed -> seedRow(seed, ledger, buffers)));
 				}
 			}
 			sections.add(new BankView.Section(BankView.Page.SEEDS, title, groups, null));
@@ -104,29 +111,38 @@ public final class BankViewBuilder
 		return sections;
 	}
 
-	/** One seed's row, or null if you have none of it. */
+	private static void addGroup(List<BankView.Group> groups, String title, Stream<BankView.Row> rows)
+	{
+		List<BankView.Row> kept = rows.filter(Objects::nonNull).collect(Collectors.toList());
+		if (!kept.isEmpty())
+		{
+			groups.add(new BankView.Group(title, kept));
+		}
+	}
+
+	/** A seed planted directly (herbs, allotments...), or null if you have none. */
 	private static BankView.Row seedRow(Seed seed, ItemLedger ledger, BufferSettings buffers)
 	{
 		int seeds = count(ledger, seed.getItemId(), SEED_SOURCES);
-		if (!seed.isPlantedAsSapling())
-		{
-			return seeds == 0 ? null : new BankView.Row(seed.getItemId(), seed.getName(), String.valueOf(seeds),
-				buffers.spare(seed, seeds) + " spare", where(ledger, seed.getItemId(), SEED_SOURCES));
-		}
-		// Trees: saplings are what gets planted, so they're the main count.
+		return seeds == 0 ? null : new BankView.Row(seed.getItemId(), seed.getName(), String.valueOf(seeds),
+			buffers.spare(seed, seeds) + " spare", where(ledger, seed.getItemId(), SEED_SOURCES));
+	}
+
+	/** A tree's saplings, with the sapling buffer applied, or null if you have none. */
+	private static BankView.Row saplingRow(Seed seed, ItemLedger ledger, BufferSettings buffers)
+	{
 		int saplings = count(ledger, seed.getSaplingItemId(), SEED_SOURCES);
-		if (seeds + saplings == 0)
-		{
-			return null;
-		}
-		String detail = "saplings · " + buffers.spare(seed, saplings) + " spare";
-		if (seeds > 0)
-		{
-			detail += " · " + seeds + " seeds";
-		}
-		return new BankView.Row(saplings > 0 ? seed.getSaplingItemId() : seed.getItemId(), seed.getName(),
-			String.valueOf(saplings), detail, "Saplings: " + where(ledger, seed.getSaplingItemId(), SEED_SOURCES)
-				+ " · Seeds: " + where(ledger, seed.getItemId(), SEED_SOURCES));
+		return saplings == 0 ? null : new BankView.Row(seed.getSaplingItemId(), seed.getSaplingName(),
+			String.valueOf(saplings), buffers.spare(seed, saplings) + " spare",
+			where(ledger, seed.getSaplingItemId(), SEED_SOURCES));
+	}
+
+	/** A tree's unpotted seeds (no buffer: the buffer applies to saplings), or null if you have none. */
+	private static BankView.Row treeSeedRow(Seed seed, ItemLedger ledger)
+	{
+		int seeds = count(ledger, seed.getItemId(), SEED_SOURCES);
+		return seeds == 0 ? null : new BankView.Row(seed.getItemId(), seed.getName(), String.valueOf(seeds), null,
+			where(ledger, seed.getItemId(), SEED_SOURCES));
 	}
 
 	// ------------------------------------------------------------------ supplies

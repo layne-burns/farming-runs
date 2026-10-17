@@ -153,7 +153,7 @@ public final class DataLoader
 			}
 			int sapling = raw.sapling == null ? Seed.NO_SAPLING : requireId(raw.sapling.itemId, where + " sapling");
 			seeds.add(new Seed(raw.name, requireId(raw.itemId, where), kind(raw.kind, where), raw.level,
-				raw.perPatch, sapling, List.copyOf(payment)));
+				raw.perPatch, sapling, raw.sapling == null ? null : raw.sapling.name, List.copyOf(payment)));
 		}
 		return seeds;
 	}
