@@ -17,7 +17,7 @@ import re
 import sys
 from pathlib import Path
 
-from wiki import fetch, raw_page
+from wiki import clean_wikitext, fetch, raw_page
 
 DEFAULT_TAG = "runelite-parent-1.13.2"
 FARMING_WORLD = ("https://raw.githubusercontent.com/runelite/runelite/{tag}/runelite-client/src/main/java/"
@@ -116,15 +116,6 @@ def parse_map(args: str):
         x = round(sum(p[0] for p in points) / len(points))
         y = round(sum(p[1] for p in points) / len(points))
     return {"x": x, "y": y, "plane": plane}, group
-
-
-def clean_wikitext(text: str) -> str:
-    text = re.sub(r"\{\{Fairycode\|(\w+)\}\}", lambda m: m.group(1).upper(), text, flags=re.I)
-    text = re.sub(r"\{\{NoCoins\|([^}]*)\}\}", r"\1", text)
-    text = re.sub(r"\[\[(?:[^|\]]*\|)?([^\]]*)\]\]", r"\1", text)
-    text = re.sub(r"\{\{[^{}]*\}\}", "", text)
-    text = re.sub(r"<[^>]+>|''+", "", text)
-    return " ".join(text.split())
 
 
 def parse_wiki_rows(page: str, text: str):

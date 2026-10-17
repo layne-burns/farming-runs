@@ -103,7 +103,8 @@ ui/
   LocationsView, LocationsViewBuilder  (pure) per location: status text, patch kinds, teleport choices + spellbook
                          warning, per-patch status, note, wiki hints
   LocationRow            a location: click to open its teleports, unlock override, patches
-  TeleportListEditor     a location's ranked teleports: up / down / remove / add / reset
+  TeleportListEditor     a location's ranked teleports: up / down / remove / reset, and "Add a teleport" as a
+                         menu: group → method → destination (fairy rings split by first letter)
   LocationsContext       your situation (unlock answers, teleport order, spellbook) passed to the view builder
   NotReadyDialog, StartAnywayDialog
   PatchOutlineOverlay    outlines to-do patches at the current stop (match by varbit)
@@ -120,9 +121,9 @@ Each external dependency has exactly one home: SP is `pathing`; game state is `s
 | File | Kind | Contents | Made by |
 |---|---|---|---|
 | `patch_locations.json` | Generated | 43 locations and 99 patches: region, varbit and gardener names (from RuneLite's `FarmingWorld`), plus each patch's map tile and the wiki's teleport hints | `scripts/generate_patch_locations.py` (RuneLite tag + wiki *&lt;kind&gt; patch/Patches* tables) |
-| `location_settings.json` | Hand | Per location: default teleport, unlock rule, per-patch unlock rules (Farming Guild tiers, the Harmony herb patch), note | Edited directly |
+| `location_settings.json` | Hand | Per location: teleports in order of preference as `method` or `method:destination` (e.g. `skills_necklace:fishing_guild`, `fairy_ring:cir`), unlock rule, per-patch unlock rules, note | Edited directly |
 | `seeds.json` | Generated | 82 seeds: item id, kind, level, seeds per patch, sapling id, protection payment (items, ids, amounts) | `scripts/update_seed_data.py` (wiki *&lt;kind&gt; patch/Seeds* tables); `PAYMENT_FIXES` in it for corrections |
-| `teleports.json` | Generated | 28 teleports: type, item ids (every charge variant) or spell runes and spellbook, waiver varbit | `scripts/update_item_data.py` from the hand-edited `scripts/teleports.in.json` |
+| `teleports.json` | Generated | 45 teleport methods in menu groups (Jewellery, Items, spells, Tablets & scrolls, Fairy ring, Spirit tree, Other), each with its destinations (skills necklace → 6 guilds, 53 fairy ring codes...): item ids (a destination can narrow them: Ardougne cloak 2+ for the farm) or spell runes and spellbook | `scripts/update_item_data.py` from the hand-edited `scripts/teleports.in.json`; fairy ring codes from the wiki's Fairy ring table |
 | `items.json` | Generated | Named item groups (spade, axe, compost types, bottomless bucket, farmer's outfit pieces, seed box, coins) and rune ids | `scripts/update_item_data.py` from the hand-edited `scripts/items.in.json` |
 | `unlocks.json` | Hand | Named rules: quest (finished or started), varbit (diary tiers), skill level | Edited directly |
 | `costs.tsv` | Hand | `arrive` ticks per location, plus `link` ticks between neighbours (walks, spirit-tree hops) | Edited directly; tuned in phase 9 |

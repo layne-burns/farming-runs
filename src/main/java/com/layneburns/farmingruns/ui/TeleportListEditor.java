@@ -15,13 +15,17 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import net.runelite.client.ui.FontManager;
 
 /**
@@ -30,7 +34,9 @@ import net.runelite.client.ui.FontManager;
  */
 class TeleportListEditor extends JPanel
 {
-	private static final String ADD_PROMPT = "Add a teleport…";
+	private static final String ADD_PROMPT = "+ Add a teleport…";
+	/** Destinations past this many are split into submenus by first letter. */
+	private static final int LONG_LIST = 20;
 
 	TeleportListEditor(LocationsView.Entry entry, Consumer<List<String>> onChange)
 	{
@@ -38,7 +44,7 @@ class TeleportListEditor extends JPanel
 		setBackground(Palette.BACKGROUND);
 		setAlignmentX(LEFT_ALIGNMENT);
 
-		List<String> order = entry.getTeleports().stream().map(LocationsView.TeleportLine::getId)
+		List<String> order = entry.getTeleports().stream().map(LocationsView.TeleportLine::getRef)
 			.collect(Collectors.toList());
 		for (int i = 0; i < entry.getTeleports().size(); i++)
 		{
@@ -54,10 +60,20 @@ class TeleportListEditor extends JPanel
 				add(warning);
 			}
 		}
-		if (!entry.getAddable().isEmpty())
+		JLabel add = link(ADD_PROMPT, () ->
 		{
-			add(addBox(entry.getAddable(), order, onChange));
-		}
+		});
+		JPopupMenu menu = addMenu(entry.getAddMenu(), order, onChange);
+		add.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				menu.show(add, 0, add.getHeight());
+			}
+		});
+		add.setBorder(BorderFactory.createEmptyBorder(3, 0, 0, 0));
+		add(add);
 		if (entry.isCustomTeleports())
 		{
 			JLabel reset = link("Reset to default", () -> onChange.accept(null));
@@ -75,7 +91,8 @@ class TeleportListEditor extends JPanel
 		row.setAlignmentX(LEFT_ALIGNMENT);
 		JLabel name = new JLabel((index + 1) + ". " + line.getName());
 		name.setForeground(index == 0 ? Palette.TEXT : Palette.SECONDARY_TEXT);
-		name.setToolTipText(index == 0 ? "Used first, if you have it" : "Used if the ones above aren't available");
+		String when = index == 0 ? "Used first, if you have it" : "Used if the ones above aren't available";
+		name.setToolTipText(line.getDetail() == null ? when : line.getDetail() + " · " + when);
 		name.setMinimumSize(new Dimension(0, 0));
 		name.setPreferredSize(new Dimension(0, name.getPreferredSize().height));
 
@@ -104,28 +121,59 @@ class TeleportListEditor extends JPanel
 		return row;
 	}
 
-	private static JComboBox<Object> addBox(List<LocationsView.TeleportOption> addable, List<String> order,
+	/**
+	 * The "Add a teleport" menu: a submenu per group (Jewellery, spells...), then per method with several
+	 * destinations. Fairy rings, with dozens of codes, are split by first letter. Listed ones are greyed out.
+	 */
+	private static JPopupMenu addMenu(List<LocationsView.TeleportMenuGroup> groups, List<String> order,
 		Consumer<List<String>> onChange)
 	{
-		JComboBox<Object> box = new JComboBox<>();
-		box.addItem(ADD_PROMPT);
-		addable.forEach(box::addItem);
-		box.setBackground(Palette.SURFACE);
-		box.setForeground(Palette.TEXT);
-		box.setFocusable(false);
-		box.setAlignmentX(LEFT_ALIGNMENT);
-		box.setMaximumSize(new Dimension(Integer.MAX_VALUE, box.getPreferredSize().height));
-		box.setPreferredSize(new Dimension(0, box.getPreferredSize().height));
-		box.addActionListener(e ->
+		JPopupMenu menu = new JPopupMenu();
+		for (LocationsView.TeleportMenuGroup group : groups)
 		{
-			if (box.getSelectedItem() instanceof LocationsView.TeleportOption)
+			JMenu groupMenu = new JMenu(group.getTitle());
+			for (LocationsView.TeleportMenuMethod method : group.getMethods())
 			{
-				List<String> added = new ArrayList<>(order);
-				added.add(((LocationsView.TeleportOption) box.getSelectedItem()).getId());
-				onChange.accept(added);
+				if (method.getOptions().size() == 1)
+				{
+					groupMenu.add(item(method.getOptions().get(0), order, onChange));
+					continue;
+				}
+				JMenu methodMenu = new JMenu(method.getName());
+				if (method.getOptions().size() > LONG_LIST)
+				{
+					Map<Character, JMenu> byLetter = new TreeMap<>();
+					for (LocationsView.TeleportOption option : method.getOptions())
+					{
+						byLetter.computeIfAbsent(option.getName().charAt(0), c -> new JMenu(c + "…"))
+							.add(item(option, order, onChange));
+					}
+					byLetter.values().forEach(methodMenu::add);
+				}
+				else
+				{
+					method.getOptions().forEach(o -> methodMenu.add(item(o, order, onChange)));
+				}
+				groupMenu.add(methodMenu);
 			}
+			menu.add(groupMenu);
+		}
+		return menu;
+	}
+
+	private static JMenuItem item(LocationsView.TeleportOption option, List<String> order,
+		Consumer<List<String>> onChange)
+	{
+		JMenuItem item = new JMenuItem(option.getDetail() == null ? option.getName()
+			: option.getName() + " – " + option.getDetail());
+		item.setEnabled(!option.isListed());
+		item.addActionListener(e ->
+		{
+			List<String> added = new ArrayList<>(order);
+			added.add(option.getRef());
+			onChange.accept(added);
 		});
-		return box;
+		return item;
 	}
 
 	private static List<String> moved(List<String> order, int from, int to)

@@ -9,6 +9,7 @@ package com.layneburns.farmingruns.data;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import com.google.gson.Gson;
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
@@ -139,8 +140,29 @@ public class DataIntegrityTest
 		assertEquals(VarbitID.LUMBRIDGE_DIARY_ELITE_COMPLETE, fairyRing.getWaivedByVarbitId());
 
 		assertTrue(data.teleport("ectophial").getItemIds().contains(ItemID.ECTOPHIAL));
-		assertEquals(List.of("ectophial", "fairy_ring"), data.location("port_phasmatys").getDefaultTeleportIds());
-		assertEquals("ALQ", data.location("port_phasmatys").getFairyRingCode());
+		assertEquals(List.of("ectophial", "morytania_legs", "fairy_ring:alq"),
+			data.location("port_phasmatys").getDefaultTeleports());
+	}
+
+	@Test
+	public void teleportReferencesResolve()
+	{
+		TeleportChoice fishing = data.teleportChoice("skills_necklace:fishing_guild");
+		assertEquals("Skills necklace → Fishing Guild", fishing.displayName());
+		assertTrue(fishing.itemIds().contains(ItemID.JEWL_NECKLACE_OF_SKILLS_4));
+
+		TeleportChoice cir = data.teleportChoice("fairy_ring:cir");
+		assertEquals("Fairy ring CIR", cir.displayName());
+		assertTrue(cir.getDestination().getDetail().contains("Mount Karuulm"));
+
+		// A destination's own items win: only Ardougne cloak 2+ reach the farm.
+		assertFalse(data.teleportChoice("ardougne_cloak:farm").itemIds().contains(ItemID.ARDY_CAPE_EASY));
+		assertTrue(data.teleportChoice("ardougne_cloak:monastery").itemIds().contains(ItemID.ARDY_CAPE_EASY));
+
+		assertEquals("Varrock Teleport", data.teleportChoice("varrock_teleport").displayName());
+		assertNull("a method with destinations needs one", data.teleportChoice("skills_necklace"));
+		assertNull("a method without destinations takes none", data.teleportChoice("varrock_teleport:varrock"));
+		assertNull(data.teleportChoice("fairy_ring:zzz"));
 	}
 
 	@Test

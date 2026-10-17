@@ -125,6 +125,32 @@ public final class GameData
 		return require(teleports, id, "teleport");
 	}
 
+	/** A "method" or "method:destination" reference, resolved; null if it doesn't name a known teleport. */
+	public TeleportChoice teleportChoice(String ref)
+	{
+		return resolve(teleports, ref);
+	}
+
+	/**
+	 * Resolves a reference: "method" for a method with no destinations, "method:destination" otherwise. Null when the
+	 * method or destination is unknown, or the destination is missing or extra.
+	 */
+	static TeleportChoice resolve(Map<String, Teleport> teleports, String ref)
+	{
+		int colon = ref.indexOf(':');
+		Teleport method = teleports.get(colon < 0 ? ref : ref.substring(0, colon));
+		if (method == null)
+		{
+			return null;
+		}
+		if (colon < 0)
+		{
+			return method.getDestinations().isEmpty() ? new TeleportChoice(ref, method, null) : null;
+		}
+		TeleportDestination destination = method.destination(ref.substring(colon + 1));
+		return destination == null ? null : new TeleportChoice(ref, method, destination);
+	}
+
 	public Collection<UnlockRule> rules()
 	{
 		return rules.values();

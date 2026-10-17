@@ -63,7 +63,6 @@ final class RawData
 	static class LocationSettings
 	{
 		List<String> teleports;
-		String fairyRing;
 		String unlock;
 		String note;
 		Map<String, String> patchUnlocks;
@@ -111,11 +110,21 @@ final class RawData
 	{
 		String id;
 		String name;
+		String group;
 		String type;
 		List<Integer> itemIds;
 		String spellbook;
 		List<Rune> runes;
 		String waivedByVarbit;
+		List<Destination> destinations;
+	}
+
+	static class Destination
+	{
+		String id;
+		String name;
+		String detail;
+		List<Integer> itemIds;
 	}
 
 	static class Rune

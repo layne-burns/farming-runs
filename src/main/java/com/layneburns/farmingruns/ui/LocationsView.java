@@ -44,8 +44,8 @@ public class LocationsView
 		String statusText;
 		/** Teleports in order of preference: the first one you can use is used. */
 		List<TeleportLine> teleports;
-		/** Teleports not in the list, which you can add. */
-		List<TeleportOption> addable;
+		/** Every teleport, grouped for the "Add a teleport" menu. */
+		List<TeleportMenuGroup> addMenu;
 		/** True when you've changed the order from the default. */
 		boolean customTeleports;
 		List<PatchLine> patches;
@@ -58,26 +58,44 @@ public class LocationsView
 	@Value
 	public static class TeleportLine
 	{
-		String id;
-		/** E.g. "Skills necklace (Farming Guild)" or "Fairy ring CIR". */
+		/** "method" or "method:destination". */
+		String ref;
+		/** E.g. "Skills necklace → Fishing Guild" or "Fairy ring CIR". */
 		String name;
+		/** More about where it lands (a fairy ring's area); null if none. */
+		@Nullable
+		String detail;
 		/** A problem with this teleport, e.g. it needs another spellbook; null if none. */
 		@Nullable
 		String warning;
 	}
 
+	/** A heading in the "Add a teleport" menu, e.g. "Jewellery". */
+	@Value
+	public static class TeleportMenuGroup
+	{
+		String title;
+		List<TeleportMenuMethod> methods;
+	}
+
+	/** A method in that menu: one item if it goes to one place, else a submenu of its destinations. */
+	@Value
+	public static class TeleportMenuMethod
+	{
+		String name;
+		List<TeleportOption> options;
+	}
+
 	@Value
 	public static class TeleportOption
 	{
-		String id;
+		String ref;
+		/** The destination's name ("Fishing Guild", "CIR"), or the method's when it has one destination. */
 		String name;
-
-		/** What the "Add teleport" list shows. */
-		@Override
-		public String toString()
-		{
-			return name;
-		}
+		@Nullable
+		String detail;
+		/** Already in this location's list, so it can't be added again. */
+		boolean listed;
 	}
 
 	@Value

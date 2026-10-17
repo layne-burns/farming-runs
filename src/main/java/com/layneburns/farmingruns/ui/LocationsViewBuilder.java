@@ -11,6 +11,8 @@ import com.layneburns.farmingruns.data.Location;
 import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.data.RunType;
 import com.layneburns.farmingruns.data.Teleport;
+import com.layneburns.farmingruns.data.TeleportChoice;
+import com.layneburns.farmingruns.data.TeleportDestination;
 import com.layneburns.farmingruns.data.TeleportType;
 import com.layneburns.farmingruns.state.LocationStatus;
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
@@ -124,28 +126,39 @@ public final class LocationsViewBuilder
 			.collect(Collectors.toList());
 		List<String> order = context.getTeleportsOf().apply(location);
 		List<LocationsView.TeleportLine> teleports = order.stream()
-			.map(data::teleport)
-			.map(t -> new LocationsView.TeleportLine(t.getId(), teleportName(t, location),
-				teleportWarning(t, context.getSpellbook())))
-			.collect(Collectors.toList());
-		List<LocationsView.TeleportOption> addable = data.teleports().stream()
-			.filter(t -> !order.contains(t.getId()))
-			.sorted(Comparator.comparing(Teleport::getName))
-			.map(t -> new LocationsView.TeleportOption(t.getId(), teleportName(t, location)))
+			.map(data::teleportChoice)
+			.map(c -> new LocationsView.TeleportLine(c.getRef(), c.displayName(),
+				c.getDestination() == null ? null : c.getDestination().getDetail(),
+				teleportWarning(c.getMethod(), context.getSpellbook())))
 			.collect(Collectors.toList());
 		return new LocationsView.Entry(location.getId(), location.getName(), kinds(location), status,
-			statusText(status), teleports, addable, context.getCustomTeleports().test(location), patches,
+			statusText(status), teleports, addMenu(data, order), context.getCustomTeleports().test(location), patches,
 			location.getNote(), location.getWikiTeleports());
 	}
 
-	/** The teleport's name; a fairy ring gets this location's code ("Fairy ring CIR"). */
-	static String teleportName(Teleport teleport, Location location)
+	/** Every teleport, grouped as the data lists them (Jewellery, Items, spells...), marking those already listed. */
+	static List<LocationsView.TeleportMenuGroup> addMenu(GameData data, List<String> listed)
 	{
-		if (teleport.getType() == TeleportType.FAIRY_RING && location.getFairyRingCode() != null)
+		Map<String, List<LocationsView.TeleportMenuMethod>> groups = new LinkedHashMap<>();
+		for (Teleport method : data.teleports())
 		{
-			return teleport.getName() + " " + location.getFairyRingCode();
+			List<LocationsView.TeleportOption> options = new ArrayList<>();
+			if (method.getDestinations().isEmpty())
+			{
+				options.add(new LocationsView.TeleportOption(method.getId(), method.getName(), null,
+					listed.contains(method.getId())));
+			}
+			for (TeleportDestination d : method.getDestinations())
+			{
+				String ref = TeleportChoice.ref(method.getId(), d.getId());
+				options.add(new LocationsView.TeleportOption(ref, d.getName(), d.getDetail(), listed.contains(ref)));
+			}
+			groups.computeIfAbsent(method.getGroup(), g -> new ArrayList<>())
+				.add(new LocationsView.TeleportMenuMethod(method.getName(), options));
 		}
-		return teleport.getName();
+		return groups.entrySet().stream()
+			.map(e -> new LocationsView.TeleportMenuGroup(e.getKey(), e.getValue()))
+			.collect(Collectors.toList());
 	}
 
 	static String statusText(LocationStatus status)

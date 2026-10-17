@@ -78,3 +78,13 @@ def infobox_ids(text: str, exclude_versions=()):
             continue
         ids += [int(i) for i in re.findall(r"\d+", value)]
     return sorted(set(ids))
+
+
+def clean_wikitext(text: str) -> str:
+    """Wiki markup to plain text: links to their text, templates and HTML tags dropped, fairy codes upper-cased."""
+    text = re.sub(r"\{\{Fairycode\|(\w+)\}\}", lambda m: m.group(1).upper(), text, flags=re.I)
+    text = re.sub(r"\{\{NoCoins\|([^}]*)\}\}", r"\1", text)
+    text = re.sub(r"\[\[(?:[^|\]]*\|)?([^\]]*)\]\]", r"\1", text)
+    text = re.sub(r"\{\{[^{}]*\}\}", "", text)
+    text = re.sub(r"<[^>]+>|''+", "", text)
+    return " ".join(text.split())

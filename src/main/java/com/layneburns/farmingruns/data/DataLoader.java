@@ -67,16 +67,13 @@ public final class DataLoader
 			{
 				throw new DataException("location_settings.json " + raw.id + ": no teleports");
 			}
-			boolean fairyRing = false;
-			for (String teleport : set.teleports)
+			for (String ref : set.teleports)
 			{
-				requireKey(teleports, teleport, "location_settings.json " + raw.id + ": teleports");
-				fairyRing |= teleports.get(teleport).getType() == TeleportType.FAIRY_RING;
-			}
-			if (fairyRing != (set.fairyRing != null))
-			{
-				throw new DataException("location_settings.json " + raw.id
-					+ ": a fairy ring teleport needs a fairyRing code, and a code needs a fairy ring teleport");
+				if (GameData.resolve(teleports, ref) == null)
+				{
+					throw new DataException("location_settings.json " + raw.id + ": unknown teleport " + ref
+						+ " (a method id from teleports.json, plus :destination when it has several)");
+				}
 			}
 			if (set.unlock != null)
 			{
@@ -110,7 +107,7 @@ public final class DataLoader
 				throw new DataException(where + ": no target tile");
 			}
 			locations.put(raw.id, new Location(raw.id, raw.name, raw.regionId, List.copyOf(raw.extraRegionIds),
-				point(raw.target), List.copyOf(patches), List.copyOf(set.teleports), set.fairyRing, set.unlock, set.note,
+				point(raw.target), List.copyOf(patches), List.copyOf(set.teleports), set.unlock, set.note,
 				List.copyOf(raw.wikiTeleports)));
 		}
 		for (String id : settings.keySet())
@@ -193,7 +190,12 @@ public final class DataLoader
 				.collect(Collectors.toUnmodifiableList());
 			Set<Integer> itemIds = raw.itemIds == null ? Set.of() : Set.copyOf(raw.itemIds);
 			int waived = raw.waivedByVarbit == null ? Teleport.NOT_WAIVED : GameIds.varbit(raw.waivedByVarbit, where);
-			teleports.put(raw.id, new Teleport(raw.id, raw.name, type, itemIds, raw.spellbook, runes, waived));
+			List<TeleportDestination> destinations = raw.destinations == null ? List.of() : raw.destinations.stream()
+				.map(d -> new TeleportDestination(d.id, d.name, d.detail,
+					d.itemIds == null ? Set.of() : Set.copyOf(d.itemIds)))
+				.collect(Collectors.toUnmodifiableList());
+			teleports.put(raw.id, new Teleport(raw.id, raw.name, raw.group, type, itemIds, raw.spellbook, runes, waived,
+				destinations));
 		}
 		return teleports;
 	}

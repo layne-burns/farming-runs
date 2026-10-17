@@ -18,5 +18,5 @@ public enum TeleportType
 	/** No items: from another spirit tree. */
 	SPIRIT_TREE,
 	/** No items: a walk or a boat. */
-	NONE
+	WALK
 }

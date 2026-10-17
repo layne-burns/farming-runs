@@ -42,7 +42,7 @@ public class LocationsViewBuilderTest
 				? LocationStatus.of(true, List.of("Quest: Song of the Elves"), null) : OPEN)
 			.patchRuleOf(p -> "farming_guild_advanced".equals(p.getUnlockRuleId())
 				? LocationStatus.of(true, List.of("Farming 85"), null) : OPEN)
-			.teleportsOf(Location::getDefaultTeleportIds)
+			.teleportsOf(Location::getDefaultTeleports)
 			.customTeleports(l -> false)
 			.spellbook("Normal")
 			.build();
@@ -111,12 +111,27 @@ public class LocationsViewBuilderTest
 	public void teleportsAreRankedAndWarnAboutSpellbooks()
 	{
 		LocationsView.Entry catherby = section(buildAll("catherby"), "HERB").getEntries().get(0);
-		assertEquals(List.of("camelot_teleport", "catherby_teleport"), catherby.getTeleports().stream()
-			.map(LocationsView.TeleportLine::getId).collect(Collectors.toList()));
+		assertEquals(List.of("camelot_teleport", "catherby_teleport", "camelot_tablet"), catherby.getTeleports().stream()
+			.map(LocationsView.TeleportLine::getRef).collect(Collectors.toList()));
 		assertNull(catherby.getTeleports().get(0).getWarning());
 		assertEquals("Needs the Lunar spellbook (you're on Normal)", catherby.getTeleports().get(1).getWarning());
-		assertTrue("listed teleports aren't offered again", catherby.getAddable().stream()
-			.noneMatch(o -> o.getId().equals("camelot_teleport")));
+	}
+
+	@Test
+	public void addMenuGroupsMethodsAndMarksListedOnes()
+	{
+		LocationsView.Entry ardougne = section(buildAll("ardougne"), "HERB").getEntries().get(0);
+		List<String> groups = ardougne.getAddMenu().stream().map(LocationsView.TeleportMenuGroup::getTitle)
+			.collect(Collectors.toList());
+		assertEquals("Jewellery", groups.get(0));
+		assertTrue(groups.contains("Fairy ring"));
+
+		LocationsView.TeleportMenuMethod skills = ardougne.getAddMenu().get(0).getMethods().stream()
+			.filter(m -> m.getName().equals("Skills necklace")).findFirst().orElseThrow();
+		assertEquals(6, skills.getOptions().size());
+		LocationsView.TeleportOption fishing = skills.getOptions().stream()
+			.filter(o -> o.getRef().equals("skills_necklace:fishing_guild")).findFirst().orElseThrow();
+		assertTrue("already in Ardougne's list", fishing.isListed());
 	}
 
 	@Test
@@ -124,7 +139,10 @@ public class LocationsViewBuilderTest
 	{
 		LocationsView.Entry guild = section(buildAll("guild"), "HERB").getEntries().stream()
 			.filter(e -> e.getName().equals("Farming Guild")).findFirst().orElseThrow();
-		assertEquals("Fairy ring CIR", guild.getTeleports().get(1).getName());
+		LocationsView.TeleportLine fairy = guild.getTeleports().stream()
+			.filter(t -> t.getRef().equals("fairy_ring:cir")).findFirst().orElseThrow();
+		assertEquals("Fairy ring CIR", fairy.getName());
+		assertTrue(fairy.getDetail().contains("Mount Karuulm"));
 	}
 
 	@Test

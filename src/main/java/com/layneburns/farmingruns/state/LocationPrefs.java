@@ -10,12 +10,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import com.layneburns.farmingruns.FarmingRunsConfig;
+import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.Location;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -49,15 +51,17 @@ public class LocationPrefs
 
 	private final ConfigManager configManager;
 	private final Gson gson;
+	private final GameData data;
 	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 	private volatile Map<String, Boolean> overrides = Map.of();
 	private volatile Map<String, List<String>> teleports = Map.of();
 
 	@Inject
-	LocationPrefs(ConfigManager configManager, Gson gson)
+	LocationPrefs(ConfigManager configManager, Gson gson, GameData data)
 	{
 		this.configManager = configManager;
 		this.gson = gson;
+		this.data = data;
 	}
 
 	public void addListener(Runnable listener)
@@ -88,10 +92,23 @@ public class LocationPrefs
 		save(OVERRIDES_KEY, overrides);
 	}
 
-	/** The location's teleports in order of preference: your order, or the default one. */
+	/**
+	 * The location's teleports in order of preference: your order, or the default one. Saved entries that no longer
+	 * name a known teleport (after a data update) are skipped; if none are left, the default is used.
+	 */
 	public List<String> teleportsFor(Location location)
 	{
-		return teleports.getOrDefault(location.getId(), location.getDefaultTeleportIds());
+		List<String> saved = teleports.get(location.getId());
+		if (saved != null)
+		{
+			List<String> valid = saved.stream().filter(ref -> data.teleportChoice(ref) != null)
+				.collect(Collectors.toList());
+			if (!valid.isEmpty())
+			{
+				return valid;
+			}
+		}
+		return location.getDefaultTeleports();
 	}
 
 	public boolean hasCustomTeleports(String locationId)

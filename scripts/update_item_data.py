@@ -1,7 +1,8 @@
 """Generate teleports.json and items.json from the hand-edited scripts/teleports.in.json and items.in.json.
 
 The .in files name items by their wiki page; this looks up every item id (all charge variants, minus the
-excluded versions) and every spell's rune cost and spellbook, so the plugin never relies on ids typed by hand.
+excluded versions), every spell's rune cost and spellbook, and the fairy ring codes, so the plugin never relies on
+ids typed by hand.
 
 The outputs are generated: edit the .in files, not the outputs, then re-run. The script stops if a page is
 missing or has no ids, so a typo can't slip through.
@@ -12,11 +13,13 @@ import json
 import re
 from pathlib import Path
 
-from wiki import infobox_ids, page_texts
+from wiki import clean_wikitext, infobox_ids, page_texts, raw_page
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 RESOURCES = ROOT / "src/main/resources/com/layneburns/farmingruns"
+# In teleports.in.json, a method whose destinations are every fairy ring code from the wiki.
+FAIRY_RING_CODES = "wiki fairy ring codes"
 
 
 def resolve_items(entries, texts, where):
@@ -30,6 +33,22 @@ def resolve_items(entries, texts, where):
             raise SystemExit(f"{where}: no item ids found on wiki page {entry['page']!r}")
         ids += found
     return sorted(set(ids))
+
+
+def fairy_ring_codes():
+    """Every fairy ring code on the wiki's Fairy ring page, with where it goes: {id, name, detail}."""
+    text = raw_page("Fairy ring")
+    codes = []
+    for row in re.finditer(r'\|- id="([A-Z]{3})"(.*?)(?=\n\|-|\n\|\})', text, re.S):
+        # Cells: code, map, location, points of interest. A cell can wrap onto a second line, so split on "\n|".
+        cells = [c for c in re.split(r"\n\|", row.group(2)) if c.strip()]
+        if len(cells) < 3:
+            raise SystemExit(f"fairy ring {row.group(1)}: unexpected row layout on the wiki")
+        code = row.group(1)
+        codes.append({"id": code.lower(), "name": code, "detail": clean_wikitext(cells[2])})
+    if len(codes) < 40:
+        raise SystemExit(f"only {len(codes)} fairy ring codes found on the wiki; its table may have changed")
+    return codes
 
 
 def spell_cost(text, spell, rune_ids):
@@ -51,6 +70,8 @@ def main() -> None:
     items_in = json.loads((SCRIPTS / "items.in.json").read_text(encoding="utf-8"))
 
     pages = [e["page"] for t in teleports_in for e in t.get("items", [])]
+    pages += [e["page"] for t in teleports_in if isinstance(t.get("destinations"), list)
+              for d in t["destinations"] for e in d.get("items", [])]
     pages += [t["spell"] for t in teleports_in if "spell" in t]
     pages += [e["page"] for entries in items_in["groups"].values() for e in entries]
     pages += items_in["runes"]
@@ -65,13 +86,30 @@ def main() -> None:
 
     teleports = []
     for t in teleports_in:
-        out = {"id": t["id"], "name": t["name"], "type": t["type"]}
+        where = f"teleport {t['id']}"
+        out = {"id": t["id"], "name": t["name"], "group": t["group"], "type": t["type"]}
+        destinations = t.get("destinations", [])
+        if destinations == FAIRY_RING_CODES:
+            destinations = fairy_ring_codes()
+        resolved = []
+        for d in destinations:
+            entry = {"id": d["id"], "name": d["name"]}
+            if "detail" in d:
+                entry["detail"] = d["detail"]
+            if "items" in d:
+                entry["itemIds"] = resolve_items(d["items"], texts, f"{where}:{d['id']}")
+            resolved.append(entry)
         if "items" in t:
-            out["itemIds"] = resolve_items(t["items"], texts, f"teleport {t['id']}")
+            out["itemIds"] = resolve_items(t["items"], texts, where)
+        elif any("itemIds" in d for d in resolved):
+            # Any destination's items count as "having" the method (e.g. any Ardougne cloak).
+            out["itemIds"] = sorted({i for d in resolved for i in d.get("itemIds", [])})
         if "spell" in t:
             out["spellbook"], out["runes"] = spell_cost(texts.get(t["spell"], ""), t["spell"], rune_ids)
         if "waivedByVarbit" in t:
             out["waivedByVarbit"] = t["waivedByVarbit"]
+        if resolved:
+            out["destinations"] = resolved
         teleports.append(out)
 
     groups = {name: resolve_items(entries, texts, f"item group {name}")

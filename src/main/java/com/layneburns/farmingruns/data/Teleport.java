@@ -20,6 +20,8 @@ public class Teleport
 
 	String id;
 	String name;
+	/** Where the "Add a teleport" menu lists it, e.g. "Jewellery" or "Lunar spells". */
+	String group;
 	TeleportType type;
 	/** For items and fairy rings: any one of these ids will do. */
 	Set<Integer> itemIds;
@@ -30,4 +32,12 @@ public class Teleport
 	List<ItemAmount> runes;
 	/** A varbit that, when set, means the items aren't needed (elite Lumbridge diary for fairy rings). */
 	int waivedByVarbitId;
+	/** Where it can go; empty when it goes to one place, named by the method itself ("Varrock Teleport"). */
+	List<TeleportDestination> destinations;
+
+	/** The destination with this id, or null. */
+	public TeleportDestination destination(String destinationId)
+	{
+		return destinations.stream().filter(d -> d.getId().equals(destinationId)).findFirst().orElse(null);
+	}
 }
