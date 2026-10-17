@@ -140,7 +140,7 @@ class LocationRow extends JPanel
 
 	/**
 	 * The patches as a table: patch, crop, state. Names and crops are left-aligned, the state right-aligned and
-	 * coloured; a locked patch shows what it needs (e.g. "Farming 85") in the state column, in red.
+	 * coloured; a locked patch says "Locked", with what it needs (e.g. "Farming 85") on a line of its own beneath.
 	 */
 	private static JPanel patchTable(List<LocationsView.PatchLine> patches)
 	{
@@ -169,9 +169,21 @@ class LocationRow extends JPanel
 			c.anchor = GridBagConstraints.EAST;
 			table.add(patch.isUsable()
 				? cell(patch.getState(), readinessColour(patch.getReadiness()), JLabel.RIGHT, false)
-				: cell(patch.getReason(), Palette.NONE, JLabel.RIGHT, false), c);
+				: cell("Locked", Palette.NONE, JLabel.RIGHT, false), c);
 			c.anchor = GridBagConstraints.WEST;
 			c.gridy++;
+			if (!patch.isUsable())
+			{
+				// What it needs, on its own line across the table, so a long reason never squeezes the columns.
+				c.gridx = 0;
+				c.gridwidth = 3;
+				JLabel reason = TabPanel.text("Needs: " + patch.getReason());
+				reason.setFont(FontManager.getRunescapeSmallFont());
+				reason.setForeground(Palette.NONE);
+				table.add(reason, c);
+				c.gridwidth = 1;
+				c.gridy++;
+			}
 		}
 		table.setMaximumSize(new Dimension(Integer.MAX_VALUE, table.getPreferredSize().height));
 		return table;

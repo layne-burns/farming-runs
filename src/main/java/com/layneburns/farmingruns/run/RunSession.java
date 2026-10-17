@@ -11,21 +11,24 @@ import com.layneburns.farmingruns.data.TeleportChoice;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Singleton;
 import lombok.Value;
+import lombok.With;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * The run in progress, if any: what was started and when. Phase 7 adds the route and moving from stop to stop.
- * Safe to read from any thread.
+ * The run in progress, if any: what was started, when, and how far it has got ({@link RunProgress}). Changed by
+ * {@link RunController}; safe to read from any thread.
  */
 @Slf4j
 @Singleton
 public class RunSession
 {
 	@Value
+	@With
 	public static class ActiveRun
 	{
 		RunSetup setup;
@@ -33,6 +36,8 @@ public class RunSession
 		/** The teleport picked for each location, by location id. */
 		Map<String, TeleportChoice> teleports;
 		long startedAtMillis;
+		/** The stops in order and how far along they are. */
+		RunProgress progress;
 
 		public List<Patch> patches()
 		{
@@ -65,6 +70,22 @@ public class RunSession
 		active = run;
 		log.debug("[farmrun] started: {} patches at {} locations", run.patches().size(), run.locationCount());
 		listeners.forEach(Runnable::run);
+	}
+
+	/** Changes the progress of the active run, if there is one. */
+	public void update(UnaryOperator<RunProgress> change)
+	{
+		ActiveRun run = active;
+		if (run == null)
+		{
+			return;
+		}
+		RunProgress next = change.apply(run.getProgress());
+		if (next != run.getProgress())
+		{
+			active = run.withProgress(next);
+			listeners.forEach(Runnable::run);
+		}
 	}
 
 	public void stop()

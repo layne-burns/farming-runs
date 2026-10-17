@@ -11,7 +11,8 @@ import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.inventory.InventoryChecker.Line;
 import com.layneburns.farmingruns.inventory.RunCheckService;
 import com.layneburns.farmingruns.inventory.RunCheckService.Check;
-import com.layneburns.farmingruns.run.RunSession;
+import com.layneburns.farmingruns.pathing.ShortestPathClient;
+import com.layneburns.farmingruns.run.RunController;
 import com.layneburns.farmingruns.run.RunSetup;
 import java.awt.Component;
 import java.util.ArrayList;
@@ -39,7 +40,8 @@ final class StartFlow
 	{
 	}
 
-	static void start(Component parent, RunSetup setup, RunCheckService checks, RunSession session, GameData data)
+	static void start(Component parent, RunSetup setup, RunCheckService checks, RunController controller,
+		ShortestPathClient shortestPath, GameData data)
 	{
 		long now = System.currentTimeMillis() / 1000;
 		List<Patch> patches = new ArrayList<>(checks.readyPatches(setup, now));
@@ -64,8 +66,13 @@ final class StartFlow
 		{
 			return;
 		}
-		session.start(new RunSession.ActiveRun(setup, check.getPlan(), check.getRequirements().getTeleports(),
-			System.currentTimeMillis()));
+		if (!shortestPath.isAvailable())
+		{
+			JOptionPane.showMessageDialog(parent, "The Shortest Path plugin isn't on, so no path will be drawn. The run"
+				+ " still tracks your stops; turn on Shortest Path (Plugin Hub) for directions.", "Start run",
+				JOptionPane.INFORMATION_MESSAGE);
+		}
+		controller.start(setup, check.getPlan(), check.getRequirements().getTeleports());
 	}
 
 	/** Ticks for each patch still growing, all off. Null when cancelled, else the ones ticked. */

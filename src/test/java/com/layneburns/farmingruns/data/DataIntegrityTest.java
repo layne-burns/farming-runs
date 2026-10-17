@@ -200,4 +200,10 @@ public class DataIntegrityTest
 			}
 		}
 	}
+
+	@Test
+	public void diaryRequirementsReadNaturally()
+	{
+		assertEquals("Elite Morytania diary", data.rule("morytania_elite").getConditions().get(0).describe());
+	}
 }

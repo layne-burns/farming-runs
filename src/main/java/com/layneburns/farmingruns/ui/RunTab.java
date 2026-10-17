@@ -19,6 +19,8 @@ import com.layneburns.farmingruns.run.KindPlan;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.PresetCombiner;
 import com.layneburns.farmingruns.run.RunPlanService;
+import com.layneburns.farmingruns.pathing.ShortestPathClient;
+import com.layneburns.farmingruns.run.RunController;
 import com.layneburns.farmingruns.run.RunSession;
 import com.layneburns.farmingruns.run.RunSetup;
 import com.layneburns.farmingruns.run.TreeRoutine;
@@ -73,6 +75,8 @@ public class RunTab extends TabPanel
 	private final ItemStore items;
 	private final RunCheckService checks;
 	private final RunSession session;
+	private final RunController controller;
+	private final ShortestPathClient shortestPath;
 	private final ItemManager itemManager;
 	private final BankRunTab bankRunTab;
 
@@ -85,7 +89,7 @@ public class RunTab extends TabPanel
 	@Inject
 	RunTab(GameData data, SetupStore setups, RunPlanService planner, UnlockService unlocks, ItemStore items,
 		PlayerInfo player, ContractService contract, RunCheckService checks, RunSession session, PatchStates states,
-		ItemManager itemManager, BankRunTab bankRunTab)
+		ItemManager itemManager, BankRunTab bankRunTab, RunController controller, ShortestPathClient shortestPath)
 	{
 		this.data = data;
 		this.setups = setups;
@@ -95,6 +99,8 @@ public class RunTab extends TabPanel
 		this.items = items;
 		this.checks = checks;
 		this.session = session;
+		this.controller = controller;
+		this.shortestPath = shortestPath;
 		this.itemManager = itemManager;
 		this.bankRunTab = bankRunTab;
 		add(scrollPane(content), BorderLayout.CENTER);
@@ -182,7 +188,8 @@ public class RunTab extends TabPanel
 
 		JButton start = button("Start run", "Asks about patches that aren't ready, checks your items, then starts");
 		start.setEnabled(active == null && !setup.getRunTypes().isEmpty());
-		start.addActionListener(e -> StartFlow.start(this, setups.current(), checks, session, data));
+		start.addActionListener(e -> StartFlow.start(this, setups.current(), checks, controller, shortestPath,
+			data));
 		JPanel startRow = new JPanel(new BorderLayout());
 		startRow.setBackground(Palette.BACKGROUND);
 		startRow.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
@@ -317,14 +324,14 @@ public class RunTab extends TabPanel
 		return section;
 	}
 
-	/** The run in progress: how big it is, and Stop. (Phase 7 lists the stops here.) */
+	/** The run in progress: its stops in order, and Stop. */
 	private SectionPanel activeRun(RunSession.ActiveRun run)
 	{
 		SectionPanel section = section("Run in progress");
-		section.addRow(text(run.patches().size() + " patches at " + run.locationCount() + " locations."
-			+ " Routing to each stop arrives in phase 7."));
-		JButton stop = button("Stop run", "Ends the run");
-		stop.addActionListener(e -> session.stop());
+		StopList.fill(section, run, data, controller::goTo, controller::skip);
+		JButton stop = button(run.getProgress().isFinished() ? "Close run" : "Stop run", "Ends the run and clears the"
+			+ " path");
+		stop.addActionListener(e -> controller.stop());
 		section.addRow(fill(stop));
 		return section;
 	}

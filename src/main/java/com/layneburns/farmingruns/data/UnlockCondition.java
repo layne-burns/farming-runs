@@ -7,6 +7,8 @@
 package com.layneburns.farmingruns.data;
 
 import javax.annotation.Nullable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.Value;
 import net.runelite.api.Quest;
 import net.runelite.api.Skill;
@@ -31,7 +33,10 @@ public class UnlockCondition
 	Skill skill;
 	int level;
 
-	/** Readable form for the panel, e.g. "Quest: Bone Voyage" or "Farming 65". */
+	/** RuneLite's diary varbit names, e.g. MORYTANIA_DIARY_ELITE_COMPLETE. */
+	private static final Pattern DIARY = Pattern.compile("([A-Z_]+)_DIARY_(EASY|MEDIUM|HARD|ELITE)_COMPLETE");
+
+	/** Readable form for the panel, e.g. "Quest: Bone Voyage", "Farming 65" or "Elite Morytania diary". */
 	public String describe()
 	{
 		if (quest != null)
@@ -42,6 +47,18 @@ public class UnlockCondition
 		{
 			return skill.getName() + " " + level;
 		}
+		Matcher diary = varbitName == null ? null : DIARY.matcher(varbitName);
+		if (diary != null && diary.matches())
+		{
+			return capitalise(diary.group(2)) + " " + capitalise(diary.group(1).replace('_', ' ')) + " diary";
+		}
 		return "Varbit " + varbitName;
+	}
+
+	/** "MORYTANIA" → "Morytania", "WESTERN PROVINCES" → "Western provinces". */
+	private static String capitalise(String words)
+	{
+		String lower = words.toLowerCase();
+		return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
 	}
 }
