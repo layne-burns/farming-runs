@@ -1,7 +1,7 @@
 """Generate src/main/resources/.../seeds.json from the OSRS wiki's "<kind> patch/Seeds" tables.
 
-For every seed: its patch kind, Farming level, item id, the sapling it grows into (tree kinds), and the
-gardener's protection payment (items, item ids, amounts). Item ids come from each item's wiki infobox.
+For every seed: its patch kind, Farming level, item id, the sapling it grows into (tree kinds), the
+gardener's protection payment (items, item ids, amounts), experience and growth time. Item ids come from each item's wiki infobox.
 
 The output is generated: don't edit it by hand. If a payment is wrong, fix it on the wiki or add an entry to
 PAYMENT_FIXES below, then re-run. The script prints rows it couldn't read and items it found no id for.
@@ -75,29 +75,114 @@ def parse_payment(cell: str):
     return payment
 
 
+def header_columns(table: str):
+    """Column names from a table's two header rows: "Level", "Seed", "Protection:Farmer", "Experience:Plant"...
+    A heading spanning two rows names its columns itself; one spanning columns takes the second row's names."""
+    rows, current = [], []
+    for line in table.split("\n"):
+        if line.startswith("|-"):
+            if current:
+                rows.append(current)
+                current = []
+            if len(rows) == 2:
+                break
+        elif line.startswith("!"):
+            current.append(line[1:])
+        elif current and line.startswith("|"):
+            break  # the first data row: the header is over
+    if current:
+        rows.append(current)
+    second = [heading_name(c) for c in (rows[1] if len(rows) > 1 else [])]
+    columns = []
+    for cell in rows[0] if rows else []:
+        name = heading_name(cell)
+        rowspan = re.search(r'rowspan="(\d+)"', cell)
+        colspan = int((re.search(r'colspan="(\d+)"', cell) or re.match(r"()", "")).group(1) or 1)
+        if len(rows) == 1 or (rowspan and rowspan.group(1) == "2"):
+            columns += [name] * colspan
+        else:
+            columns += [f"{name}:{second.pop(0)}" for _ in range(colspan)]
+    return columns
+
+
+def heading_name(cell: str) -> str:
+    """A header cell's text: footnotes dropped first (they contain '|'), then any attributes before the '|'."""
+    return re.sub(r"\{\{efn.*", "", cell).split("|")[-1].strip()
+
+
+def cell_text(cell: str) -> str:
+    """A data cell without its leading attributes (e.g. 'align="left" |')."""
+    return re.sub(r'^\s*(?:[a-z-]+="[^"]*"\s*)+\|', "", cell)
+
+
+def parse_number(cell: str):
+    found = re.match(r"\s*([\d,]+(?:\.\d+)?)", cell)
+    return float(found.group(1).replace(",", "")) if found else None
+
+
+def parse_xp(row: dict):
+    """Experience columns as {"plant": 27, "harvest": 30.5, "checkHealth": ..., "total": ...}."""
+    xp = {}
+    for column, cell in row.items():
+        key = None
+        if column.startswith("Experience:"):
+            key = column.split(":", 1)[1].lower().replace("-", " ")
+        elif column == "Experience":  # anima: experience only for planting
+            key = "plant"
+        elif column == "XP":
+            key = "total"
+        value = parse_number(cell) if key else None
+        if value is not None:
+            words = key.split()
+            xp[words[0] + "".join(w.capitalize() for w in words[1:])] = value
+    return xp
+
+
+def parse_growth(cell: str):
+    """Growth time in one style, e.g. '1 h 20 min'. The wiki writes 'N x M mins' (N growth stages of M minutes),
+    sometimes with the total in brackets ('(16 Hours)'); the stages are multiplied out."""
+    stages = re.search(r"(\d+)\s*(?:×|\{\{x\}\}|x)\s*(\d+)\s*min", cell)
+    if stages:
+        minutes = int(stages.group(1)) * int(stages.group(2))
+    else:
+        hours = re.search(r"(\d+)\s*h", cell, re.I)
+        mins = re.search(r"(\d+)\s*min", cell, re.I)
+        if not hours and not mins:
+            return None
+        minutes = (int(hours.group(1)) * 60 if hours else 0) + (int(mins.group(1)) if mins else 0)
+    h, m = divmod(minutes, 60)
+    return " ".join(part for part in (f"{h} h" if h else "", f"{m} min" if m else "") if part)
+
+
 def parse_page(page: str, default_kind):
     text = raw_page(f"{page}/Seeds")
-    seeds, section = [], None
-    for chunk in re.split(r"\n\|-", text):
-        cells = re.split(r"\n\|(?![-}])", "\n" + chunk.split("\n|}")[0])
-        cells = [c for c in cells if c.strip()]
-        if len(cells) >= 3 and re.match(r"^\s*\d+\s*$", cells[0].split("\n")[0]):
-            seed = (re.search(r"\{\{plinkp\|([^}]+)\}\}", cells[1])
-                    or re.search(r"\[\[(?!File:)([^\]|]+)", cells[1]))
+    seeds = []
+    for table in re.finditer(r"\{\|.*?\n\|\}", text, re.S):
+        # The sub-heading just above a table (special patches) says which kind its rows are.
+        headings = re.findall(r"^===\s*(.+?)\s*===", text[:table.start()], re.M)
+        section = headings[-1] if headings else None
+        columns = header_columns(table.group(0))
+        for chunk in re.split(r"\n\|-", table.group(0)):
+            cells = [c for c in re.split(r"\n\|(?![-}])", "\n" + chunk.split("\n|}")[0]) if c.strip()]
+            if len(cells) < 3 or not re.match(r"^\s*\d+\s*$", cells[0].split("\n")[0]):
+                continue
+            if len(cells) != len(columns):
+                print(f"  {page}: a row has {len(cells)} cells but the header has {len(columns)}: {cells[1][:40]!r}")
+                continue
+            row = dict(zip(columns, (cell_text(c) for c in cells)))
+            seed_cell = row.get("Seed") or row.get("Frag") or cells[1]
+            seed = (re.search(r"\{\{plinkp\|([^}]+)\}\}", seed_cell)
+                    or re.search(r"\[\[(?!File:)([^\]|]+)", seed_cell))
             name = seed.group(1).strip()
             kind = default_kind or SPECIAL_SECTIONS.get(section) or SPECIAL_SEEDS.get(name)
             if kind is None:
                 print(f"  no kind for {name} (section {section}) on {page}")
-            else:
-                # Allotment tables have a Flower column before the Farmer (payment) column.
-                payment = parse_payment(cells[3 if kind == "ALLOTMENT" else 2])
-                payment = PAYMENT_FIXES.get(name, payment)
-                seeds.append({"name": name, "kind": kind, "level": int(cells[0].split()[0]), "payment": payment})
-        # A sub-heading sits at the end of a chunk, after the previous table's last row: it applies to the
-        # rows that follow, so it is read after this chunk's row.
-        heading = re.findall(r"^===\s*(.+?)\s*===", chunk, re.M)
-        if heading:
-            section = heading[-1]
+                continue
+            payment_cell = row.get("Protection:Farmer") or row.get("Protection") or ""
+            payment = PAYMENT_FIXES.get(name, parse_payment(payment_cell))
+            growth = next((v for k, v in row.items() if k.startswith("Growth time")), "")
+            seeds.append({"name": name, "kind": kind, "level": int(cells[0].split()[0]), "payment": payment,
+                          "xp": parse_xp(row), "growth": parse_growth(growth)})
     return seeds
 
 
@@ -118,6 +203,8 @@ def main() -> None:
         if s["kind"] in SAPLING_KINDS:
             entry["sapling"] = {"name": sapling_name(s["name"]), "itemId": ids.get(sapling_name(s["name"]))}
         entry["payment"] = [{**p, "itemId": ids.get(p["item"])} for p in s["payment"]]
+        entry["xp"] = s["xp"]
+        entry["growth"] = s["growth"]
         out.append(entry)
 
     data = {"_comment": "Generated by scripts/update_seed_data.py from the OSRS wiki; do not edit by hand.",

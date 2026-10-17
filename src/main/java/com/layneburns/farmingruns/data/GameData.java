@@ -104,6 +104,17 @@ public final class GameData
 			.collect(Collectors.toList());
 	}
 
+	/** How many patches of each kind exist. (Phase 3 narrows this to the patches you have unlocked.) */
+	public Map<PatchImplementation, Integer> patchCountsByKind()
+	{
+		Map<PatchImplementation, Integer> counts = new HashMap<>();
+		for (Patch patch : patches.values())
+		{
+			counts.merge(patch.getKind(), 1, Integer::sum);
+		}
+		return counts;
+	}
+
 	public Collection<Teleport> teleports()
 	{
 		return teleports.values();

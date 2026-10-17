@@ -18,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 public final class ItemCatalog
 {
 	private final Map<String, Set<Integer>> groups;
+	/** What each group is for, by group name. */
+	private final Map<String, String> descriptions;
 	private final Map<String, Integer> runes;
 
 	public Set<Integer> group(String name)
@@ -46,12 +48,29 @@ public final class ItemCatalog
 	 */
 	public String displayName(int itemId)
 	{
+		String group = groupOf(itemId);
+		if (group == null)
+		{
+			return null;
+		}
+		String words = group.replace('_', ' ');
+		return Character.toUpperCase(words.charAt(0)) + words.substring(1);
+	}
+
+	/** What the item is for (from items.in.json), or null if it's in no described group. */
+	public String description(int itemId)
+	{
+		String group = groupOf(itemId);
+		return group == null ? null : descriptions.get(group);
+	}
+
+	private String groupOf(int itemId)
+	{
 		for (Map.Entry<String, Set<Integer>> group : groups.entrySet())
 		{
 			if (group.getValue().contains(itemId))
 			{
-				String words = group.getKey().replace('_', ' ');
-				return Character.toUpperCase(words.charAt(0)) + words.substring(1);
+				return group.getKey();
 			}
 		}
 		return null;

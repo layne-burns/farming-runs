@@ -31,6 +31,10 @@ public class Seed
 	String saplingName;
 	/** The gardener's protection payment; empty when the crop can't be protected. */
 	List<ItemAmount> payment;
+	SeedXp xp;
+	/** How long it takes to grow, e.g. "1 h 20 min"; null if unknown. */
+	@Nullable
+	String growth;
 
 	public boolean isPlantedAsSapling()
 	{

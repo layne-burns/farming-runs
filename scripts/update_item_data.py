@@ -81,8 +81,13 @@ def main() -> None:
     (RESOURCES / "teleports.json").write_text(json.dumps(
         {"_comment": generated.format("teleports.in.json"), "teleports": teleports}, indent="\t") + "\n",
         encoding="utf-8", newline="\n")
+    descriptions = items_in.get("descriptions", {})
+    unknown = set(descriptions) - set(groups)
+    if unknown:
+        raise SystemExit(f"items.in.json: descriptions for unknown groups {sorted(unknown)}")
     (RESOURCES / "items.json").write_text(json.dumps(
-        {"_comment": generated.format("items.in.json"), "groups": groups, "runes": rune_ids}, indent="\t") + "\n",
+        {"_comment": generated.format("items.in.json"), "groups": groups, "descriptions": descriptions,
+         "runes": rune_ids}, indent="\t", ensure_ascii=False) + "\n",
         encoding="utf-8", newline="\n")
     print(f"wrote teleports.json ({len(teleports)} teleports) and items.json ({len(groups)} groups, "
           f"{len(rune_ids)} runes)")

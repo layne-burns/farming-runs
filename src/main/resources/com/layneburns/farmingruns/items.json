@@ -76,6 +76,27 @@
 			995
 		]
 	},
+	"descriptions": {
+		"spade": "Harvests crops, digs up tree roots and clears dead plants.",
+		"rake": "Clears weeds from a patch.",
+		"seed_dibber": "Plants seeds. Not needed after Barbarian Training's seed planting.",
+		"secateurs": "Prunes diseased trees and bushes.",
+		"magic_secateurs": "Prunes diseased trees and bushes; +10% yield from herbs, allotments, hops and grapes when carried.",
+		"gardening_trowel": "Fills plant pots with soil and pots seeds to grow saplings.",
+		"plant_cure": "Cures a diseased patch (trees and bushes are pruned with secateurs instead).",
+		"bucket": "Empty bucket, for compost.",
+		"axe": "Chops down a grown tree so you can clear the patch yourself.",
+		"compost": "Halves the chance of disease and adds 1 harvest.",
+		"supercompost": "Cuts the chance of disease by 80% and adds 2 harvests.",
+		"ultracompost": "Cuts the chance of disease by 90% and adds 3 harvests.",
+		"bottomless_compost_bucket": "Holds one type of compost in bulk, so you carry one item instead of many buckets.",
+		"farmers_strawhat": "Farmer's outfit: +0.4% Farming XP (+2.5% with the full set).",
+		"farmers_jacket": "Farmer's outfit: +0.8% Farming XP (+2.5% with the full set).",
+		"farmers_boro_trousers": "Farmer's outfit: +0.6% Farming XP (+2.5% with the full set).",
+		"farmers_boots": "Farmer's outfit: +0.2% Farming XP (+2.5% with the full set).",
+		"seed_box": "Carries up to 6 kinds of seeds in one inventory slot.",
+		"coins": "Pays gardeners to clear grown trees (200 coins each)."
+	},
 	"runes": {
 		"Air rune": 556,
 		"Water rune": 555,

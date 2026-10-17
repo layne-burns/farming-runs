@@ -44,7 +44,10 @@ public class BankViewBuilderTest
 		BankView.Row ranarr = row(build(ledger).getSections(), "Herbs & flowers", "Herb", "Ranarr seed");
 		assertEquals("14", ranarr.getValue());
 		assertEquals("11 spare", ranarr.getDetail());
-		assertEquals("Bank 12, Seed vault 2", ranarr.getTooltip());
+		assertTrue(ranarr.getTooltip(), ranarr.getTooltip().contains("Where: Bank 12, Seed vault 2"));
+		assertTrue(ranarr.getTooltip(), ranarr.getTooltip().contains("Level 32"));
+		assertTrue(ranarr.getTooltip(), ranarr.getTooltip().contains("XP: 27 plant, 30.5 per harvest"));
+		assertTrue(ranarr.getTooltip(), ranarr.getTooltip().contains("Can't be protected"));
 	}
 
 	@Test
@@ -96,7 +99,7 @@ public class BankViewBuilderTest
 			.with(ItemSource.BANK, new StorageSnapshot(Map.of(ItemID.BASKET_TOMATO_5, 4), NOW));
 		BankView.Row tomatoes = row(build(ledger).getSections(), "Protection payments", null, "Tomatoes(5)");
 		assertEquals("4", tomatoes.getValue());
-		assertTrue(tomatoes.getTooltip(), tomatoes.getTooltip().contains("Acorn (1)"));
+		assertTrue(tomatoes.getTooltip(), tomatoes.getTooltip().contains("Acorn: 1"));
 	}
 
 	@Test
@@ -145,7 +148,7 @@ public class BankViewBuilderTest
 
 	private static BankView build(ItemLedger ledger)
 	{
-		return BankViewBuilder.build(data, ledger, BUFFERS, 0, NOW);
+		return BankViewBuilder.build(data, ledger, BUFFERS, data.patchCountsByKind(), 0, NOW);
 	}
 
 	private static BankView.Row row(List<BankView.Section> sections, String section, String group, String label)

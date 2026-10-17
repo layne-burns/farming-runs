@@ -83,6 +83,8 @@ final class RawData
 		int perPatch;
 		NamedItem sapling;
 		List<Payment> payment;
+		Map<String, Double> xp;
+		String growth;
 	}
 
 	static class NamedItem
@@ -147,6 +149,7 @@ final class RawData
 	static class Items
 	{
 		Map<String, List<Integer>> groups;
+		Map<String, String> descriptions;
 		Map<String, Integer> runes;
 	}
 }

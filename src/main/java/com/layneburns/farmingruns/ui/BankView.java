@@ -74,11 +74,98 @@ public class BankView
 		String label;
 		/** The main count, kept short so it always fits. */
 		String value;
-		/** A smaller second line, e.g. "11 spare · 5 seeds"; null for none. */
+		/** A smaller second line, e.g. "11 spare"; null for none. */
 		@Nullable
 		String detail;
+		/** How the detail line is coloured; null for the normal grey. */
+		@Nullable
+		Coverage detailColour;
 		/** Where the items are, e.g. "Bank 12, Seed vault 2". */
 		String tooltip;
+		/** For seeds and saplings you can plant: what the filters look at. Null for everything else. */
+		@Nullable
+		Plantable plantable;
+
+		public Row(int iconItemId, String label, String value, @Nullable String detail, String tooltip)
+		{
+			this(iconItemId, label, value, detail, null, tooltip, null);
+		}
+
+		public Row(int iconItemId, String label, String value, @Nullable String detail, @Nullable Coverage detailColour,
+			String tooltip, @Nullable Plantable plantable)
+		{
+			this.iconItemId = iconItemId;
+			this.label = label;
+			this.value = value;
+			this.detail = detail;
+			this.detailColour = detailColour;
+			this.tooltip = tooltip;
+			this.plantable = plantable;
+		}
+	}
+
+	/** How much of a full run something covers. */
+	public enum Coverage
+	{
+		/** Enough for every patch in a full run. */
+		FULL,
+		/** Enough for some patches, not all. */
+		PARTIAL,
+		/** Enough for none. */
+		NONE
+	}
+
+	/**
+	 * The facts about a plantable seed (or sapling) that the filters use. A full run is every patch of the kind,
+	 * or as many patches as the spare seeds fill, whichever is fewer.
+	 */
+	@Value
+	public static class Plantable
+	{
+		/** Farming level needed to plant it. */
+		int level;
+		/** Patches of this kind. */
+		int patches;
+		/** Patches the spare seeds (after the buffer) can fill. */
+		int seededPatches;
+		/** False for crops a gardener can't protect (herbs, flowers...). */
+		boolean protectable;
+		/** Patches the payment you hold can protect. */
+		int paidPatches;
+		/** The payment for one patch, e.g. "9 x Sweetcorn"; empty if not protectable. */
+		String paymentPerPatch;
+
+		/** Patches in a full run: every patch, or what the spare seeds fill, whichever is fewer. */
+		public int runPatches()
+		{
+			return Math.min(patches, seededPatches);
+		}
+
+		public Coverage seeds()
+		{
+			return coverage(seededPatches, patches);
+		}
+
+		/** Payment held, against a full run; with no spare seeds, against every patch of the kind. */
+		public Coverage protection()
+		{
+			return coverage(paidPatches, protectionNeed());
+		}
+
+		/** Patches the payment is measured against (see {@link #protection()}). */
+		public int protectionNeed()
+		{
+			return runPatches() > 0 ? runPatches() : patches;
+		}
+
+		private static Coverage coverage(int have, int need)
+		{
+			if (have <= 0 || need <= 0)
+			{
+				return Coverage.NONE;
+			}
+			return have >= need ? Coverage.FULL : Coverage.PARTIAL;
+		}
 	}
 
 	/** The sections of one page, without empty ones that have nothing to say. */

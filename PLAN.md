@@ -55,6 +55,7 @@ state/                   the only package that reads the client (varbits, contai
   LeprechaunDecoder      (pure) FARMING_TOOLS_* varbits → counts, using the game's own client-script arithmetic
   LeprechaunWatcher      re-decodes when those varbits change
   BufferSettings         (pure) seeds kept back per type: allotment / sapling / other
+  PlayerInfo             real Farming level (phase 3 adds quests, diaries, spellbook)
   PatchStates            reads Time Tracking's config + vendored decode → PatchStatus (ready / ready in / dead…)
   ReadyPredictor         (pure) next-ready-time maths, adapted from Time Tracking's prediction
   ContractService        current contract → seed + Farming Guild patch, if not yet planted
@@ -84,6 +85,10 @@ ui/
   BankView, BankViewBuilder  (pure) what the Bank tab lists: pages (Seeds / Supplies / Leprechaun) → sections →
                          kind groups → rows (count, "spare" detail, where); search across every page; compost,
                          payments (and what they protect), teleport items, leprechaun
+  BankToolbar            search box + Filters dropdown (Has protection / Enough for a run / Can plant)
+  BankFilters            (pure) applies those filters; colours the detail line green / yellow
+  BankTooltips           (pure) tooltip wording: level, growth, XP, protection, uses, where
+  SuppliesBuilder        (pure) Supplies and Leprechaun page rows
   SectionPanel, ItemRow, TabPanel, FitWidthPanel   shared look: collapsible sections with kind sub-headings,
                          two-line icon rows, dark background, lists that never scroll sideways
   LocationsTab           unlock state + reason, override box, teleport dropdown, patch ready times

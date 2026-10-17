@@ -153,7 +153,8 @@ public final class DataLoader
 			}
 			int sapling = raw.sapling == null ? Seed.NO_SAPLING : requireId(raw.sapling.itemId, where + " sapling");
 			seeds.add(new Seed(raw.name, requireId(raw.itemId, where), kind(raw.kind, where), raw.level,
-				raw.perPatch, sapling, raw.sapling == null ? null : raw.sapling.name, List.copyOf(payment)));
+				raw.perPatch, sapling, raw.sapling == null ? null : raw.sapling.name, List.copyOf(payment),
+				SeedXp.from(raw.xp), raw.growth));
 		}
 		return seeds;
 	}
@@ -188,7 +189,8 @@ public final class DataLoader
 		RawData.Items raw = read("items.json", RawData.Items.class);
 		Map<String, Set<Integer>> groups = new HashMap<>();
 		raw.groups.forEach((name, ids) -> groups.put(name, Set.copyOf(ids)));
-		return new ItemCatalog(Map.copyOf(groups), Map.copyOf(raw.runes));
+		return new ItemCatalog(Map.copyOf(groups), raw.descriptions == null ? Map.of() : Map.copyOf(raw.descriptions),
+			Map.copyOf(raw.runes));
 	}
 
 	private Map<String, UnlockRule> loadRules()

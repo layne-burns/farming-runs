@@ -13,7 +13,12 @@
 					"amount": 2,
 					"itemId": 6032
 				}
-			]
+			],
+			"xp": {
+				"plant": 8.0,
+				"harvest": 9.0
+			},
+			"growth": "40 min"
 		},
 		{
 			"name": "Onion seed",
@@ -27,7 +32,12 @@
 					"amount": 1,
 					"itemId": 5438
 				}
-			]
+			],
+			"xp": {
+				"plant": 9.5,
+				"harvest": 10.5
+			},
+			"growth": "40 min"
 		},
 		{
 			"name": "Cabbage seed",
@@ -41,7 +51,12 @@
 					"amount": 1,
 					"itemId": 5458
 				}
-			]
+			],
+			"xp": {
+				"plant": 10.0,
+				"harvest": 11.5
+			},
+			"growth": "40 min"
 		},
 		{
 			"name": "Tomato seed",
@@ -55,7 +70,12 @@
 					"amount": 2,
 					"itemId": 5478
 				}
-			]
+			],
+			"xp": {
+				"plant": 12.5,
+				"harvest": 14.0
+			},
+			"growth": "40 min"
 		},
 		{
 			"name": "Sweetcorn seed",
@@ -69,7 +89,12 @@
 					"amount": 10,
 					"itemId": 5931
 				}
-			]
+			],
+			"xp": {
+				"plant": 17.0,
+				"harvest": 19.0
+			},
+			"growth": "1 h"
 		},
 		{
 			"name": "Strawberry seed",
@@ -83,7 +108,12 @@
 					"amount": 1,
 					"itemId": 5386
 				}
-			]
+			],
+			"xp": {
+				"plant": 26.0,
+				"harvest": 29.0
+			},
+			"growth": "1 h"
 		},
 		{
 			"name": "Watermelon seed",
@@ -97,7 +127,12 @@
 					"amount": 10,
 					"itemId": 5970
 				}
-			]
+			],
+			"xp": {
+				"plant": 48.5,
+				"harvest": 54.5
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Snape grass seed",
@@ -111,7 +146,12 @@
 					"amount": 5,
 					"itemId": 247
 				}
-			]
+			],
+			"xp": {
+				"plant": 82.0,
+				"harvest": 82.0
+			},
+			"growth": "1 h 10 min"
 		},
 		{
 			"name": "Marigold seed",
@@ -119,7 +159,13 @@
 			"kind": "FLOWER",
 			"level": 2,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 8.5,
+				"harvest": 47.0,
+				"total": 55.5
+			},
+			"growth": "20 min"
 		},
 		{
 			"name": "Rosemary seed",
@@ -127,7 +173,13 @@
 			"kind": "FLOWER",
 			"level": 11,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 12.0,
+				"harvest": 66.5,
+				"total": 78.5
+			},
+			"growth": "20 min"
 		},
 		{
 			"name": "Nasturtium seed",
@@ -135,7 +187,13 @@
 			"kind": "FLOWER",
 			"level": 24,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 19.5,
+				"harvest": 111.0,
+				"total": 130.5
+			},
+			"growth": "20 min"
 		},
 		{
 			"name": "Woad seed",
@@ -143,7 +201,13 @@
 			"kind": "FLOWER",
 			"level": 25,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 20.5,
+				"harvest": 115.5,
+				"total": 136.0
+			},
+			"growth": "20 min"
 		},
 		{
 			"name": "Limpwurt seed",
@@ -151,7 +215,13 @@
 			"kind": "FLOWER",
 			"level": 26,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 21.5,
+				"harvest": 120.0,
+				"total": 141.5
+			},
+			"growth": "20 min"
 		},
 		{
 			"name": "White lily seed",
@@ -159,7 +229,13 @@
 			"kind": "FLOWER",
 			"level": 58,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 42.0,
+				"harvest": 250.0,
+				"total": 292.0
+			},
+			"growth": "20 min"
 		},
 		{
 			"name": "Guam seed",
@@ -167,7 +243,13 @@
 			"kind": "HERB",
 			"level": 9,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 11.0,
+				"harvest": 12.5,
+				"total": 111.0
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Marrentill seed",
@@ -175,7 +257,13 @@
 			"kind": "HERB",
 			"level": 14,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 13.5,
+				"harvest": 15.0,
+				"total": 133.5
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Tarromin seed",
@@ -183,7 +271,13 @@
 			"kind": "HERB",
 			"level": 19,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 16.0,
+				"harvest": 18.0,
+				"total": 160.0
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Harralander seed",
@@ -191,7 +285,13 @@
 			"kind": "HERB",
 			"level": 26,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 21.5,
+				"harvest": 24.0,
+				"total": 213.5
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Gout tuber",
@@ -199,7 +299,13 @@
 			"kind": "HERB",
 			"level": 29,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 105.0,
+				"harvest": 45.0,
+				"total": 465.0
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Ranarr seed",
@@ -207,7 +313,13 @@
 			"kind": "HERB",
 			"level": 32,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 27.0,
+				"harvest": 30.5,
+				"total": 271.0
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Toadflax seed",
@@ -215,7 +327,13 @@
 			"kind": "HERB",
 			"level": 38,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 34.0,
+				"harvest": 38.5,
+				"total": 342.0
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Irit seed",
@@ -223,7 +341,13 @@
 			"kind": "HERB",
 			"level": 44,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 43.0,
+				"harvest": 48.5,
+				"total": 431.0
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Avantoe seed",
@@ -231,7 +355,13 @@
 			"kind": "HERB",
 			"level": 50,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 54.5,
+				"harvest": 61.5,
+				"total": 546.5
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Kwuarm seed",
@@ -239,7 +369,13 @@
 			"kind": "HERB",
 			"level": 56,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 69.0,
+				"harvest": 78.0,
+				"total": 693.0
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Snapdragon seed",
@@ -247,7 +383,13 @@
 			"kind": "HERB",
 			"level": 62,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 87.5,
+				"harvest": 98.5,
+				"total": 875.5
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Huasca seed",
@@ -255,7 +397,13 @@
 			"kind": "HERB",
 			"level": 65,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 86.5,
+				"harvest": 110.0,
+				"total": 966.5
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Cadantine seed",
@@ -263,7 +411,13 @@
 			"kind": "HERB",
 			"level": 67,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 106.5,
+				"harvest": 120.0,
+				"total": 1066.5
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Lantadyme seed",
@@ -271,7 +425,13 @@
 			"kind": "HERB",
 			"level": 73,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 134.5,
+				"harvest": 151.5,
+				"total": 1346.5
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Dwarf weed seed",
@@ -279,7 +439,13 @@
 			"kind": "HERB",
 			"level": 79,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 170.5,
+				"harvest": 192.0,
+				"total": 1706.5
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Torstol seed",
@@ -287,7 +453,13 @@
 			"kind": "HERB",
 			"level": 85,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 199.5,
+				"harvest": 224.5,
+				"total": 1995.5
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Barley seed",
@@ -301,7 +473,12 @@
 					"amount": 3,
 					"itemId": 6032
 				}
-			]
+			],
+			"xp": {
+				"plant": 8.5,
+				"harvest": 9.5
+			},
+			"growth": "40 min"
 		},
 		{
 			"name": "Hammerstone seed",
@@ -315,7 +492,12 @@
 					"amount": 1,
 					"itemId": 6010
 				}
-			]
+			],
+			"xp": {
+				"plant": 9.0,
+				"harvest": 10.0
+			},
+			"growth": "40 min"
 		},
 		{
 			"name": "Asgarnian seed",
@@ -329,7 +511,12 @@
 					"amount": 1,
 					"itemId": 5458
 				}
-			]
+			],
+			"xp": {
+				"plant": 10.9,
+				"harvest": 12.0
+			},
+			"growth": "50 min"
 		},
 		{
 			"name": "Jute seed",
@@ -343,7 +530,12 @@
 					"amount": 6,
 					"itemId": 6008
 				}
-			]
+			],
+			"xp": {
+				"plant": 13.0,
+				"harvest": 14.5
+			},
+			"growth": "50 min"
 		},
 		{
 			"name": "Yanillian seed",
@@ -357,7 +549,12 @@
 					"amount": 1,
 					"itemId": 5968
 				}
-			]
+			],
+			"xp": {
+				"plant": 14.5,
+				"harvest": 16.0
+			},
+			"growth": "1 h"
 		},
 		{
 			"name": "Flax seed",
@@ -371,7 +568,12 @@
 					"amount": 6,
 					"itemId": 1947
 				}
-			]
+			],
+			"xp": {
+				"plant": 16.0,
+				"harvest": 17.5
+			},
+			"growth": "1 h"
 		},
 		{
 			"name": "Krandorian seed",
@@ -385,7 +587,12 @@
 					"amount": 3,
 					"itemId": 5478
 				}
-			]
+			],
+			"xp": {
+				"plant": 17.5,
+				"harvest": 19.5
+			},
+			"growth": "1 h 10 min"
 		},
 		{
 			"name": "Wildblood seed",
@@ -399,7 +606,12 @@
 					"amount": 1,
 					"itemId": 6012
 				}
-			]
+			],
+			"xp": {
+				"plant": 23.0,
+				"harvest": 26.0
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Hemp seed",
@@ -413,7 +625,12 @@
 					"amount": 6,
 					"itemId": 1779
 				}
-			]
+			],
+			"xp": {
+				"plant": 33.0,
+				"harvest": 37.0
+			},
+			"growth": "1 h 20 min"
 		},
 		{
 			"name": "Cotton seed",
@@ -427,7 +644,12 @@
 					"amount": 6,
 					"itemId": 31457
 				}
-			]
+			],
+			"xp": {
+				"plant": 72.0,
+				"harvest": 82.0
+			},
+			"growth": "1 h 40 min"
 		},
 		{
 			"name": "Redberry seed",
@@ -441,7 +663,13 @@
 					"amount": 4,
 					"itemId": 5478
 				}
-			]
+			],
+			"xp": {
+				"plant": 11.5,
+				"checkHealth": 64.0,
+				"harvest": 4.5
+			},
+			"growth": "1 h 40 min"
 		},
 		{
 			"name": "Cadavaberry seed",
@@ -455,7 +683,13 @@
 					"amount": 3,
 					"itemId": 5968
 				}
-			]
+			],
+			"xp": {
+				"plant": 18.0,
+				"checkHealth": 102.5,
+				"harvest": 7.0
+			},
+			"growth": "2 h"
 		},
 		{
 			"name": "Dwellberry seed",
@@ -469,7 +703,13 @@
 					"amount": 3,
 					"itemId": 5406
 				}
-			]
+			],
+			"xp": {
+				"plant": 31.5,
+				"checkHealth": 177.5,
+				"harvest": 12.0
+			},
+			"growth": "2 h 20 min"
 		},
 		{
 			"name": "Jangerberry seed",
@@ -483,7 +723,13 @@
 					"amount": 6,
 					"itemId": 5982
 				}
-			]
+			],
+			"xp": {
+				"plant": 50.5,
+				"checkHealth": 284.5,
+				"harvest": 19.0
+			},
+			"growth": "2 h 40 min"
 		},
 		{
 			"name": "Whiteberry seed",
@@ -497,7 +743,13 @@
 					"amount": 8,
 					"itemId": 6004
 				}
-			]
+			],
+			"xp": {
+				"plant": 78.0,
+				"checkHealth": 437.5,
+				"harvest": 29.0
+			},
+			"growth": "2 h 40 min"
 		},
 		{
 			"name": "Poison ivy seed",
@@ -505,7 +757,13 @@
 			"kind": "BUSH",
 			"level": 70,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 120.0,
+				"checkHealth": 675.0,
+				"harvest": 45.0
+			},
+			"growth": "2 h 40 min"
 		},
 		{
 			"name": "Acorn",
@@ -523,7 +781,13 @@
 					"amount": 1,
 					"itemId": 5968
 				}
-			]
+			],
+			"xp": {
+				"plant": 14.0,
+				"checkHealth": 467.3,
+				"total": 481.3
+			},
+			"growth": "2 h 40 min"
 		},
 		{
 			"name": "Willow seed",
@@ -541,7 +805,13 @@
 					"amount": 1,
 					"itemId": 5386
 				}
-			]
+			],
+			"xp": {
+				"plant": 25.0,
+				"checkHealth": 1456.5,
+				"total": 1481.5
+			},
+			"growth": "4 h"
 		},
 		{
 			"name": "Maple seed",
@@ -559,7 +829,13 @@
 					"amount": 1,
 					"itemId": 5396
 				}
-			]
+			],
+			"xp": {
+				"plant": 45.0,
+				"checkHealth": 3403.4,
+				"total": 3448.4
+			},
+			"growth": "5 h 20 min"
 		},
 		{
 			"name": "Yew seed",
@@ -577,7 +853,13 @@
 					"amount": 10,
 					"itemId": 6016
 				}
-			]
+			],
+			"xp": {
+				"plant": 81.0,
+				"checkHealth": 7069.9,
+				"total": 7150.9
+			},
+			"growth": "6 h 40 min"
 		},
 		{
 			"name": "Magic seed",
@@ -595,7 +877,13 @@
 					"amount": 25,
 					"itemId": 5974
 				}
-			]
+			],
+			"xp": {
+				"plant": 145.5,
+				"checkHealth": 13768.3,
+				"total": 13913.8
+			},
+			"growth": "8 h"
 		},
 		{
 			"name": "Apple tree seed",
@@ -613,7 +901,11 @@
 					"amount": 9,
 					"itemId": 5986
 				}
-			]
+			],
+			"xp": {
+				"total": 1272.5
+			},
+			"growth": "16 h"
 		},
 		{
 			"name": "Banana tree seed",
@@ -631,7 +923,11 @@
 					"amount": 4,
 					"itemId": 5386
 				}
-			]
+			],
+			"xp": {
+				"total": 1841.5
+			},
+			"growth": "16 h"
 		},
 		{
 			"name": "Orange tree seed",
@@ -649,7 +945,11 @@
 					"amount": 3,
 					"itemId": 5406
 				}
-			]
+			],
+			"xp": {
+				"total": 2586.7
+			},
+			"growth": "16 h"
 		},
 		{
 			"name": "Curry tree seed",
@@ -667,7 +967,11 @@
 					"amount": 5,
 					"itemId": 5416
 				}
-			]
+			],
+			"xp": {
+				"total": 3036.9
+			},
+			"growth": "16 h"
 		},
 		{
 			"name": "Pineapple seed",
@@ -685,7 +989,11 @@
 					"amount": 10,
 					"itemId": 5982
 				}
-			]
+			],
+			"xp": {
+				"total": 4791.7
+			},
+			"growth": "16 h"
 		},
 		{
 			"name": "Papaya tree seed",
@@ -703,7 +1011,11 @@
 					"amount": 10,
 					"itemId": 2114
 				}
-			]
+			],
+			"xp": {
+				"total": 6380.4
+			},
+			"growth": "16 h"
 		},
 		{
 			"name": "Palm tree seed",
@@ -721,7 +1033,11 @@
 					"amount": 15,
 					"itemId": 5972
 				}
-			]
+			],
+			"xp": {
+				"total": 10509.6
+			},
+			"growth": "16 h"
 		},
 		{
 			"name": "Dragonfruit tree seed",
@@ -739,7 +1055,11 @@
 					"amount": 15,
 					"itemId": 5974
 				}
-			]
+			],
+			"xp": {
+				"total": 17895.0
+			},
+			"growth": "16 h"
 		},
 		{
 			"name": "Seaweed spore",
@@ -753,7 +1073,12 @@
 					"amount": 200,
 					"itemId": 21555
 				}
-			]
+			],
+			"xp": {
+				"plant": 19.0,
+				"harvest": 21.0
+			},
+			"growth": "40 min"
 		},
 		{
 			"name": "Grape seed",
@@ -761,7 +1086,13 @@
 			"kind": "GRAPES",
 			"level": 36,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 31.5,
+				"checkHealth": 625.0,
+				"harvest": 40.0
+			},
+			"growth": "35 min"
 		},
 		{
 			"name": "Mushroom spore",
@@ -769,7 +1100,12 @@
 			"kind": "MUSHROOM",
 			"level": 53,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 61.5,
+				"harvest": 57.7
+			},
+			"growth": "4 h"
 		},
 		{
 			"name": "Belladonna seed",
@@ -777,7 +1113,12 @@
 			"kind": "BELLADONNA",
 			"level": 63,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 91.0,
+				"harvest": 512.0
+			},
+			"growth": "5 h 20 min"
 		},
 		{
 			"name": "Hespori seed",
@@ -785,7 +1126,12 @@
 			"kind": "HESPORI",
 			"level": 65,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 62.0,
+				"harvest": 12600.0
+			},
+			"growth": "32 h"
 		},
 		{
 			"name": "Elkhorn frag",
@@ -799,7 +1145,12 @@
 					"amount": 5,
 					"itemId": 21504
 				}
-			]
+			],
+			"xp": {
+				"plant": 20.5,
+				"harvest": 24.0
+			},
+			"growth": "2 h 40 min"
 		},
 		{
 			"name": "Pillar frag",
@@ -813,7 +1164,12 @@
 					"amount": 5,
 					"itemId": 31481
 				}
-			]
+			],
+			"xp": {
+				"plant": 52.5,
+				"harvest": 60.0
+			},
+			"growth": "2 h 40 min"
 		},
 		{
 			"name": "Umbral frag",
@@ -827,7 +1183,12 @@
 					"amount": 5,
 					"itemId": 31484
 				}
-			]
+			],
+			"xp": {
+				"plant": 136.0,
+				"harvest": 159.0
+			},
+			"growth": "2 h 40 min"
 		},
 		{
 			"name": "Kronos seed",
@@ -835,7 +1196,11 @@
 			"kind": "ANIMA",
 			"level": 76,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 100.0
+			},
+			"growth": "85 h 20 min"
 		},
 		{
 			"name": "Iasor seed",
@@ -843,7 +1208,11 @@
 			"kind": "ANIMA",
 			"level": 76,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 100.0
+			},
+			"growth": "85 h 20 min"
 		},
 		{
 			"name": "Attas seed",
@@ -851,7 +1220,11 @@
 			"kind": "ANIMA",
 			"level": 76,
 			"perPatch": 1,
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 100.0
+			},
+			"growth": "85 h 20 min"
 		},
 		{
 			"name": "Teak seed",
@@ -869,7 +1242,12 @@
 					"amount": 15,
 					"itemId": 225
 				}
-			]
+			],
+			"xp": {
+				"plant": 35.0,
+				"checkHealth": 7290.0
+			},
+			"growth": "74 h 40 min"
 		},
 		{
 			"name": "Mahogany seed",
@@ -887,7 +1265,12 @@
 					"amount": 25,
 					"itemId": 5998
 				}
-			]
+			],
+			"xp": {
+				"plant": 63.0,
+				"checkHealth": 15720.0
+			},
+			"growth": "85 h 20 min"
 		},
 		{
 			"name": "Camphor seed",
@@ -905,7 +1288,12 @@
 					"amount": 10,
 					"itemId": 239
 				}
-			]
+			],
+			"xp": {
+				"plant": 88.0,
+				"checkHealth": 17840.0
+			},
+			"growth": "85 h 20 min"
 		},
 		{
 			"name": "Ironwood seed",
@@ -923,7 +1311,12 @@
 					"amount": 10,
 					"itemId": 5970
 				}
-			]
+			],
+			"xp": {
+				"plant": 145.0,
+				"checkHealth": 20380.0
+			},
+			"growth": "85 h 20 min"
 		},
 		{
 			"name": "Rosewood seed",
@@ -941,7 +1334,12 @@
 					"amount": 8,
 					"itemId": 22929
 				}
-			]
+			],
+			"xp": {
+				"plant": 252.0,
+				"checkHealth": 23100.0
+			},
+			"growth": "106 h 40 min"
 		},
 		{
 			"name": "Calquat tree seed",
@@ -959,7 +1357,13 @@
 					"amount": 8,
 					"itemId": 6018
 				}
-			]
+			],
+			"xp": {
+				"plant": 129.5,
+				"checkHealth": 12096.0,
+				"harvest": 48.5
+			},
+			"growth": "21 h 20 min"
 		},
 		{
 			"name": "Crystal acorn",
@@ -971,7 +1375,12 @@
 				"name": "Crystal sapling",
 				"itemId": 23659
 			},
-			"payment": []
+			"payment": [],
+			"xp": {
+				"plant": 126.0,
+				"checkHealth": 13240.0
+			},
+			"growth": "8 h"
 		},
 		{
 			"name": "Spirit seed",
@@ -999,7 +1408,12 @@
 					"amount": 1,
 					"itemId": 9082
 				}
-			]
+			],
+			"xp": {
+				"plant": 199.5,
+				"checkHealth": 19301.8
+			},
+			"growth": "64 h"
 		},
 		{
 			"name": "Celastrus seed",
@@ -1017,7 +1431,13 @@
 					"amount": 8,
 					"itemId": 3138
 				}
-			]
+			],
+			"xp": {
+				"plant": 204.0,
+				"checkHealth": 14130.0,
+				"harvest": 23.5
+			},
+			"growth": "13 h 20 min"
 		},
 		{
 			"name": "Redwood tree seed",
@@ -1035,7 +1455,12 @@
 					"amount": 6,
 					"itemId": 22929
 				}
-			]
+			],
+			"xp": {
+				"plant": 230.0,
+				"checkHealth": 22450.0
+			},
+			"growth": "106 h 40 min"
 		},
 		{
 			"name": "Cactus seed",
@@ -1049,7 +1474,13 @@
 					"amount": 6,
 					"itemId": 753
 				}
-			]
+			],
+			"xp": {
+				"plant": 66.5,
+				"checkHealth": 374.0,
+				"harvest": 25.0
+			},
+			"growth": "9 h 20 min"
 		},
 		{
 			"name": "Potato cactus seed",
@@ -1063,7 +1494,13 @@
 					"amount": 8,
 					"itemId": 231
 				}
-			]
+			],
+			"xp": {
+				"plant": 68.0,
+				"checkHealth": 230.0,
+				"harvest": 68.0
+			},
+			"growth": "1 h 10 min"
 		}
 	]
 }

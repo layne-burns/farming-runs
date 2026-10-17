@@ -11,8 +11,8 @@ import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.state.BufferSettings;
 import com.layneburns.farmingruns.state.ItemStore;
 import com.layneburns.farmingruns.state.LeprechaunWatcher;
+import com.layneburns.farmingruns.state.PlayerInfo;
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.HashMap;
 import java.util.List;
@@ -20,27 +20,20 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
-import net.runelite.client.ui.components.IconTextField;
 import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
 
 /**
  * Bank tab: the seed log, run supplies and tool leprechaun storage (SPEC §2.2). Browse by page (Seeds / Supplies /
- * Leprechaun) or type in the search box to find items on every page at once. What to show is decided by
- * {@link BankViewBuilder} and {@link BankView#search}; this class only draws it, and redraws when your items, the
- * buffers, the page or the search change.
+ * Leprechaun), search every page at once, or filter the seeds. What to show is decided by {@link BankViewBuilder},
+ * {@link BankView#search} and {@link BankFilters}; this class only draws it, and redraws when anything changes.
  */
 @Singleton
 public class BankTab extends TabPanel
@@ -48,10 +41,11 @@ public class BankTab extends TabPanel
 	private final GameData data;
 	private final ItemStore store;
 	private final LeprechaunWatcher leprechaun;
+	private final PlayerInfo player;
 	private final FarmingRunsConfig config;
 	private final ItemManager itemManager;
 
-	private final IconTextField search = new IconTextField();
+	private final BankToolbar toolbar = new BankToolbar(this::refresh);
 	private final JPanel seenLine = new JPanel(new GridLayout(1, 3));
 	private final FitWidthPanel content = new FitWidthPanel();
 	private BankView.Page page = BankView.Page.SEEDS;
@@ -61,19 +55,20 @@ public class BankTab extends TabPanel
 	private final AtomicBoolean redrawQueued = new AtomicBoolean();
 
 	@Inject
-	BankTab(GameData data, ItemStore store, LeprechaunWatcher leprechaun, FarmingRunsConfig config,
-		ItemManager itemManager)
+	BankTab(GameData data, ItemStore store, LeprechaunWatcher leprechaun, PlayerInfo player,
+		FarmingRunsConfig config, ItemManager itemManager)
 	{
 		this.data = data;
 		this.store = store;
 		this.leprechaun = leprechaun;
+		this.player = player;
 		this.config = config;
 		this.itemManager = itemManager;
 
 		JPanel top = new JPanel();
 		top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
 		top.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		top.add(searchBox());
+		top.add(toolbar);
 		top.add(pageSwitch());
 		seenLine.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		seenLine.setToolTipText("When the bank, seed vault and seed box were last opened. Their contents are only "
@@ -81,13 +76,10 @@ public class BankTab extends TabPanel
 		top.add(seenLine);
 		add(top, BorderLayout.NORTH);
 
-		JScrollPane scroll = new JScrollPane(content);
-		scroll.setBorder(BorderFactory.createEmptyBorder());
-		scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		scroll.getViewport().setBackground(ColorScheme.DARK_GRAY_COLOR);
-		add(scroll, BorderLayout.CENTER);
+		add(scrollPane(content), BorderLayout.CENTER);
 
 		store.addListener(this::refresh);
+		player.addListener(this::refresh);
 		refresh();
 	}
 
@@ -100,45 +92,12 @@ public class BankTab extends TabPanel
 		}
 	}
 
-	private JPanel searchBox()
-	{
-		search.setIcon(IconTextField.Icon.SEARCH);
-		search.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		search.setHoverBackgroundColor(ColorScheme.DARK_GRAY_HOVER_COLOR);
-		search.setPreferredSize(new Dimension(0, 30));
-		search.setToolTipText("Search every page: an item name or a patch kind (e.g. \"ranarr\", \"fruit\")");
-		search.getDocument().addDocumentListener(new DocumentListener()
-		{
-			@Override
-			public void insertUpdate(DocumentEvent e)
-			{
-				refresh();
-			}
-
-			@Override
-			public void removeUpdate(DocumentEvent e)
-			{
-				refresh();
-			}
-
-			@Override
-			public void changedUpdate(DocumentEvent e)
-			{
-				refresh();
-			}
-		});
-		search.addClearListener(this::refresh);
-		JPanel wrapper = new JPanel(new BorderLayout());
-		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		wrapper.setBorder(BorderFactory.createEmptyBorder(6, 0, 4, 0));
-		wrapper.add(search, BorderLayout.CENTER);
-		return wrapper;
-	}
-
 	private MaterialTabGroup pageSwitch()
 	{
 		MaterialTabGroup tabs = new MaterialTabGroup();
 		tabs.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		// One equal column per page, so all three always fit on one line (the default flow layout wraps).
+		tabs.setLayout(new GridLayout(1, BankView.Page.values().length));
 		MaterialTab first = null;
 		for (BankView.Page p : BankView.Page.values())
 		{
@@ -160,7 +119,7 @@ public class BankTab extends TabPanel
 	{
 		redrawQueued.set(false);
 		BankView view = BankViewBuilder.build(data, store.ledger(), BufferSettings.from(config),
-			leprechaun.getBottomlessBucketUses(), System.currentTimeMillis());
+			data.patchCountsByKind(), leprechaun.getBottomlessBucketUses(), System.currentTimeMillis());
 
 		seenLine.removeAll();
 		for (String seen : view.getSeen())
@@ -171,27 +130,30 @@ public class BankTab extends TabPanel
 			seenLine.add(label);
 		}
 
-		String query = search.getText().trim();
-		List<BankView.Section> sections = query.isEmpty() ? view.page(page) : view.search(query);
+		String query = toolbar.query();
+		BankFilters filters = toolbar.filters(player.getFarmingLevel());
+		List<BankView.Section> sections = filters.apply(query.isEmpty() ? view.page(page) : view.search(query));
 
 		content.removeAll();
 		if (sections.isEmpty())
 		{
-			content.add(text("Nothing matches \"" + query + "\"."));
+			content.add(text(query.isEmpty() ? "No seeds match the filters." : "Nothing matches \"" + query + "\"."));
 		}
 		for (BankView.Section section : sections)
 		{
-			content.add(sectionPanel(section, !query.isEmpty()));
+			content.add(sectionPanel(section, !query.isEmpty() || filters.activeCount() > 0));
 		}
 		revalidate();
 		repaint();
 	}
 
-	private SectionPanel sectionPanel(BankView.Section section, boolean searching)
+	/**
+	 * @param narrowed true while searching or filtering: every section shown is opened, whatever it was before
+	 */
+	private SectionPanel sectionPanel(BankView.Section section, boolean narrowed)
 	{
 		String title = section.getTitle();
-		// While searching, every section with a match is open, whatever it was before.
-		SectionPanel panel = new SectionPanel(title, !searching && collapsed.getOrDefault(title, false),
+		SectionPanel panel = new SectionPanel(title, !narrowed && collapsed.getOrDefault(title, false),
 			state -> collapsed.put(title, state));
 		if (section.isEmpty())
 		{

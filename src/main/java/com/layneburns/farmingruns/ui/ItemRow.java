@@ -7,6 +7,7 @@
 package com.layneburns.farmingruns.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import javax.swing.BorderFactory;
@@ -18,7 +19,8 @@ import net.runelite.client.ui.FontManager;
 
 /**
  * One item in a list: its icon, its name with an optional smaller detail line underneath, and a short count on the
- * right. The name and detail shorten with "..." when the panel is narrow; the tooltip has the full story.
+ * right. The name and detail shorten with "..." when the panel is narrow; the tooltip has the full story, one
+ * fact per line.
  */
 class ItemRow extends JPanel
 {
@@ -30,8 +32,7 @@ class ItemRow extends JPanel
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.DARK_GRAY_COLOR));
 		setAlignmentX(LEFT_ALIGNMENT);
-		String tooltip = row.getDetail() == null ? row.getTooltip() : row.getDetail() + " · " + row.getTooltip();
-		setToolTipText(tooltip);
+		setToolTipText(tooltipHtml(row));
 
 		JLabel icon = new JLabel();
 		icon.setPreferredSize(ICON_SIZE);
@@ -46,7 +47,7 @@ class ItemRow extends JPanel
 		{
 			JLabel detail = new JLabel(row.getDetail());
 			detail.setFont(FontManager.getRunescapeSmallFont());
-			detail.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
+			detail.setForeground(colour(row.getDetailColour()));
 			text.add(detail);
 		}
 		// A zero minimum lets the text shrink (and shorten with "...") instead of widening the panel.
@@ -61,5 +62,39 @@ class ItemRow extends JPanel
 		add(text, BorderLayout.CENTER);
 		add(value, BorderLayout.EAST);
 		setMaximumSize(new Dimension(Integer.MAX_VALUE, ICON_SIZE.height + 1));
+	}
+
+	/** Green for a full run, yellow for part of one, red for none; grey when there's nothing to judge. */
+	static Color colour(BankView.Coverage coverage)
+	{
+		if (coverage == null)
+		{
+			return ColorScheme.MEDIUM_GRAY_COLOR;
+		}
+		switch (coverage)
+		{
+			case FULL:
+				return ColorScheme.PROGRESS_COMPLETE_COLOR;
+			case PARTIAL:
+				return ColorScheme.PROGRESS_INPROGRESS_COLOR;
+			default:
+				return ColorScheme.PROGRESS_ERROR_COLOR;
+		}
+	}
+
+	/** The item's name in bold, then the row's tooltip lines (one per line). */
+	private static String tooltipHtml(BankView.Row row)
+	{
+		StringBuilder html = new StringBuilder("<html><b>").append(escape(row.getLabel())).append("</b>");
+		for (String line : row.getTooltip().split("\n"))
+		{
+			html.append("<br>").append(escape(line));
+		}
+		return html.append("</html>").toString();
+	}
+
+	private static String escape(String text)
+	{
+		return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
 	}
 }

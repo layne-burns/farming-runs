@@ -13,6 +13,7 @@ import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.state.ContainerWatcher;
 import com.layneburns.farmingruns.state.ItemStore;
 import com.layneburns.farmingruns.state.LeprechaunWatcher;
+import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.ui.BankTab;
 import com.layneburns.farmingruns.ui.FarmingRunsPanel;
 import java.awt.image.BufferedImage;
@@ -69,6 +70,9 @@ public class FarmingRunsPlugin extends Plugin
 	@Inject
 	private LeprechaunWatcher leprechaunWatcher;
 
+	@Inject
+	private PlayerInfo playerInfo;
+
 	private NavigationButton navigationButton;
 
 	@Override
@@ -86,12 +90,14 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(itemStore);
 		eventBus.register(containerWatcher);
 		eventBus.register(leprechaunWatcher);
+		eventBus.register(playerInfo);
 		itemStore.loadRemembered();
 		// If the plugin starts while logged in, read what the client already has.
 		clientThread.invokeLater(() ->
 		{
 			containerWatcher.readCurrent();
 			leprechaunWatcher.refresh();
+			playerInfo.refresh();
 		});
 
 		log.debug("[farmrun] started: {} locations, {} patches, {} seeds (patch table from {})",
@@ -102,6 +108,7 @@ public class FarmingRunsPlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
+		eventBus.unregister(playerInfo);
 		eventBus.unregister(leprechaunWatcher);
 		eventBus.unregister(containerWatcher);
 		eventBus.unregister(itemStore);
