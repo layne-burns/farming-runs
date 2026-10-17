@@ -19,8 +19,10 @@ import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PatchStatus;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -68,6 +70,11 @@ public class RunCheckService
 	 * and compost the leprechaun also has (you may grab them from either). Read on the client thread by the bank.
 	 */
 	private volatile Map<Integer, Integer> bankItems = Map.of();
+	/**
+	 * Every item the last check said the run uses (met or not), plus your seed box and rune pouch when they'd hold
+	 * what it needs: anything else in your inventory can go in the bank.
+	 */
+	private volatile Set<Integer> neededItems = Set.of();
 	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
 	@Inject
@@ -123,6 +130,7 @@ public class RunCheckService
 		List<InventoryChecker.Line> lines = InventoryChecker.check(requirements.getRequirements(), ledger,
 			data.getItems().group("seed_box"));
 		setBankItems(lines);
+		setNeededItems(requirements);
 		return new Check(plan, requirements, lines);
 	}
 
@@ -130,6 +138,27 @@ public class RunCheckService
 	public Map<Integer, Integer> bankItems()
 	{
 		return bankItems;
+	}
+
+	/** Items the run uses; empty when there's no run set up. */
+	public Set<Integer> neededItems()
+	{
+		return neededItems;
+	}
+
+	private void setNeededItems(RunRequirements requirements)
+	{
+		Set<Integer> needed = new HashSet<>();
+		requirements.getRequirements().forEach(r -> needed.addAll(r.getItemIds()));
+		if (needed.stream().anyMatch(id -> data.seedByItem(id) != null))
+		{
+			needed.addAll(data.getItems().group("seed_box"));
+		}
+		if (needed.stream().anyMatch(data.getItems().runes().values()::contains))
+		{
+			needed.addAll(data.getItems().group("rune_pouch"));
+		}
+		neededItems = Set.copyOf(needed);
 	}
 
 	/** Called when {@link #bankItems()} changes. */

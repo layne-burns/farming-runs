@@ -29,6 +29,7 @@ import com.layneburns.farmingruns.ui.BankRunTab;
 import com.layneburns.farmingruns.ui.BankSearchButton;
 import com.layneburns.farmingruns.ui.SeedVaultFilter;
 import com.layneburns.farmingruns.ui.BankTab;
+import com.layneburns.farmingruns.ui.DepositOverlay;
 import com.layneburns.farmingruns.ui.GardenerOverlay;
 import com.layneburns.farmingruns.ui.RunItemOverlay;
 import com.layneburns.farmingruns.ui.FarmingRunsPanel;
@@ -144,6 +145,9 @@ public class FarmingRunsPlugin extends Plugin
 	@Inject
 	private GardenerOverlay gardenerOverlay;
 
+	@Inject
+	private DepositOverlay depositOverlay;
+
 	private NavigationButton navigationButton;
 
 	@Override
@@ -160,6 +164,7 @@ public class FarmingRunsPlugin extends Plugin
 		overlayManager.add(bankHighlightOverlay);
 		overlayManager.add(runItemOverlay);
 		overlayManager.add(gardenerOverlay);
+		overlayManager.add(depositOverlay);
 
 		eventBus.register(itemStore);
 		eventBus.register(containerWatcher);
@@ -221,6 +226,7 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.unregister(leprechaunWatcher);
 		eventBus.unregister(containerWatcher);
 		eventBus.unregister(itemStore);
+		overlayManager.remove(depositOverlay);
 		overlayManager.remove(gardenerOverlay);
 		overlayManager.remove(runItemOverlay);
 		overlayManager.remove(bankHighlightOverlay);

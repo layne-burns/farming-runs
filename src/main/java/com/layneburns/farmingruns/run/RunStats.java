@@ -8,18 +8,16 @@ package com.layneburns.farmingruns.run;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import lombok.Value;
 
 /**
  * Your farming runs over time (saved per account): how many, the patches planted, the XP and time, the fastest full
- * run, and your best haul of each crop from one stop ("most herbs grabbed at once"). Immutable. Pure: unit tested.
+ * run, and the most herbs you've picked from one patch. Immutable. Pure: unit tested.
  */
 @Value
 public class RunStats
 {
-	public static final RunStats NONE = new RunStats(0, 0, 0, 0, 0, Map.of());
+	public static final RunStats NONE = new RunStats(0, 0, 0, 0, 0, 0, "");
 
 	/** Runs finished (every stop done or skipped). */
 	int runs;
@@ -28,26 +26,26 @@ public class RunStats
 	long millis;
 	/** The quickest finished run, in milliseconds; 0 before the first. */
 	long fastestMillis;
-	/** The most of each produce gathered at a single stop, by item name. */
-	Map<String, Integer> bestAtOneStop;
+	/** The most herbs picked from one patch, and which herb; 0 and "" before the first. */
+	int mostHerbs;
+	String mostHerbsName;
 
-	/** These stats with a run added; the run's records are filled in (new bests at one stop, a new fastest run). */
+	/** These stats with a run added; the run's records are filled in (most herbs, fastest run). */
 	public Added add(RunSummary run)
 	{
 		List<String> records = new ArrayList<>();
-		Map<String, Integer> best = new TreeMap<>(bestAtOneStop == null ? Map.of() : bestAtOneStop);
-		run.getBestAtOneStop().forEach((item, count) ->
+		int herbs = mostHerbs;
+		String herbName = mostHerbsName;
+		if (run.getMostHerbs() > herbs)
 		{
-			Integer was = best.get(item);
-			if (was == null || count > was)
+			if (herbs > 0)
 			{
-				best.put(item, count);
-				if (was != null)
-				{
-					records.add(item + ": " + count + " at one stop (was " + was + ")");
-				}
+				records.add("Most herbs from one patch: " + run.getMostHerbs() + " " + run.getMostHerbsName() + " (was "
+					+ herbs + ")");
 			}
-		});
+			herbs = run.getMostHerbs();
+			herbName = run.getMostHerbsName();
+		}
 		long fastest = fastestMillis;
 		if (run.isCompleted() && (fastest == 0 || run.getMillis() < fastest))
 		{
@@ -58,10 +56,10 @@ public class RunStats
 			fastest = run.getMillis();
 		}
 		RunStats next = new RunStats(runs + (run.isCompleted() ? 1 : 0), patchesPlanted + run.getPatchesPlanted(),
-			xp + run.getXpGained(), millis + run.getMillis(), fastest, Map.copyOf(best));
+			xp + run.getXpGained(), millis + run.getMillis(), fastest, herbs, herbName);
 		RunSummary withRecords = new RunSummary(run.isCompleted(), run.getMillis(), run.getXpGained(),
-			run.getStopsDone(), run.getStops(), run.getPatchesPlanted(), run.getHarvested(), run.getBestAtOneStop(),
-			List.copyOf(records));
+			run.getStopsDone(), run.getStops(), run.getPatchesPlanted(), run.getHarvested(), run.getMostHerbs(),
+			run.getMostHerbsName(), List.copyOf(records));
 		return new Added(next, withRecords);
 	}
 

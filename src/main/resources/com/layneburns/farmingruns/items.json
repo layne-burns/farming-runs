@@ -84,6 +84,12 @@
 		"construction_cape": [
 			9789,
 			9790
+		],
+		"rune_pouch": [
+			12791,
+			24416,
+			27281,
+			27509
 		]
 	},
 	"descriptions": {
@@ -108,7 +114,8 @@
 		"amulet_of_bounty": "Worn while planting allotments: 25% chance to use one seed instead of three (10 charges).",
 		"coins": "Pays gardeners to clear grown trees (200 coins each).",
 		"house_tablet": "Teleports you into your house, for its portals (used up).",
-		"construction_cape": "Unlimited teleports into your house, for its portals."
+		"construction_cape": "Unlimited teleports into your house, for its portals.",
+		"rune_pouch": "Holds runes in one inventory slot; they count as carried."
 	},
 	"runes": {
 		"Air rune": 556,

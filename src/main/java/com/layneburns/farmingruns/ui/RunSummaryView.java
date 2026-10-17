@@ -35,6 +35,10 @@ final class RunSummaryView
 		{
 			section.addRow(TabPanel.text("Gathered: " + top(run.getHarvested())));
 		}
+		if (run.getMostHerbs() > 0)
+		{
+			section.addRow(TabPanel.text("Best herb patch: " + run.getMostHerbs() + " " + run.getMostHerbsName()));
+		}
 		for (String record : run.getRecords())
 		{
 			JLabel label = TabPanel.text("★ New best: " + record);
@@ -55,9 +59,10 @@ final class RunSummaryView
 		section.addRow(TabPanel.text(String.format("Farming XP from runs: %,d", stats.getXp())));
 		section.addRow(TabPanel.text("Time on runs: " + hours(stats.getMillis())
 			+ (stats.getFastestMillis() > 0 ? " · Fastest: " + RunStats.minutes(stats.getFastestMillis()) : "")));
-		if (!stats.getBestAtOneStop().isEmpty())
+		if (stats.getMostHerbs() > 0)
 		{
-			section.addRow(TabPanel.text("Most at one stop: " + top(stats.getBestAtOneStop())));
+			section.addRow(TabPanel.text("Most herbs from one patch: " + stats.getMostHerbs() + " "
+				+ stats.getMostHerbsName()));
 		}
 	}
 

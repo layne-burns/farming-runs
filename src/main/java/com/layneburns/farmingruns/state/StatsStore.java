@@ -11,7 +11,6 @@ import com.google.gson.JsonParseException;
 import com.layneburns.farmingruns.FarmingRunsConfig;
 import com.layneburns.farmingruns.run.RunStats;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.inject.Inject;
@@ -82,9 +81,10 @@ public class StatsStore
 				RunStats read = gson.fromJson(json, RunStats.class);
 				if (read != null)
 				{
-					// Older or partial saves may lack the map.
+					// Older or partial saves may lack the herb name.
 					loaded = new RunStats(read.getRuns(), read.getPatchesPlanted(), read.getXp(), read.getMillis(),
-						read.getFastestMillis(), read.getBestAtOneStop() == null ? Map.of() : Map.copyOf(read.getBestAtOneStop()));
+						read.getFastestMillis(), read.getMostHerbs(),
+						read.getMostHerbsName() == null ? "" : read.getMostHerbsName());
 				}
 			}
 			catch (JsonParseException e)

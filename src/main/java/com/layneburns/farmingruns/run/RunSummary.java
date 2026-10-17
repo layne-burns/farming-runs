@@ -21,10 +21,11 @@ public class RunSummary
 	int stopsDone;
 	int stops;
 	int patchesPlanted;
-	/** Produce gathered, by item name. */
+	/** Produce that landed in your inventory, by item name. */
 	Map<String, Integer> harvested;
-	/** The most of each produce gathered at a single stop, by item name. */
-	Map<String, Integer> bestAtOneStop;
-	/** New lifetime bests set by this run, e.g. "Grimy ranarr weed: 14 at one stop (was 11)". */
+	/** The most herbs picked from one patch this run (counted from the game's pick messages), and which herb. */
+	int mostHerbs;
+	String mostHerbsName;
+	/** New lifetime bests set by this run, e.g. "Most herbs from one patch: 14 Ranarr (was 11)". */
 	List<String> records;
 }

@@ -7,33 +7,40 @@
 package com.layneburns.farmingruns.run;
 
 import com.layneburns.farmingruns.state.StatsStore;
+import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
 import com.layneburns.farmingruns.vendor.timetracking.Produce;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.Skill;
+import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.util.Text;
 
 /**
- * Keeps score during a run: Farming XP gained since Start, and the produce you gather at each stop (for "most at one
- * stop" records). When the run finishes, or is stopped part way, it makes a {@link RunSummary}, adds it to your saved
+ * Keeps score during a run: Farming XP gained since Start, the produce you gather, and the herbs you pick from each
+ * patch (counted from the game's "You pick ..." messages, so a herb sack doesn't hide them). When the run finishes, or is stopped part way, it makes a {@link RunSummary}, adds it to your saved
  * {@link RunStats} and keeps it for the Live tab. Client thread.
  */
 @Slf4j
@@ -45,6 +52,14 @@ public class RunTracker
 		.filter(p -> p != Produce.WEEDS && p != Produce.SCARECROW)
 		.map(Produce::getItemID)
 		.collect(Collectors.toUnmodifiableSet());
+
+	/** "You pick a grimy ranarr weed.", "You harvest some ...": what was picked. */
+	private static final Pattern PICKED = Pattern.compile("you (?:pick|harvest) (?:an? |some )?(.+?)\\.?$");
+	/** Herb names as Time Tracking has them ("ranarr", "snapdragon"), to tell herbs from other crops. */
+	private static final List<String> HERBS = Arrays.stream(Produce.values())
+		.filter(p -> p.getPatchImplementation() == PatchImplementation.HERB)
+		.map(p -> p.getName().toLowerCase(Locale.ROOT))
+		.collect(Collectors.toUnmodifiableList());
 
 	private final Client client;
 	private final ItemManager itemManager;
@@ -61,9 +76,12 @@ public class RunTracker
 	private volatile int xpGained;
 	@Nullable
 	private String stopId;
-	private final Map<Integer, Integer> atThisStop = new HashMap<>();
 	private final Map<Integer, Integer> harvested = new HashMap<>();
-	private final Map<Integer, Integer> bestAtOneStop = new HashMap<>();
+	/** Herbs picked at the current stop, and which herb; the run's best so far. */
+	private int herbsHere;
+	private String herbHere = "";
+	private int mostHerbs;
+	private String mostHerbsName = "";
 	private Map<Integer, Integer> lastInventory = Map.of();
 	@Nullable
 	private volatile RunSummary lastSummary;
@@ -119,7 +137,6 @@ public class RunTracker
 			int gained = count - lastInventory.getOrDefault(id, 0);
 			if (gained > 0 && PRODUCE.contains(id))
 			{
-				atThisStop.merge(id, gained, Integer::sum);
 				harvested.merge(id, gained, Integer::sum);
 			}
 		});
@@ -161,20 +178,51 @@ public class RunTracker
 		lastSeen = run;
 		startXp = client.getSkillExperience(Skill.FARMING);
 		xpGained = 0;
-		atThisStop.clear();
 		harvested.clear();
-		bestAtOneStop.clear();
+		herbsHere = 0;
+		herbHere = "";
+		mostHerbs = 0;
+		mostHerbsName = "";
 		lastInventory = inventory();
 		RunProgress.Stop stop = run.getProgress().currentStop();
 		stopId = stop == null ? null : stop.getLocationId();
 		changed();
 	}
 
-	/** The stop is over: its haul counts towards the best at one stop. */
+	/** The stop is over: its herbs count towards the run's most from one patch (a stop has one herb patch). */
 	private void closeStop()
 	{
-		atThisStop.forEach((id, count) -> bestAtOneStop.merge(id, count, Math::max));
-		atThisStop.clear();
+		if (herbsHere > mostHerbs)
+		{
+			mostHerbs = herbsHere;
+			mostHerbsName = herbHere;
+		}
+		herbsHere = 0;
+		herbHere = "";
+	}
+
+	@Subscribe
+	public void onChatMessage(ChatMessage event)
+	{
+		if (tracking == 0 || (event.getType() != ChatMessageType.GAMEMESSAGE && event.getType() != ChatMessageType.SPAM))
+		{
+			return;
+		}
+		Matcher picked = PICKED.matcher(Text.removeTags(event.getMessage()).toLowerCase(Locale.ROOT));
+		if (!picked.find())
+		{
+			return;
+		}
+		String what = picked.group(1);
+		String herb = HERBS.stream().filter(what::contains).findFirst().orElse(null);
+		if (herb != null || what.contains("grimy") || what.equals("herb"))
+		{
+			herbsHere++;
+			if (herb != null)
+			{
+				herbHere = Character.toUpperCase(herb.charAt(0)) + herb.substring(1);
+			}
+		}
 	}
 
 	private void finish(boolean completed)
@@ -197,8 +245,8 @@ public class RunTracker
 			return;
 		}
 		RunSummary summary = new RunSummary(completed, System.currentTimeMillis() - run.getStartedAtMillis(), xpGained,
-			(int) progress.doneCount(), progress.getStops().size(), planted, named(harvested), named(bestAtOneStop),
-			List.of());
+			(int) progress.doneCount(), progress.getStops().size(), planted, named(harvested), mostHerbs,
+			mostHerbsName.isEmpty() ? "herbs" : mostHerbsName, List.of());
 		RunStats.Added added = stats.stats().add(summary);
 		stats.save(added.getStats());
 		lastSummary = added.getRun();
