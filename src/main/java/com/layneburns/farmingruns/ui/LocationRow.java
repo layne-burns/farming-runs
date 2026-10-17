@@ -36,10 +36,10 @@ class LocationRow extends JPanel
 
 	/**
 	 * @param onToggle   called when the header is clicked
-	 * @param onTeleport the chosen teleport id, or null for the default
-	 * @param onOverride true / false to force unlocked / locked, or null to follow the rules
+	 * @param onTeleports the new teleport order, or null for the default
+	 * @param onOverride  true / false to force unlocked / locked, or null to follow the rules
 	 */
-	LocationRow(LocationsView.Entry entry, boolean expanded, Runnable onToggle, Consumer<String> onTeleport,
+	LocationRow(LocationsView.Entry entry, boolean expanded, Runnable onToggle, Consumer<List<String>> onTeleports,
 		Consumer<Boolean> onOverride)
 	{
 		super(new BorderLayout());
@@ -49,7 +49,7 @@ class LocationRow extends JPanel
 		add(header(entry, onToggle), BorderLayout.NORTH);
 		if (expanded)
 		{
-			add(details(entry, onTeleport, onOverride), BorderLayout.CENTER);
+			add(details(entry, onTeleports, onOverride), BorderLayout.CENTER);
 		}
 	}
 
@@ -89,7 +89,8 @@ class LocationRow extends JPanel
 		return header;
 	}
 
-	private static JPanel details(LocationsView.Entry entry, Consumer<String> onTeleport, Consumer<Boolean> onOverride)
+	private static JPanel details(LocationsView.Entry entry, Consumer<List<String>> onTeleports,
+		Consumer<Boolean> onOverride)
 	{
 		JPanel details = new JPanel();
 		details.setLayout(new BoxLayout(details, BoxLayout.Y_AXIS));
@@ -98,25 +99,12 @@ class LocationRow extends JPanel
 
 		details.add(wrapped(entry.getStatusText(), statusColour(entry.getStatus())));
 
-		details.add(caption("Teleport"));
-		JComboBox<LocationsView.TeleportOption> teleport = new JComboBox<>(
-			entry.getTeleports().toArray(new LocationsView.TeleportOption[0]));
-		entry.getTeleports().stream().filter(o -> o.getId().equals(entry.getTeleportId())).findFirst()
-			.ifPresent(teleport::setSelectedItem);
-		// The listener goes on after the selection is set, so drawing the row doesn't count as a choice.
-		teleport.addActionListener(e ->
-		{
-			LocationsView.TeleportOption chosen = (LocationsView.TeleportOption) teleport.getSelectedItem();
-			onTeleport.accept(chosen == null || chosen.isDefault() ? null : chosen.getId());
-		});
-		details.add(fit(teleport));
-		if (entry.getTeleportWarning() != null)
-		{
-			details.add(wrapped(entry.getTeleportWarning(), Palette.PARTIAL));
-		}
+		details.add(caption("Teleports (first one you have is used)"));
+		details.add(new TeleportListEditor(entry, onTeleports));
 
 		details.add(caption("Unlock"));
 		JComboBox<String> override = new JComboBox<>(OVERRIDES);
+		// The listener goes on after the selection is set, so drawing the row doesn't count as a choice.
 		LocationStatus status = entry.getStatus();
 		override.setSelectedIndex(!status.isOverridden() ? 0
 			: status.getAccess() == LocationStatus.Access.UNLOCKED ? 1 : 2);

@@ -26,15 +26,21 @@ import net.runelite.client.events.RuneScapeProfileChanged;
 
 /**
  * Your choices per location, saved to your RuneScape profile: an unlock override (force unlocked or locked when the
- * rules get it wrong) and the teleport to use instead of the default. Listeners are told after every change.
+ * rules get it wrong) and your own order of teleports instead of the default one. Listeners are told after every
+ * change.
  */
 @Slf4j
 @Singleton
 public class LocationPrefs
 {
 	private static final String OVERRIDES_KEY = "unlockOverrides";
-	private static final String TELEPORTS_KEY = "teleportChoices";
+	private static final String TELEPORTS_KEY = "teleportOrders";
+	/** Before ranked lists, a single teleport per location was saved here; it's moved to the front on load. */
+	private static final String OLD_TELEPORT_KEY = "teleportChoices";
 	private static final Type BOOLEAN_MAP = new TypeToken<Map<String, Boolean>>()
+	{
+	}.getType();
+	private static final Type LIST_MAP = new TypeToken<Map<String, List<String>>>()
 	{
 	}.getType();
 	private static final Type STRING_MAP = new TypeToken<Map<String, String>>()
@@ -45,7 +51,7 @@ public class LocationPrefs
 	private final Gson gson;
 	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 	private volatile Map<String, Boolean> overrides = Map.of();
-	private volatile Map<String, String> teleports = Map.of();
+	private volatile Map<String, List<String>> teleports = Map.of();
 
 	@Inject
 	LocationPrefs(ConfigManager configManager, Gson gson)
@@ -82,23 +88,28 @@ public class LocationPrefs
 		save(OVERRIDES_KEY, overrides);
 	}
 
-	/** The teleport id to use for a location: your choice, or the location's default. */
-	public String teleportFor(Location location)
+	/** The location's teleports in order of preference: your order, or the default one. */
+	public List<String> teleportsFor(Location location)
 	{
-		return teleports.getOrDefault(location.getId(), location.getDefaultTeleportId());
+		return teleports.getOrDefault(location.getId(), location.getDefaultTeleportIds());
 	}
 
-	/** @param teleportId the teleport to use, or null to go back to the default */
-	public void setTeleport(String locationId, @Nullable String teleportId)
+	public boolean hasCustomTeleports(String locationId)
 	{
-		Map<String, String> copy = new HashMap<>(teleports);
-		if (teleportId == null)
+		return teleports.containsKey(locationId);
+	}
+
+	/** @param order your order of teleport ids, or null to go back to the default */
+	public void setTeleports(String locationId, @Nullable List<String> order)
+	{
+		Map<String, List<String>> copy = new HashMap<>(teleports);
+		if (order == null)
 		{
 			copy.remove(locationId);
 		}
 		else
 		{
-			copy.put(locationId, teleportId);
+			copy.put(locationId, List.copyOf(order));
 		}
 		teleports = Map.copyOf(copy);
 		save(TELEPORTS_KEY, teleports);
@@ -108,7 +119,8 @@ public class LocationPrefs
 	public void load()
 	{
 		overrides = read(OVERRIDES_KEY, BOOLEAN_MAP);
-		teleports = read(TELEPORTS_KEY, STRING_MAP);
+		teleports = read(TELEPORTS_KEY, LIST_MAP);
+		migrateSingleChoices();
 		listeners.forEach(Runnable::run);
 	}
 
@@ -116,6 +128,22 @@ public class LocationPrefs
 	public void onRuneScapeProfileChanged(RuneScapeProfileChanged event)
 	{
 		load();
+	}
+
+	/** A teleport picked before ranked lists existed becomes the first of a custom list (the default follows on use). */
+	private void migrateSingleChoices()
+	{
+		Map<String, String> old = read(OLD_TELEPORT_KEY, STRING_MAP);
+		if (old.isEmpty())
+		{
+			return;
+		}
+		Map<String, List<String>> copy = new HashMap<>(teleports);
+		old.forEach((location, teleport) -> copy.putIfAbsent(location, List.of(teleport)));
+		teleports = Map.copyOf(copy);
+		configManager.setRSProfileConfiguration(FarmingRunsConfig.GROUP, TELEPORTS_KEY, gson.toJson(teleports));
+		configManager.unsetRSProfileConfiguration(FarmingRunsConfig.GROUP, OLD_TELEPORT_KEY);
+		log.debug("[unlock] moved {} single teleport choices to ranked lists", old.size());
 	}
 
 	private void save(String key, Map<String, ?> value)

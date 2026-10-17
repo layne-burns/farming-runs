@@ -62,7 +62,8 @@ final class RawData
 
 	static class LocationSettings
 	{
-		String teleport;
+		List<String> teleports;
+		String fairyRing;
 		String unlock;
 		String note;
 		Map<String, String> patchUnlocks;

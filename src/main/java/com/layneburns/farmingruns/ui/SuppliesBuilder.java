@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.runelite.api.gameval.ItemID;
 
@@ -102,13 +103,10 @@ final class SuppliesBuilder
 			if (total > 0)
 			{
 				int icon = teleport.getItemIds().stream().max(Comparator.comparingInt(ledger::count)).orElseThrow();
-				List<String> usedFor = data.locations().stream()
-					.filter(l -> l.getDefaultTeleportId().equals(teleport.getId()))
-					.map(Location::getName)
-					.sorted()
-					.collect(Collectors.toList());
+				List<String> first = locationsWhere(data, l -> l.getDefaultTeleportIds().get(0).equals(teleport.getId()));
+				List<String> fallback = locationsWhere(data, l -> l.getDefaultTeleportIds().indexOf(teleport.getId()) > 0);
 				rows.add(new BankView.Row(icon, teleport.getName(), String.valueOf(total), null,
-					BankTooltips.teleport(usedFor, whereAny(ledger, teleport.getItemIds()))));
+					BankTooltips.teleport(first, fallback, whereAny(ledger, teleport.getItemIds()))));
 			}
 		}
 		return rows;
@@ -121,6 +119,11 @@ final class SuppliesBuilder
 				null, BankTooltips.leprechaun(data.getItems().description(e.getKey()))))
 			.sorted(Comparator.comparing(BankView.Row::getLabel))
 			.collect(Collectors.toList());
+	}
+
+	private static List<String> locationsWhere(GameData data, Predicate<Location> test)
+	{
+		return data.locations().stream().filter(test).map(Location::getName).sorted().collect(Collectors.toList());
 	}
 
 	private static String leprechaunItemName(GameData data, int itemId)

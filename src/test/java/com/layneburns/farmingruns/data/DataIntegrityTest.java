@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
@@ -138,7 +139,8 @@ public class DataIntegrityTest
 		assertEquals(VarbitID.LUMBRIDGE_DIARY_ELITE_COMPLETE, fairyRing.getWaivedByVarbitId());
 
 		assertTrue(data.teleport("ectophial").getItemIds().contains(ItemID.ECTOPHIAL));
-		assertEquals("ectophial", data.location("port_phasmatys").getDefaultTeleportId());
+		assertEquals(List.of("ectophial", "fairy_ring"), data.location("port_phasmatys").getDefaultTeleportIds());
+		assertEquals("ALQ", data.location("port_phasmatys").getFairyRingCode());
 	}
 
 	@Test

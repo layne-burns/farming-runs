@@ -25,7 +25,11 @@ public class Location
 	/** Where Shortest Path is pointed for this stop. */
 	WorldPoint target;
 	List<Patch> patches;
-	String defaultTeleportId;
+	/** Teleports in order of preference: the first one you can use is used. */
+	List<String> defaultTeleportIds;
+	/** The fairy ring code here, e.g. "CIR", when a fairy ring is one of its teleports; else null. */
+	@Nullable
+	String fairyRingCode;
 	@Nullable
 	String unlockRuleId;
 	@Nullable

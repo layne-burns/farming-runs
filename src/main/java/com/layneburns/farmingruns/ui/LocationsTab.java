@@ -198,8 +198,14 @@ public class LocationsTab extends TabPanel
 	{
 		redrawQueued.set(false);
 		String query = search.getText().trim();
-		LocationsView view = LocationsViewBuilder.build(data, unlocks::status, unlocks::patchRuleStatus,
-			prefs::teleportFor, player.getFacts().spellbookName(), query, Set.copyOf(runTypes));
+		LocationsContext context = LocationsContext.builder()
+			.statusOf(unlocks::status)
+			.patchRuleOf(unlocks::patchRuleStatus)
+			.teleportsOf(prefs::teleportsFor)
+			.customTeleports(l -> prefs.hasCustomTeleports(l.getId()))
+			.spellbook(player.getFacts().spellbookName())
+			.build();
+		LocationsView view = LocationsViewBuilder.build(data, context, query, Set.copyOf(runTypes));
 
 		summary.setText(view.getSummary());
 		content.removeAll();
@@ -235,7 +241,7 @@ public class LocationsTab extends TabPanel
 					}
 					refresh();
 				},
-				teleportId -> prefs.setTeleport(id, teleportId),
+				order -> prefs.setTeleports(id, order),
 				unlocked -> prefs.setOverride(id, unlocked)));
 		}
 		return panel;

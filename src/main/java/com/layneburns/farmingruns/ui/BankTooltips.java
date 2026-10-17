@@ -54,12 +54,24 @@ final class BankTooltips
 			+ "\nWhere: " + where;
 	}
 
-	/** A teleport item: the locations that use it by default, then where it is. */
-	static String teleport(List<String> usedFor, String where)
+	/** A teleport item: where it's the first choice, where it's a fallback (by default), then where it is. */
+	static String teleport(List<String> firstChoice, List<String> fallback, String where)
 	{
-		String uses = usedFor.isEmpty() ? "Not a default teleport for any location"
-			: "Default teleport for " + String.join(", ", usedFor);
-		return uses + "\nWhere: " + where;
+		List<String> lines = new ArrayList<>();
+		if (!firstChoice.isEmpty())
+		{
+			lines.add("First choice for " + String.join(", ", firstChoice));
+		}
+		if (!fallback.isEmpty())
+		{
+			lines.add("Fallback for " + String.join(", ", fallback));
+		}
+		if (lines.isEmpty())
+		{
+			lines.add("Not in any location's teleports by default");
+		}
+		lines.add("Where: " + where);
+		return String.join("\n", lines);
 	}
 
 	/** Something stored with the tool leprechaun. */

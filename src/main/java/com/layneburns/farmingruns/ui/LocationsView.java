@@ -42,12 +42,12 @@ public class LocationsView
 		LocationStatus status;
 		/** E.g. "Unlocked", "Locked: Quest: Song of the Elves", "Unlocked (your override)". */
 		String statusText;
-		/** The teleport in use (your choice or the default), and every choice, default first. */
-		String teleportId;
-		List<TeleportOption> teleports;
-		/** A problem with the chosen teleport, e.g. it needs another spellbook; null if none. */
-		@Nullable
-		String teleportWarning;
+		/** Teleports in order of preference: the first one you can use is used. */
+		List<TeleportLine> teleports;
+		/** Teleports not in the list, which you can add. */
+		List<TeleportOption> addable;
+		/** True when you've changed the order from the default. */
+		boolean customTeleports;
 		List<PatchLine> patches;
 		@Nullable
 		String note;
@@ -56,16 +56,27 @@ public class LocationsView
 	}
 
 	@Value
+	public static class TeleportLine
+	{
+		String id;
+		/** E.g. "Skills necklace (Farming Guild)" or "Fairy ring CIR". */
+		String name;
+		/** A problem with this teleport, e.g. it needs another spellbook; null if none. */
+		@Nullable
+		String warning;
+	}
+
+	@Value
 	public static class TeleportOption
 	{
 		String id;
 		String name;
-		boolean isDefault;
 
+		/** What the "Add teleport" list shows. */
 		@Override
 		public String toString()
 		{
-			return isDefault ? name + " (default)" : name;
+			return name;
 		}
 	}
 

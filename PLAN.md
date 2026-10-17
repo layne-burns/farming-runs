@@ -102,7 +102,9 @@ ui/
   LocationsTab           search, Types dropdown (multi-select), Recheck; a section per run type, Locked last
   LocationsView, LocationsViewBuilder  (pure) per location: status text, patch kinds, teleport choices + spellbook
                          warning, per-patch status, note, wiki hints
-  LocationRow            a location: click to open teleport choice, unlock override, patches
+  LocationRow            a location: click to open its teleports, unlock override, patches
+  TeleportListEditor     a location's ranked teleports: up / down / remove / add / reset
+  LocationsContext       your situation (unlock answers, teleport order, spellbook) passed to the view builder
   NotReadyDialog, StartAnywayDialog
   PatchOutlineOverlay    outlines to-do patches at the current stop (match by varbit)
   OverheadReminder       pay / compost / tree-step text over the player
@@ -138,7 +140,7 @@ The tool leprechaun needs no data file: its encoding is the game's own `farming_
 | 2 | **Seed log and leprechaun** ✅ | `ItemStore`, `ContainerWatcher`, `LeprechaunWatcher`, `BankTab` (via the pure `BankViewBuilder`), buffer settings, profile persistence | `LeprechaunDecoderTest`, `ItemLedgerTest`, `BankViewBuilderTest` | Counts match the bank, vault and seed box after opening each, and the leprechaun matches its Exchange screen. **Verify:** is the seed-box container sent at login or only once opened? What do bottomless bucket types 2–4 mean (log line `[leprechaun]`)? |
 | 3 | **Unlocks** | `PlayerFacts`/`PlayerInfo`, `UnlockEvaluator`, `LocationPrefs`, `UnlockService`, `LocationsTab` (via `LocationsViewBuilder`); Bank "full run" uses unlocked patches. POH nexus / jewellery box tick boxes moved to phase 6, where teleports are checked | `UnlockEvaluatorTest`, `LocationsViewBuilderTest` | Prifddinas is locked (SotE) and everything else unlocked; overrides and teleport choices survive a relog |
 | 4 | **Patch states** | `PatchStates`, `ReadyPredictor`, ready times in `LocationsTab` | Decode and predict on recorded Time Tracking values | Ready times match Time Tracking's own Farming tab |
-| 5 | **Run setup** | `RunSetup`, `PresetStore`, `SeedPicker`, `ContractService`, `RunTab` setup form | Picker: best spare seed, buffers 9/2/3, mixing, contract override, manual mode | Auto picks look right; save, load and relog a preset |
+| 5 | **Run setup** | `RunSetup`, `PresetStore`, `SeedPicker`, `ContractService`, `RunTab` setup form; goal presets (e.g. Prayer potion → ranarr + snape grass), combinable (open questions in SPEC §2.3) | Picker: best spare seed, buffers 9/2/3, mixing, contract override, manual mode | Auto picks look right; save, load and relog a preset |
 | 6 | **Start checks** | `RunRequirements`, `ItemCounts`, `InventoryChecker`, `BankHighlightOverlay`, `NotReadyDialog`, `StartAnywayDialog` | Requirements per routine, payment and compost; leprechaun counts as available; missing counts | Remove an item → it's listed and highlighted in the bank → "Start anyway" works |
 | 7 | **Route and run loop** | `CostTable`, `RoutePlanner`, `ShortestPathClient`, `RunSession`, `RunController`, the stop list in `RunTab` | Planner matches brute force on random small cases; session advance, skip and jump | A herb + allotment run: SP draws each leg and auto-advances when a stop is planted (and paid) |
 | 8 | **Guidance** | `PatchOutlineOverlay`, `OverheadReminder`, `DebugInfo` | Reminder text per situation | Outlines on the patches still to do; the pay and compost reminders appear and clear |

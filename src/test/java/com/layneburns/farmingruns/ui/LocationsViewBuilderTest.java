@@ -37,11 +37,16 @@ public class LocationsViewBuilderTest
 	/** Everything unlocked except Prifddinas (Song of the Elves) and the guild's advanced tier (Farming 80). */
 	private static LocationsView build(String query, Set<RunType> types)
 	{
-		return LocationsViewBuilder.build(data,
-			l -> l.getId().equals("prifddinas") ? LocationStatus.of(true, List.of("Quest: Song of the Elves"), null) : OPEN,
-			p -> "farming_guild_advanced".equals(p.getUnlockRuleId())
-				? LocationStatus.of(true, List.of("Farming 85"), null) : OPEN,
-			Location::getDefaultTeleportId, "Normal", query, types);
+		LocationsContext context = LocationsContext.builder()
+			.statusOf(l -> l.getId().equals("prifddinas")
+				? LocationStatus.of(true, List.of("Quest: Song of the Elves"), null) : OPEN)
+			.patchRuleOf(p -> "farming_guild_advanced".equals(p.getUnlockRuleId())
+				? LocationStatus.of(true, List.of("Farming 85"), null) : OPEN)
+			.teleportsOf(Location::getDefaultTeleportIds)
+			.customTeleports(l -> false)
+			.spellbook("Normal")
+			.build();
+		return LocationsViewBuilder.build(data, context, query, types);
 	}
 
 	private static LocationsView buildAll(String query)
@@ -103,14 +108,23 @@ public class LocationsViewBuilderTest
 	}
 
 	@Test
-	public void teleportsListTheDefaultFirstAndWarnAboutSpellbooks()
+	public void teleportsAreRankedAndWarnAboutSpellbooks()
 	{
 		LocationsView.Entry catherby = section(buildAll("catherby"), "HERB").getEntries().get(0);
-		assertEquals("camelot_teleport", catherby.getTeleportId());
-		assertTrue(catherby.getTeleports().get(0).isDefault());
-		assertNull(catherby.getTeleportWarning());
-		assertEquals("Needs the Lunar spellbook (you're on Normal)",
-			LocationsViewBuilder.teleportWarning(data.teleport("catherby_teleport"), "Normal"));
+		assertEquals(List.of("camelot_teleport", "catherby_teleport"), catherby.getTeleports().stream()
+			.map(LocationsView.TeleportLine::getId).collect(Collectors.toList()));
+		assertNull(catherby.getTeleports().get(0).getWarning());
+		assertEquals("Needs the Lunar spellbook (you're on Normal)", catherby.getTeleports().get(1).getWarning());
+		assertTrue("listed teleports aren't offered again", catherby.getAddable().stream()
+			.noneMatch(o -> o.getId().equals("camelot_teleport")));
+	}
+
+	@Test
+	public void fairyRingsShowTheLocationsCode()
+	{
+		LocationsView.Entry guild = section(buildAll("guild"), "HERB").getEntries().stream()
+			.filter(e -> e.getName().equals("Farming Guild")).findFirst().orElseThrow();
+		assertEquals("Fairy ring CIR", guild.getTeleports().get(1).getName());
 	}
 
 	@Test

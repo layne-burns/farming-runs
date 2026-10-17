@@ -63,7 +63,21 @@ public final class DataLoader
 			{
 				throw new DataException("location_settings.json has no entry for location " + raw.id);
 			}
-			requireKey(teleports, set.teleport, "location_settings.json " + raw.id + ": teleport");
+			if (set.teleports == null || set.teleports.isEmpty())
+			{
+				throw new DataException("location_settings.json " + raw.id + ": no teleports");
+			}
+			boolean fairyRing = false;
+			for (String teleport : set.teleports)
+			{
+				requireKey(teleports, teleport, "location_settings.json " + raw.id + ": teleports");
+				fairyRing |= teleports.get(teleport).getType() == TeleportType.FAIRY_RING;
+			}
+			if (fairyRing != (set.fairyRing != null))
+			{
+				throw new DataException("location_settings.json " + raw.id
+					+ ": a fairy ring teleport needs a fairyRing code, and a code needs a fairy ring teleport");
+			}
 			if (set.unlock != null)
 			{
 				requireKey(rules, set.unlock, "location_settings.json " + raw.id + ": unlock");
@@ -96,7 +110,7 @@ public final class DataLoader
 				throw new DataException(where + ": no target tile");
 			}
 			locations.put(raw.id, new Location(raw.id, raw.name, raw.regionId, List.copyOf(raw.extraRegionIds),
-				point(raw.target), List.copyOf(patches), set.teleport, set.unlock, set.note,
+				point(raw.target), List.copyOf(patches), List.copyOf(set.teleports), set.fairyRing, set.unlock, set.note,
 				List.copyOf(raw.wikiTeleports)));
 		}
 		for (String id : settings.keySet())

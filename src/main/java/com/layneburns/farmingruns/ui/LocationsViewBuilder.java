@@ -38,17 +38,13 @@ public final class LocationsViewBuilder
 	}
 
 	/**
-	 * @param statusOf    a location's unlock status
-	 * @param patchRuleOf a patch's own rule status (Farming Guild tiers), ignoring its location
-	 * @param teleportOf  the teleport id in use at a location
-	 * @param spellbook   your spellbook ("Normal", "Lunar"...), or null if not known
-	 * @param query       search text (name or patch kind); empty for all
-	 * @param runTypes    the run types to show a section for
+	 * @param query    search text (name or patch kind); empty for all
+	 * @param runTypes the run types to show a section for
 	 */
-	public static LocationsView build(GameData data, Function<Location, LocationStatus> statusOf,
-		Function<Patch, LocationStatus> patchRuleOf, Function<Location, String> teleportOf, @Nullable String spellbook,
-		String query, Set<RunType> runTypes)
+	public static LocationsView build(GameData data, LocationsContext context, String query, Set<RunType> runTypes)
 	{
+		Function<Location, LocationStatus> statusOf = context.getStatusOf();
+		Function<Patch, LocationStatus> patchRuleOf = context.getPatchRuleOf();
 		List<Location> locations = data.locations().stream()
 			.sorted(Comparator.comparing(Location::getName))
 			.collect(Collectors.toList());
@@ -82,7 +78,7 @@ public final class LocationsViewBuilder
 				{
 					continue;
 				}
-				LocationsView.Entry entry = entry(data, location, status, patchRuleOf, teleportOf.apply(location), spellbook);
+				LocationsView.Entry entry = entry(data, location, status, context);
 				if (matches(entry, query))
 				{
 					entries.add(entry);
@@ -99,7 +95,7 @@ public final class LocationsViewBuilder
 			boolean shown = location.getPatches().stream().anyMatch(p -> runTypes.stream().anyMatch(t -> t.covers(p.getKind())));
 			if (status.getAccess() == LocationStatus.Access.LOCKED && shown)
 			{
-				LocationsView.Entry entry = entry(data, location, status, patchRuleOf, teleportOf.apply(location), spellbook);
+				LocationsView.Entry entry = entry(data, location, status, context);
 				if (matches(entry, query))
 				{
 					locked.add(entry);
@@ -116,20 +112,40 @@ public final class LocationsViewBuilder
 	}
 
 	private static LocationsView.Entry entry(GameData data, Location location, LocationStatus status,
-		Function<Patch, LocationStatus> patchRuleOf, String teleportId, @Nullable String spellbook)
+		LocationsContext context)
 	{
 		List<LocationsView.PatchLine> patches = location.getPatches().stream()
 			.map(p ->
 			{
-				LocationStatus rule = patchRuleOf.apply(p);
+				LocationStatus rule = context.getPatchRuleOf().apply(p);
 				return new LocationsView.PatchLine(patchName(p), rule.isUsable(),
 					rule.isUsable() ? null : String.join(", ", rule.getMissing()));
 			})
 			.collect(Collectors.toList());
+		List<String> order = context.getTeleportsOf().apply(location);
+		List<LocationsView.TeleportLine> teleports = order.stream()
+			.map(data::teleport)
+			.map(t -> new LocationsView.TeleportLine(t.getId(), teleportName(t, location),
+				teleportWarning(t, context.getSpellbook())))
+			.collect(Collectors.toList());
+		List<LocationsView.TeleportOption> addable = data.teleports().stream()
+			.filter(t -> !order.contains(t.getId()))
+			.sorted(Comparator.comparing(Teleport::getName))
+			.map(t -> new LocationsView.TeleportOption(t.getId(), teleportName(t, location)))
+			.collect(Collectors.toList());
 		return new LocationsView.Entry(location.getId(), location.getName(), kinds(location), status,
-			statusText(status), teleportId, teleportOptions(data, location),
-			teleportWarning(data.teleport(teleportId), spellbook), patches, location.getNote(),
-			location.getWikiTeleports());
+			statusText(status), teleports, addable, context.getCustomTeleports().test(location), patches,
+			location.getNote(), location.getWikiTeleports());
+	}
+
+	/** The teleport's name; a fairy ring gets this location's code ("Fairy ring CIR"). */
+	static String teleportName(Teleport teleport, Location location)
+	{
+		if (teleport.getType() == TeleportType.FAIRY_RING && location.getFairyRingCode() != null)
+		{
+			return teleport.getName() + " " + location.getFairyRingCode();
+		}
+		return teleport.getName();
 	}
 
 	static String statusText(LocationStatus status)
@@ -163,19 +179,6 @@ public final class LocationsViewBuilder
 	{
 		String kind = BankViewBuilder.kindName(patch.getKind());
 		return patch.getName().isEmpty() ? kind : kind + " (" + patch.getName() + ")";
-	}
-
-	/** The location's default first, then every other teleport by name. */
-	private static List<LocationsView.TeleportOption> teleportOptions(GameData data, Location location)
-	{
-		List<LocationsView.TeleportOption> options = new ArrayList<>();
-		Teleport fallback = data.teleport(location.getDefaultTeleportId());
-		options.add(new LocationsView.TeleportOption(fallback.getId(), fallback.getName(), true));
-		data.teleports().stream()
-			.filter(t -> !t.getId().equals(fallback.getId()))
-			.sorted(Comparator.comparing(Teleport::getName))
-			.forEach(t -> options.add(new LocationsView.TeleportOption(t.getId(), t.getName(), false)));
-		return options;
 	}
 
 	/** A warning when the teleport can't work as things stand: a spell from another spellbook. */
