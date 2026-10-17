@@ -93,16 +93,15 @@ public class LocationPrefs
 	}
 
 	/**
-	 * The location's teleports in order of preference: your order, or the default one. Saved entries that no longer
-	 * name a known teleport (after a data update) are skipped; if none are left, the default is used.
+	 * The location's teleports in order of preference: your order, or the default one. Saved orders are upgraded to
+	 * today's names when loaded; anything still unknown is skipped, and if nothing is left the default is used.
 	 */
 	public List<String> teleportsFor(Location location)
 	{
 		List<String> saved = teleports.get(location.getId());
 		if (saved != null)
 		{
-			List<String> valid = saved.stream().filter(ref -> data.teleportChoice(ref) != null)
-				.collect(Collectors.toList());
+			List<String> valid = saved.stream().filter(this::isValid).collect(Collectors.toList());
 			if (!valid.isEmpty())
 			{
 				return valid;
@@ -138,6 +137,7 @@ public class LocationPrefs
 		overrides = read(OVERRIDES_KEY, BOOLEAN_MAP);
 		teleports = read(TELEPORTS_KEY, LIST_MAP);
 		migrateSingleChoices();
+		upgradeSavedNames();
 		listeners.forEach(Runnable::run);
 	}
 
@@ -161,6 +161,33 @@ public class LocationPrefs
 		configManager.setRSProfileConfiguration(FarmingRunsConfig.GROUP, TELEPORTS_KEY, gson.toJson(teleports));
 		configManager.unsetRSProfileConfiguration(FarmingRunsConfig.GROUP, OLD_TELEPORT_KEY);
 		log.debug("[unlock] moved {} single teleport choices to ranked lists", old.size());
+	}
+
+	/**
+	 * Teleport names saved by an older version (e.g. "ardougne_cloak_farm") become today's references
+	 * ("ardougne_cloak:farm"), and the result is saved, so it happens once.
+	 */
+	private void upgradeSavedNames()
+	{
+		Map<String, List<String>> upgraded = new HashMap<>();
+		teleports.forEach((locationId, order) ->
+		{
+			Location location = data.locations().stream().filter(l -> l.getId().equals(locationId)).findFirst()
+				.orElse(null);
+			upgraded.put(locationId,
+				location == null ? order : TeleportRefUpgrade.upgradeAll(order, location, this::isValid));
+		});
+		if (!upgraded.equals(teleports))
+		{
+			teleports = Map.copyOf(upgraded);
+			configManager.setRSProfileConfiguration(FarmingRunsConfig.GROUP, TELEPORTS_KEY, gson.toJson(teleports));
+			log.debug("[unlock] upgraded saved teleport names");
+		}
+	}
+
+	private boolean isValid(String ref)
+	{
+		return data.teleportChoice(ref) != null;
 	}
 
 	private void save(String key, Map<String, ?> value)
