@@ -66,6 +66,24 @@ public class SeedPickerTest
 	}
 
 	@Test
+	public void mostXpFirstFillsFromTheTopOfYourList()
+	{
+		// Chosen: ranarr, snapdragon, avantoe. Most XP first: snapdragon (2 spare), then avantoe (2), then ranarr.
+		RunSetup setup = herbRun().withKindPlan(PatchImplementation.HERB, KindPlan.AUTO.withAuto(false)
+			.withFillOrder(FillOrder.MOST_XP)
+			.withCrops(List.of(CropShare.even(ItemID.RANARR_SEED), CropShare.even(ItemID.SNAPDRAGON_SEED),
+				CropShare.even(ItemID.AVANTOE_SEED))));
+		Map<Integer, Integer> held = Map.of(ItemID.RANARR_SEED, 100, ItemID.SNAPDRAGON_SEED, 5, ItemID.AVANTOE_SEED, 5);
+		PlantingPlan plan = SeedPicker.plan(setup, herbs, held, BUFFERS, 99, data, null);
+		Map<String, Long> counts = countsBySeed(plan);
+		assertEquals(2L, (long) counts.get("Snapdragon seed"));
+		assertEquals(2L, (long) counts.get("Avantoe seed"));
+		assertEquals(herbs.size() - 4, (long) counts.get("Ranarr seed"));
+		// The first patches get the highest-XP seed.
+		assertEquals("Snapdragon seed", plan.getAssignments().get(0).getSeed().getName());
+	}
+
+	@Test
 	public void theContractGetsItsPatchEvenFromTheBuffer()
 	{
 		Patch guildHerb = data.patch("farming_guild.herb");

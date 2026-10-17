@@ -8,6 +8,7 @@ package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.data.Seed;
 import com.layneburns.farmingruns.run.CropShare;
+import com.layneburns.farmingruns.run.FillOrder;
 import com.layneburns.farmingruns.run.KindPlan;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.TreeRoutine;
@@ -20,6 +21,7 @@ import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,9 +88,27 @@ class KindCard extends JPanel
 
 		if (!plan.isAuto())
 		{
+			JComboBox<FillOrder> order = new JComboBox<>(FillOrder.values());
+			order.setSelectedItem(plan.getFillOrder());
+			order.setFocusable(false);
+			order.setToolTipText("By share: patches split by the numbers below. Most XP first: the highest-XP seed"
+				+ " fills patches first, as far as your spare goes, then the next.");
+			order.addActionListener(e -> onChange.accept(plan.withFillOrder((FillOrder) order.getSelectedItem())));
+			add(left(order));
+			boolean byShare = plan.getFillOrder() != FillOrder.MOST_XP;
+			List<Integer> indexes = new ArrayList<>();
 			for (int i = 0; i < plan.getCrops().size(); i++)
 			{
-				add(cropRow(plan, i, seeds, patches, onChange));
+				indexes.add(i);
+			}
+			if (!byShare)
+			{
+				// Listed in the order they fill: most XP first.
+				indexes.sort(Comparator.comparingDouble((Integer i) -> -xpOf(plan.getCrops().get(i), seeds)));
+			}
+			for (int i : indexes)
+			{
+				add(cropRow(plan, i, seeds, patches, byShare, onChange));
 			}
 			add(addCrop(plan, seeds, onChange));
 		}
@@ -122,7 +142,8 @@ class KindCard extends JPanel
 	}
 
 	/** "Ranarr seed   share [1]  patches [-]  ✕" */
-	private static JPanel cropRow(KindPlan plan, int index, List<Seed> seeds, int patches, Consumer<KindPlan> onChange)
+	private static JPanel cropRow(KindPlan plan, int index, List<Seed> seeds, int patches, boolean byShare,
+		Consumer<KindPlan> onChange)
 	{
 		CropShare crop = plan.getCrops().get(index);
 		String name = seeds.stream().filter(s -> s.getItemId() == crop.getSeedItemId()).map(Seed::getName)
@@ -148,10 +169,13 @@ class KindCard extends JPanel
 			onChange.accept(replace(plan, index, new CropShare(crop.getSeedItemId(), crop.getWeight(),
 				value == 0 ? null : value)));
 		});
-		numbers.add(small("share", Palette.SECONDARY_TEXT));
-		numbers.add(share);
-		numbers.add(small("#", Palette.SECONDARY_TEXT));
-		numbers.add(exact);
+		if (byShare)
+		{
+			numbers.add(small("share", Palette.SECONDARY_TEXT));
+			numbers.add(share);
+			numbers.add(small("#", Palette.SECONDARY_TEXT));
+			numbers.add(exact);
+		}
 		numbers.add(link("✕", "Remove this seed", () ->
 		{
 			List<CropShare> crops = new ArrayList<>(plan.getCrops());
@@ -220,6 +244,12 @@ class KindCard extends JPanel
 			parts.add(empty + " with no seed");
 		}
 		return parts.isEmpty() ? "Nothing to plant" : String.join(", ", parts);
+	}
+
+	private static double xpOf(CropShare crop, List<Seed> seeds)
+	{
+		return seeds.stream().filter(s -> s.getItemId() == crop.getSeedItemId()).mapToDouble(FillOrder::xpScore)
+			.findFirst().orElse(0);
 	}
 
 	private static KindPlan replace(KindPlan plan, int index, CropShare crop)

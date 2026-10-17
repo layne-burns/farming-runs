@@ -36,7 +36,7 @@ Assumptions: you play an ironman (payment comes from your own produce), you've c
 - **Skip patches:** a tick list of the unlocked patches of the chosen kinds.
 - **Seed choice:**
   - **Auto** (default): fills each kind with the best seed you can spare, and mixes seeds when one runs short.
-  - Turn Auto off to choose by hand.
+  - Turn Auto off to choose by hand. Your chosen seeds are given patches either **by share** (the shares or exact counts you set) or **most XP first** (the highest-XP seed fills patches first, as far as your spare goes, then the next; added 2026-10-17).
   - **Buffer:** never use the last *N* of any seed. Settings: Allotment 9, Saplings 2, Other 3.
   - **Farming contract:** a contract you hold but haven't planted makes the matching Farming Guild patch use the contract seed. The buffer doesn't apply to it.
 - **Payment:** one toggle per kind. A data file holds each crop's payment item and amount.

@@ -90,7 +90,22 @@ public final class SeedPicker
 				.filter(s -> farmingLevel < 0 || s.getLevel() <= farmingLevel)
 				.sorted(Comparator.comparingInt(Seed::getLevel).reversed())
 				.collect(Collectors.toList());
-			if (!plan.isAuto() && !plan.getCrops().isEmpty())
+			if (!plan.isAuto() && !plan.getCrops().isEmpty() && plan.getFillOrder() == FillOrder.MOST_XP)
+			{
+				// Your chosen seeds, highest XP first, each as far as your spare goes.
+				List<Seed> chosen = plan.getCrops().stream()
+					.map(c -> data.seedByItem(c.getSeedItemId()))
+					.filter(s -> s != null && (farmingLevel < 0 || s.getLevel() <= farmingLevel))
+					.sorted(Comparator.comparingDouble(FillOrder::xpScore).reversed())
+					.collect(Collectors.toList());
+				fillAuto(open, chosen, left, buffers, assignments);
+				if (!open.isEmpty())
+				{
+					warnings.add("Not enough of your chosen seeds for " + open.size() + " patch"
+						+ (open.size() == 1 ? "" : "es") + ": filled with the best you can spare");
+				}
+			}
+			else if (!plan.isAuto() && !plan.getCrops().isEmpty())
 			{
 				open = fillChosen(plan, open, data, farmingLevel, left, buffers, assignments, warnings);
 			}

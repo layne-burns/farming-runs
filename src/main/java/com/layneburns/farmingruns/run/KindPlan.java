@@ -20,7 +20,8 @@ import lombok.With;
 public class KindPlan
 {
 	/** Auto: the best seeds you can spare. */
-	public static final KindPlan AUTO = new KindPlan(true, List.of(), false, TreeRoutine.PAY_TO_REMOVE, false);
+	public static final KindPlan AUTO = new KindPlan(true, List.of(), false, TreeRoutine.PAY_TO_REMOVE, false,
+		FillOrder.SHARES);
 
 	/** True: pick the best seeds you can spare. False: use {@link #crops}. */
 	boolean auto;
@@ -34,4 +35,6 @@ public class KindPlan
 	 * way round so older saves, which lack it, default to harvesting.
 	 */
 	boolean skipHarvest;
+	/** How your chosen crops get patches: by share, or most XP first. */
+	FillOrder fillOrder;
 }
