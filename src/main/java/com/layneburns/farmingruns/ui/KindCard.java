@@ -26,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.swing.BorderFactory;
@@ -59,10 +60,11 @@ class KindCard extends JPanel
 	 * @param amulet   allotments: whether the amulet of bounty will be worn (your choice or the default); null for
 	 *                 other kinds
 	 * @param collapsed which collapsible parts are closed, by key; kept by the Run tab across redraws
+	 * @param seedInfo  a seed's tooltip: XP, protection and the goals that use it
 	 */
 	KindCard(String title, KindPlan plan, List<Seed> seeds, List<PlantingPlan.Assignment> planned, int patches,
 		@Nullable String payTooltip, boolean isTree, boolean harvests, List<String> notes, @Nullable Boolean amulet,
-		Map<String, Boolean> collapsed, Consumer<KindPlan> onChange)
+		Map<String, Boolean> collapsed, Function<Seed, String> seedInfo, Consumer<KindPlan> onChange)
 	{
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(Palette.SURFACE);
@@ -144,9 +146,9 @@ class KindCard extends JPanel
 			}
 			for (int i : indexes)
 			{
-				add(cropRow(plan, i, seeds, patches, byShare, onChange));
+				add(cropRow(plan, i, seeds, patches, byShare, seedInfo, onChange));
 			}
-			add(addCrop(plan, seeds, onChange));
+			add(addCrop(plan, seeds, seedInfo, onChange));
 		}
 
 		JLabel preview = TabPanel.text(preview(planned));
@@ -195,15 +197,18 @@ class KindCard extends JPanel
 
 	/** "Ranarr seed   share [1]  patches [-]  ✕" */
 	private static JPanel cropRow(KindPlan plan, int index, List<Seed> seeds, int patches, boolean byShare,
-		Consumer<KindPlan> onChange)
+		Function<Seed, String> seedInfo, Consumer<KindPlan> onChange)
 	{
 		CropShare crop = plan.getCrops().get(index);
-		String name = seeds.stream().filter(s -> s.getItemId() == crop.getSeedItemId()).map(Seed::getName)
-			.findFirst().orElse("?");
+		Seed seed = seeds.stream().filter(s -> s.getItemId() == crop.getSeedItemId()).findFirst().orElse(null);
 		JPanel row = new JPanel(new BorderLayout(4, 0));
 		row.setOpaque(false);
-		JLabel label = new JLabel(name);
+		JLabel label = new JLabel(seed == null ? "?" : seed.getName());
 		label.setForeground(Palette.TEXT);
+		if (seed != null)
+		{
+			label.setToolTipText(seedInfo.apply(seed));
+		}
 		label.setMinimumSize(new Dimension(0, 0));
 		label.setPreferredSize(new Dimension(0, label.getPreferredSize().height));
 
@@ -241,7 +246,8 @@ class KindCard extends JPanel
 		return row;
 	}
 
-	private static JPanel addCrop(KindPlan plan, List<Seed> seeds, Consumer<KindPlan> onChange)
+	private static JPanel addCrop(KindPlan plan, List<Seed> seeds, Function<Seed, String> seedInfo,
+		Consumer<KindPlan> onChange)
 	{
 		JPopupMenu menu = new JPopupMenu();
 		for (Seed seed : seeds)
@@ -251,6 +257,7 @@ class KindCard extends JPanel
 				continue;
 			}
 			JMenuItem item = new JMenuItem(seed.getName() + " (level " + seed.getLevel() + ")");
+			item.setToolTipText(seedInfo.apply(seed));
 			item.addActionListener(e ->
 			{
 				List<CropShare> crops = new ArrayList<>(plan.getCrops());

@@ -31,6 +31,38 @@ final class BankTooltips
 		return String.join("\n", lines);
 	}
 
+	/**
+	 * A seed in the Run tab's seed choices: level, growth, XP (and roughly per patch), seeds per patch, protection,
+	 * and the goals that use its crop.
+	 */
+	static String seedChoice(Seed seed, List<String> goals)
+	{
+		List<String> lines = new ArrayList<>(about(seed));
+		if (seed.getXp().getTotal() > 0)
+		{
+			lines.add("About " + Math.round(seed.getXp().getTotal()) + " XP per patch in all");
+		}
+		lines.add(protection(seed));
+		lines.add(goals.isEmpty() ? "Not part of any goal" : "Used for: " + String.join(", ", goals));
+		return String.join("\n", lines);
+	}
+
+	/** One fact per line as a Swing tooltip, under the name in bold. */
+	static String html(String name, String lines)
+	{
+		StringBuilder html = new StringBuilder("<html><b>").append(escape(name)).append("</b>");
+		for (String line : lines.split("\n"))
+		{
+			html.append("<br>").append(escape(line));
+		}
+		return html.append("</html>").toString();
+	}
+
+	private static String escape(String text)
+	{
+		return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+	}
+
 	/** A tree seed not yet potted. */
 	static String unpottedTreeSeed(Seed seed, String where)
 	{

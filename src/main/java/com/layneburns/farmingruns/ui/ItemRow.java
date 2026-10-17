@@ -31,7 +31,7 @@ class ItemRow extends JPanel
 		setBackground(Palette.SURFACE);
 		setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Palette.BACKGROUND));
 		setAlignmentX(LEFT_ALIGNMENT);
-		setToolTipText(tooltipHtml(row));
+		setToolTipText(BankTooltips.html(row.getLabel(), row.getTooltip()));
 
 		JLabel icon = new JLabel();
 		icon.setPreferredSize(ICON_SIZE);
@@ -79,21 +79,5 @@ class ItemRow extends JPanel
 			default:
 				return Palette.NONE;
 		}
-	}
-
-	/** The item's name in bold, then the row's tooltip lines (one per line). */
-	private static String tooltipHtml(BankView.Row row)
-	{
-		StringBuilder html = new StringBuilder("<html><b>").append(escape(row.getLabel())).append("</b>");
-		for (String line : row.getTooltip().split("\n"))
-		{
-			html.append("<br>").append(escape(line));
-		}
-		return html.append("</html>").toString();
-	}
-
-	private static String escape(String text)
-	{
-		return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
 	}
 }

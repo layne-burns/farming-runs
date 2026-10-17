@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -169,6 +170,11 @@ public class RunTab extends TabPanel
 		types.addRow(runTypes(setup));
 		content.add(types);
 
+		Map<Seed, List<String>> goalsBySeed = new HashMap<>();
+		data.goals().forEach(g -> g.getCrops().forEach(c -> goalsBySeed.computeIfAbsent(c.getSeed(),
+			k -> new ArrayList<>()).add(g.getName())));
+		Function<Seed, String> seedInfo = seed -> BankTooltips.html(seed.getName(),
+			BankTooltips.seedChoice(seed, goalsBySeed.getOrDefault(seed, List.of())));
 		for (PatchImplementation kind : kindsIn(setup))
 		{
 			List<PlantingPlan.Assignment> planned = plan.getAssignments().stream()
@@ -182,7 +188,7 @@ public class RunTab extends TabPanel
 					p -> Protection.isDiseaseFree(p, data, player.getFacts())) : null, isTree,
 				TreeRoutine.hasHarvest(kind), kindNotes(setup, plan, kind, planned),
 				kind == PatchImplementation.ALLOTMENT ? BountyAmulet.wanted(setup.kindPlan(kind), planned, data) : null,
-				collapsed, kp -> update(s -> s.withKindPlan(kind, kp))));
+				collapsed, seedInfo, kp -> update(s -> s.withKindPlan(kind, kp))));
 		}
 
 		SectionPanel compost = section("Compost");
