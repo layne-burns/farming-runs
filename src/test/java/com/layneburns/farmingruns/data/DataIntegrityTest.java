@@ -206,4 +206,17 @@ public class DataIntegrityTest
 	{
 		assertEquals("Elite Morytania diary", data.rule("morytania_elite").getConditions().get(0).describe());
 	}
+
+	@Test
+	public void everyPatchWithATileHasSomewhereToStand()
+	{
+		// Written by scripts/snap_to_walkable.py; regenerating patch_locations.json without it drops them.
+		for (Patch patch : data.patches())
+		{
+			if (patch.getTile() != null)
+			{
+				assertNotNull(patch.getId() + ": run scripts/snap_to_walkable.py", patch.getStand());
+			}
+		}
+	}
 }

@@ -222,16 +222,17 @@ public class RunController
 
 	/**
 	 * Where to head at a stop: the patches there still to do (Shortest Path picks the nearest), so a big place like the
-	 * Farming Guild leads to the right patch. The location's own target when no patch has a tile.
+	 * Farming Guild leads to the right patch. Each patch's stand tile, beside it, since the patch itself can't be walked
+	 * on. The location's own target when no patch has one.
 	 */
 	private Set<WorldPoint> targets(RunProgress.Stop stop, RunProgress progress)
 	{
 		Set<WorldPoint> tiles = new HashSet<>();
 		for (PlantingPlan.Assignment a : stop.getPatches())
 		{
-			if (!progress.isPatchDone(a.getPatch().getId()) && a.getPatch().getTile() != null)
+			if (!progress.isPatchDone(a.getPatch().getId()) && a.getPatch().getStand() != null)
 			{
-				tiles.add(a.getPatch().getTile());
+				tiles.add(a.getPatch().getStand());
 			}
 		}
 		return tiles.isEmpty() ? Set.of(data.location(stop.getLocationId()).getTarget()) : tiles;

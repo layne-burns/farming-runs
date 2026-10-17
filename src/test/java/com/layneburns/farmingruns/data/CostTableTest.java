@@ -9,6 +9,8 @@ package com.layneburns.farmingruns.data;
 import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Map;
+import net.runelite.api.coords.WorldPoint;
 import org.junit.Test;
 
 public class CostTableTest
@@ -27,5 +29,19 @@ public class CostTableTest
 	public void rejectsANonNumberWithTheLine() throws IOException
 	{
 		CostTable.parse(new StringReader("arrive\ta\t-\tten\n"));
+	}
+
+	@Test
+	public void closePlacesCostAWalk() throws IOException
+	{
+		CostTable costs = CostTable.parse(new StringReader("arrive\ta\t-\t30\narrive\tb\t-\t30\narrive\tc\t-\t30\n"))
+			.withPlaces(Map.of("a", new WorldPoint(3200, 3200, 0), "b", new WorldPoint(3210, 3200, 0),
+				"c", new WorldPoint(3400, 3200, 0)));
+		// 10 tiles apart: a 7-tick walk beats the 30-tick teleport.
+		assertEquals(7, costs.cost("a", "b"));
+		// Far apart: the teleport.
+		assertEquals(30, costs.cost("a", "c"));
+		// From wherever you start: always the teleport.
+		assertEquals(30, costs.cost(null, "b"));
 	}
 }

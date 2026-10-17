@@ -28,9 +28,12 @@ public class Patch
 	int regionId;
 	int varbitId;
 	int gardenerNpcId;
-	/** The patch's tile from the wiki, or null if the wiki has none. */
+	/** The patch's tile from the wiki (on the patch itself), or null if the wiki has none. */
 	@Nullable
 	WorldPoint tile;
+	/** Where to stand to work the patch: the nearest walkable tile beside it, for Shortest Path; null without a tile. */
+	@Nullable
+	WorldPoint stand;
 	/** Unlock rule for just this patch (e.g. a Farming Guild tier), or null to follow its location. */
 	@Nullable
 	String unlockRuleId;

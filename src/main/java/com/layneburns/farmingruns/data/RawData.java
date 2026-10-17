@@ -40,6 +40,8 @@ final class RawData
 		int regionId;
 		List<Integer> extraRegionIds;
 		Tile target;
+		/** The nearest walkable tile to the target (added by scripts/snap_to_walkable.py). */
+		Tile targetStand;
 		List<String> wikiTeleports;
 		List<RawPatch> patches;
 	}
@@ -52,6 +54,8 @@ final class RawData
 		String varbit;
 		String gardener;
 		Tile tile;
+		/** The nearest walkable tile beside the patch (added by scripts/snap_to_walkable.py). */
+		Tile stand;
 	}
 
 	/** location_settings.json (hand-edited). */

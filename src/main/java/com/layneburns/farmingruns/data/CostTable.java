@@ -14,40 +14,68 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.runelite.api.coords.WorldPoint;
 
 /**
  * Travel costs (in ticks) for ordering a run, read from costs.tsv: each location's "arrive" cost (its
- * teleport plus the walk) and cheaper "link" costs between neighbours. A leg costs its link if there is one,
- * otherwise the destination's arrive cost.
+ * teleport plus the walk) and cheaper "link" costs between neighbours. A leg costs the cheapest of its link, a walk
+ * between the two places when they're close ({@link #withPlaces}), and the destination's arrive cost.
  */
 public final class CostTable
 {
+	/** Running is two tiles a tick; paths wind, so allow about a third more. */
+	static final double TICKS_PER_TILE = 0.65;
+	/** Further apart than this, a walk is never worth counting (and may cross water or walls). */
+	static final int MAX_WALK_TILES = 60;
+
 	private final Map<String, Integer> arrive;
 	private final Map<String, Integer> links;
+	/** Where each location is, to price walks between close ones; empty for none. */
+	private final Map<String, WorldPoint> places;
 
-	private CostTable(Map<String, Integer> arrive, Map<String, Integer> links)
+	private CostTable(Map<String, Integer> arrive, Map<String, Integer> links, Map<String, WorldPoint> places)
 	{
 		this.arrive = Collections.unmodifiableMap(arrive);
 		this.links = Collections.unmodifiableMap(links);
+		this.places = Map.copyOf(places);
+	}
+
+	/** The same costs, also pricing a walk between locations close to each other. */
+	public CostTable withPlaces(Map<String, WorldPoint> places)
+	{
+		return new CostTable(arrive, links, places);
 	}
 
 	/** Cost of the leg from {@code from} (null: the start of the run) to {@code to}. */
 	public int cost(@Nullable String from, String to)
 	{
-		if (from != null)
-		{
-			Integer link = links.get(linkKey(from, to));
-			if (link != null)
-			{
-				return link;
-			}
-		}
 		Integer cost = arrive.get(to);
 		if (cost == null)
 		{
 			throw new IllegalArgumentException("no arrive cost for " + to);
 		}
-		return cost;
+		if (from == null)
+		{
+			return cost;
+		}
+		Integer link = links.get(linkKey(from, to));
+		int best = link != null ? link : cost;
+		Integer walk = walk(from, to);
+		return walk != null ? Math.min(best, walk) : best;
+	}
+
+	/** Ticks to walk between two close locations on the same level; null when they aren't close. */
+	@Nullable
+	Integer walk(String from, String to)
+	{
+		WorldPoint a = places.get(from);
+		WorldPoint b = places.get(to);
+		if (a == null || b == null || a.getPlane() != b.getPlane())
+		{
+			return null;
+		}
+		int tiles = Math.max(Math.abs(a.getX() - b.getX()), Math.abs(a.getY() - b.getY()));
+		return tiles > MAX_WALK_TILES ? null : (int) Math.ceil(tiles * TICKS_PER_TILE);
 	}
 
 	public Set<String> locationsWithArriveCost()
@@ -107,6 +135,6 @@ public final class CostTable
 					throw new DataException("costs.tsv line " + number + ": unknown type " + cells[0]);
 			}
 		}
-		return new CostTable(arrive, links);
+		return new CostTable(arrive, links, Map.of());
 	}
 }
