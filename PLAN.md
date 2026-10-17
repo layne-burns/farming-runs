@@ -66,12 +66,17 @@ state/                   the only package that reads the client (varbits, contai
                          tick offset, autoweed); tells listeners when Time Tracking saves; knows if it's switched off
   ReadyPredictor         (pure) port of Time Tracking's predictPatch/getTickTime: crop, stage, ready time
   PatchStatus            (pure) ready / empty / growing / diseased / dead / unknown, crop, ready-at; readable text
-  ContractService        current contract → seed + Farming Guild patch, if not yet planted
+  ContractService        Farming Guild contract → seed (Oak → Acorn) + guild patch, if not yet planted
+  SetupStore             current setup and named presets in the RS profile
 
 run/
-  RunSetup               (pure) kinds, skips, seed mode/manual seeds, payment per kind, tree routine per kind, compost
-  PresetStore            named presets as JSON in profile config; remembers last used
-  SeedPicker             (pure) auto seed choice with buffers + contract override; mixing when short
+  RunSetup, KindPlan, CropShare  (pure) run types; per kind: auto or chosen crops (weight or exact patches),
+                         pay, tree routine; skipped patches; compost. SetupJson saves them (tolerant of old saves)
+  PresetCombiner         (pure) ticked presets combined: run types joined, a shared kind split evenly per preset
+  SeedPicker             (pure) contract first; auto = best level you can spare, mixing; chosen crops via
+                         ShareSplitter (exact first, then weights, capped by spare); trees plant saplings
+  ShareSplitter          (pure) largest-remainder split of patches between crops
+  RunPlanService         gathers the picker's inputs (usable patches, held seeds, buffers, level, contract)
   RunRequirements        (pure) setup + picks + teleports → list of RequiredItem (id/alternatives, qty, why)
   RoutePlanner           (pure) Held–Karp ≤ 20 stops, else greedy + 2-opt, over CostTable
   RunSession             (pure) state machine: stops, current, per-patch done flags, skip/jump
@@ -88,7 +93,8 @@ pathing/
 
 ui/
   FarmingRunsPanel       side panel with tabs: Run, Bank, Locations
-  RunTab                 setup form → Start; during a run, the ordered stop list with skip/go-next
+  RunTab                 presets, run types, a KindCard per kind, compost, patches to visit, plan summary
+  PresetsPanel, KindCard the presets list (tick to combine, save, delete); one kind's seeds / pay / tree routine
   BankTab                draws BankView; redraws on item or buffer changes
   BankView, BankViewBuilder  (pure) what the Bank tab lists: pages (Seeds / Supplies / Leprechaun) → sections →
                          kind groups → rows (count, "spare" detail, where); search across every page; compost,

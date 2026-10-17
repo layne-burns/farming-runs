@@ -1,0 +1,276 @@
+/*
+ * Copyright (c) 2026, Layne Burns <https://github.com/layne-burns>
+ * All rights reserved.
+ *
+ * Licensed under the BSD 2-Clause License; see the LICENSE file in the project root.
+ */
+package com.layneburns.farmingruns.ui;
+
+import com.layneburns.farmingruns.data.Seed;
+import com.layneburns.farmingruns.run.CropShare;
+import com.layneburns.farmingruns.run.KindPlan;
+import com.layneburns.farmingruns.run.PlantingPlan;
+import com.layneburns.farmingruns.run.TreeRoutine;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
+import net.runelite.client.ui.FontManager;
+
+/**
+ * One patch kind in the Run tab (e.g. Herb, 9 patches): Auto (the best seeds you can spare) or your chosen crops,
+ * each with a share or an exact number of patches; whether to pay the gardener; for trees, what to do with the grown
+ * tree. Shows what will actually be planted. Every change is passed to {@code onChange} as a new {@link KindPlan}.
+ */
+class KindCard extends JPanel
+{
+	/**
+	 * @param seeds    the seeds of this kind, best first
+	 * @param planned  this kind's assignments in the current planting plan
+	 * @param patches  patches of this kind the run visits
+	 * @param canPay   whether any seed of this kind can be protected
+	 * @param isTree   whether a tree routine applies
+	 */
+	KindCard(String title, KindPlan plan, List<Seed> seeds, List<PlantingPlan.Assignment> planned, int patches,
+		boolean canPay, boolean isTree, Consumer<KindPlan> onChange)
+	{
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		setBackground(Palette.SURFACE);
+		setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createMatteBorder(0, 0, 4, 0, Palette.BACKGROUND),
+			BorderFactory.createEmptyBorder(4, 6, 4, 6)));
+		setAlignmentX(LEFT_ALIGNMENT);
+
+		JLabel heading = new JLabel(title + " · " + patches + " patch" + (patches == 1 ? "" : "es"));
+		heading.setForeground(Palette.TEXT);
+		add(left(heading));
+
+		JCheckBox auto = check("Auto: best seeds you can spare", plan.isAuto());
+		auto.setToolTipText("Untick to choose the seeds yourself");
+		auto.addActionListener(e ->
+		{
+			if (auto.isSelected())
+			{
+				onChange.accept(plan.withAuto(true));
+			}
+			else
+			{
+				// Start from what Auto would plant, shared evenly, so there's something to adjust.
+				List<CropShare> start = planned.stream().filter(a -> a.getSeed() != null && !a.isContract())
+					.map(a -> a.getSeed().getItemId()).distinct().map(CropShare::even).collect(Collectors.toList());
+				onChange.accept(plan.withAuto(false).withCrops(plan.getCrops().isEmpty() ? start : plan.getCrops()));
+			}
+		});
+		add(left(auto));
+
+		if (!plan.isAuto())
+		{
+			for (int i = 0; i < plan.getCrops().size(); i++)
+			{
+				add(cropRow(plan, i, seeds, patches, onChange));
+			}
+			add(addCrop(plan, seeds, onChange));
+		}
+
+		JLabel preview = TabPanel.text(preview(planned));
+		preview.setToolTipText("What will be planted, given the seeds you can spare");
+		add(left(preview));
+
+		if (canPay)
+		{
+			JCheckBox pay = check("Pay the gardener to protect", plan.isPay());
+			pay.addActionListener(e -> onChange.accept(plan.withPay(pay.isSelected())));
+			add(left(pay));
+		}
+		if (isTree)
+		{
+			JComboBox<TreeRoutine> routine = new JComboBox<>(TreeRoutine.values());
+			routine.setSelectedItem(plan.getTreeRoutine());
+			routine.setFocusable(false);
+			routine.addActionListener(e -> onChange.accept(plan.withTreeRoutine((TreeRoutine) routine.getSelectedItem())));
+			add(left(routine));
+		}
+		setMaximumSize(new Dimension(Integer.MAX_VALUE, getPreferredSize().height));
+	}
+
+	/** "Ranarr seed   share [1]  patches [-]  ✕" */
+	private static JPanel cropRow(KindPlan plan, int index, List<Seed> seeds, int patches, Consumer<KindPlan> onChange)
+	{
+		CropShare crop = plan.getCrops().get(index);
+		String name = seeds.stream().filter(s -> s.getItemId() == crop.getSeedItemId()).map(Seed::getName)
+			.findFirst().orElse("?");
+		JPanel row = new JPanel(new BorderLayout(4, 0));
+		row.setOpaque(false);
+		JLabel label = new JLabel(name);
+		label.setForeground(Palette.TEXT);
+		label.setMinimumSize(new Dimension(0, 0));
+		label.setPreferredSize(new Dimension(0, label.getPreferredSize().height));
+
+		JPanel numbers = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
+		numbers.setOpaque(false);
+		JSpinner share = spinner(crop.getWeight(), 1, 99, "Share: patches are split in proportion to the shares");
+		share.setEnabled(crop.getPatches() == null);
+		share.addChangeListener(e -> onChange.accept(replace(plan, index,
+			new CropShare(crop.getSeedItemId(), (Integer) share.getValue(), crop.getPatches()))));
+		JSpinner exact = spinner(crop.getPatches() == null ? 0 : crop.getPatches(), 0, Math.max(patches, 1),
+			"Exact number of patches (0: use the share instead)");
+		exact.addChangeListener(e ->
+		{
+			int value = (Integer) exact.getValue();
+			onChange.accept(replace(plan, index, new CropShare(crop.getSeedItemId(), crop.getWeight(),
+				value == 0 ? null : value)));
+		});
+		numbers.add(small("share", Palette.SECONDARY_TEXT));
+		numbers.add(share);
+		numbers.add(small("#", Palette.SECONDARY_TEXT));
+		numbers.add(exact);
+		numbers.add(link("✕", "Remove this seed", () ->
+		{
+			List<CropShare> crops = new ArrayList<>(plan.getCrops());
+			crops.remove(index);
+			onChange.accept(plan.withCrops(List.copyOf(crops)));
+		}));
+		row.add(label, BorderLayout.CENTER);
+		row.add(numbers, BorderLayout.EAST);
+		row.setAlignmentX(LEFT_ALIGNMENT);
+		row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
+		return row;
+	}
+
+	private static JPanel addCrop(KindPlan plan, List<Seed> seeds, Consumer<KindPlan> onChange)
+	{
+		JPopupMenu menu = new JPopupMenu();
+		for (Seed seed : seeds)
+		{
+			if (plan.getCrops().stream().anyMatch(c -> c.getSeedItemId() == seed.getItemId()))
+			{
+				continue;
+			}
+			JMenuItem item = new JMenuItem(seed.getName() + " (level " + seed.getLevel() + ")");
+			item.addActionListener(e ->
+			{
+				List<CropShare> crops = new ArrayList<>(plan.getCrops());
+				crops.add(CropShare.even(seed.getItemId()));
+				onChange.accept(plan.withCrops(List.copyOf(crops)));
+			});
+			menu.add(item);
+		}
+		JLabel add = new JLabel("+ Add a seed…");
+		add.setForeground(Palette.SECONDARY_TEXT);
+		add.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		add.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				menu.show(add, 0, add.getHeight());
+			}
+		});
+		return left(add);
+	}
+
+	/** "5 × Ranarr seed, 4 × Snapdragon seed (+ contract)", or what's missing. */
+	static String preview(List<PlantingPlan.Assignment> planned)
+	{
+		Map<String, Integer> counts = new LinkedHashMap<>();
+		int empty = 0;
+		for (PlantingPlan.Assignment a : planned)
+		{
+			if (a.getSeed() == null)
+			{
+				empty++;
+			}
+			else
+			{
+				counts.merge(a.getSeed().getName() + (a.isContract() ? " (contract)" : ""), 1, Integer::sum);
+			}
+		}
+		List<String> parts = counts.entrySet().stream().map(e -> e.getValue() + " × " + e.getKey())
+			.collect(Collectors.toList());
+		if (empty > 0)
+		{
+			parts.add(empty + " with no seed");
+		}
+		return parts.isEmpty() ? "Nothing to plant" : String.join(", ", parts);
+	}
+
+	private static KindPlan replace(KindPlan plan, int index, CropShare crop)
+	{
+		List<CropShare> crops = new ArrayList<>(plan.getCrops());
+		crops.set(index, crop);
+		return plan.withCrops(List.copyOf(crops));
+	}
+
+	private static JSpinner spinner(int value, int min, int max, String tooltip)
+	{
+		JSpinner spinner = new JSpinner(new SpinnerNumberModel(Math.max(min, Math.min(max, value)), min, max, 1));
+		spinner.setToolTipText(tooltip);
+		spinner.setPreferredSize(new Dimension(42, spinner.getPreferredSize().height));
+		return spinner;
+	}
+
+	private static JCheckBox check(String text, boolean selected)
+	{
+		JCheckBox box = new JCheckBox(text, selected);
+		box.setForeground(Palette.TEXT);
+		box.setOpaque(false);
+		box.setFocusable(false);
+		return box;
+	}
+
+	private static JLabel small(String text, Color colour)
+	{
+		JLabel label = new JLabel(text);
+		label.setFont(FontManager.getRunescapeSmallFont());
+		label.setForeground(colour);
+		return label;
+	}
+
+	private static JLabel link(String text, String tooltip, Runnable onClick)
+	{
+		JLabel label = new JLabel(text);
+		label.setForeground(Palette.SECONDARY_TEXT);
+		label.setToolTipText(tooltip);
+		label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		label.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				onClick.run();
+			}
+		});
+		return label;
+	}
+
+	/** Wraps a component so it sits left-aligned in the card's vertical stack. */
+	private static JPanel left(Component component)
+	{
+		JPanel wrapper = new JPanel(new BorderLayout());
+		wrapper.setOpaque(false);
+		wrapper.setAlignmentX(LEFT_ALIGNMENT);
+		wrapper.add(component, BorderLayout.WEST);
+		wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, wrapper.getPreferredSize().height));
+		return wrapper;
+	}
+}

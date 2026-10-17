@@ -77,10 +77,13 @@ abstract class TabPanel extends JPanel
 		return button;
 	}
 
-	/** A text label in the panel's standard light grey, readable on the dark background. */
+	/** Width text wraps at: the panel is about 225 wide, less padding and the scroll bar. */
+	private static final int WRAP_WIDTH = 175;
+
+	/** A text label in the panel's standard light grey, readable on the dark background; long text wraps. */
 	static JLabel text(String html)
 	{
-		JLabel label = new JLabel("<html>" + html + "</html>");
+		JLabel label = new JLabel("<html><div style='width:" + WRAP_WIDTH + "px'>" + html + "</div></html>");
 		label.setForeground(Palette.SECONDARY_TEXT);
 		return label;
 	}
