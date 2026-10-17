@@ -107,10 +107,13 @@ public class LocationsView
 	@Value
 	public static class PatchLine
 	{
-		/** E.g. "Allotment (North)". */
+		/** E.g. "Allotment N" or "Herb". */
 		String name;
-		/** What's in it, e.g. "Ranarr: ready in 1 h 20 min"; and its readiness for colour. */
-		String stateText;
+		/** What's growing, e.g. "Ranarr"; null when empty or not seen. */
+		@Nullable
+		String crop;
+		/** Short state: "ready", "empty", "dead", "1 h 20 m", "not seen". */
+		String state;
 		PatchStatus.Readiness readiness;
 		boolean usable;
 		/** Why it isn't usable, e.g. "Farming 85"; null if it is. */

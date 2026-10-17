@@ -123,11 +123,21 @@ public class LocationsViewBuilderTest
 		assertEquals(PatchStatus.Readiness.READY, catherby.getSummaryReadiness());
 		LocationsView.PatchLine herb = catherby.getPatches().stream()
 			.filter(p -> p.getName().equals("Herb")).findFirst().orElseThrow();
-		assertEquals("Ranarr: ready", herb.getStateText());
+		assertEquals("Ranarr", herb.getCrop());
+		assertEquals("ready", herb.getState());
 
 		LocationsView.Entry fruit = section(view, "FRUIT_TREE").getEntries().get(0);
 		assertEquals("in 1 h", fruit.getReadySummary());
 		assertEquals(PatchStatus.Readiness.GROWING, fruit.getSummaryReadiness());
+	}
+
+	@Test
+	public void patchNamesAreShortAndNotRepeated()
+	{
+		assertEquals("Allotment N", LocationsViewBuilder.patchName(data.patch("catherby.allotment_north")));
+		assertEquals("Allotment NW", LocationsViewBuilder.patchName(data.patch("falador.allotment_north_west")));
+		assertEquals("Anima", LocationsViewBuilder.patchName(data.patch("farming_guild.anima")));
+		assertEquals("Herb", LocationsViewBuilder.patchName(data.patch("catherby.herb")));
 	}
 
 	@Test

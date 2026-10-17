@@ -12,7 +12,10 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -27,7 +30,7 @@ import net.runelite.client.ui.FontManager;
 
 /**
  * One location in the Locations tab. The header shows whether it's unlocked; clicking it opens the details: the
- * status and why, the teleport to use, an unlock override, and each patch.
+ * status and why, the teleports to use, each patch, notes, and (last, rarely needed) an unlock override.
  */
 class LocationRow extends JPanel
 {
@@ -105,6 +108,21 @@ class LocationRow extends JPanel
 		details.add(caption("Teleports (first one you have is used)"));
 		details.add(new TeleportListEditor(entry, onTeleports));
 
+		details.add(caption("Patches"));
+		details.add(patchTable(entry.getPatches()));
+		if (entry.getNote() != null)
+		{
+			details.add(caption("Note"));
+			details.add(wrapped(entry.getNote(), Palette.SECONDARY_TEXT));
+		}
+		List<String> hints = entry.getWikiTeleports();
+		if (!hints.isEmpty())
+		{
+			details.add(caption("Wiki suggests"));
+			details.add(wrapped(String.join("; ", hints.subList(0, Math.min(3, hints.size()))), Palette.SECONDARY_TEXT));
+		}
+
+		// Last: rarely needed, only when the unlock rules get a location wrong.
 		details.add(caption("Unlock"));
 		JComboBox<String> override = new JComboBox<>(OVERRIDES);
 		// The listener goes on after the selection is set, so drawing the row doesn't count as a choice.
@@ -117,26 +135,54 @@ class LocationRow extends JPanel
 			onOverride.accept(chosen == 0 ? null : chosen == 1);
 		});
 		details.add(fit(override));
-
-		details.add(caption("Patches"));
-		for (LocationsView.PatchLine patch : entry.getPatches())
-		{
-			details.add(patch.isUsable()
-				? wrapped(patch.getName() + " · " + patch.getStateText(), readinessColour(patch.getReadiness()))
-				: wrapped("✗ " + patch.getName() + ": " + patch.getReason(), Palette.NONE));
-		}
-		if (entry.getNote() != null)
-		{
-			details.add(caption("Note"));
-			details.add(wrapped(entry.getNote(), Palette.SECONDARY_TEXT));
-		}
-		List<String> hints = entry.getWikiTeleports();
-		if (!hints.isEmpty())
-		{
-			details.add(caption("Wiki suggests"));
-			details.add(wrapped(String.join("; ", hints.subList(0, Math.min(3, hints.size()))), Palette.SECONDARY_TEXT));
-		}
 		return details;
+	}
+
+	/**
+	 * The patches as a table: patch, crop, state. Names and crops are left-aligned, the state right-aligned and
+	 * coloured; a locked patch shows what it needs (e.g. "Farming 85") in the state column, in red.
+	 */
+	private static JPanel patchTable(List<LocationsView.PatchLine> patches)
+	{
+		JPanel table = new JPanel(new GridBagLayout());
+		table.setBackground(Palette.BACKGROUND);
+		table.setAlignmentX(LEFT_ALIGNMENT);
+		GridBagConstraints c = new GridBagConstraints();
+		c.gridy = 0;
+		c.anchor = GridBagConstraints.WEST;
+		c.insets = new Insets(0, 0, 1, 6);
+		for (LocationsView.PatchLine patch : patches)
+		{
+			c.gridx = 0;
+			c.weightx = 0;
+			table.add(cell(patch.getName(), Palette.TEXT, JLabel.LEFT), c);
+
+			c.gridx = 1;
+			c.weightx = 1;
+			c.fill = GridBagConstraints.HORIZONTAL;
+			String crop = !patch.isUsable() || patch.getCrop() == null ? "–" : patch.getCrop();
+			table.add(cell(crop, Palette.SECONDARY_TEXT, JLabel.LEFT), c);
+			c.fill = GridBagConstraints.NONE;
+
+			c.gridx = 2;
+			c.weightx = 0;
+			c.anchor = GridBagConstraints.EAST;
+			table.add(patch.isUsable()
+				? cell(patch.getState(), readinessColour(patch.getReadiness()), JLabel.RIGHT)
+				: cell(patch.getReason(), Palette.NONE, JLabel.RIGHT), c);
+			c.anchor = GridBagConstraints.WEST;
+			c.gridy++;
+		}
+		table.setMaximumSize(new Dimension(Integer.MAX_VALUE, table.getPreferredSize().height));
+		return table;
+	}
+
+	private static JLabel cell(String text, Color colour, int alignment)
+	{
+		JLabel label = new JLabel(text, alignment);
+		label.setForeground(colour);
+		label.setMinimumSize(new Dimension(0, label.getPreferredSize().height));
+		return label;
 	}
 
 	private static String shortStatus(LocationStatus status)

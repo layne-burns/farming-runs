@@ -36,6 +36,22 @@ import javax.annotation.Nullable;
  */
 public final class LocationsViewBuilder
 {
+	/** Longest first, so "North West" becomes "NW" rather than "N West". */
+	private static final Map<String, String> COMPASS = new LinkedHashMap<>();
+
+	static
+	{
+		COMPASS.put("North West", "NW");
+		COMPASS.put("North East", "NE");
+		COMPASS.put("South West", "SW");
+		COMPASS.put("South East", "SE");
+		COMPASS.put("North", "N");
+		COMPASS.put("South", "S");
+		COMPASS.put("East", "E");
+		COMPASS.put("West", "W");
+		COMPASS.put("Middle", "Mid");
+	}
+
 	private LocationsViewBuilder()
 	{
 	}
@@ -122,7 +138,7 @@ public final class LocationsViewBuilder
 			{
 				LocationStatus rule = context.getPatchRuleOf().apply(p);
 				PatchStatus state = context.getPatchStateOf().apply(p);
-				return new LocationsView.PatchLine(patchName(p), state.describe(context.getNowSeconds()),
+				return new LocationsView.PatchLine(patchName(p), state.getCrop(), state.shortState(context.getNowSeconds()),
 					state.getReadiness(), rule.isUsable(), rule.isUsable() ? null : String.join(", ", rule.getMissing()));
 			})
 			.collect(Collectors.toList());
@@ -177,7 +193,7 @@ public final class LocationsViewBuilder
 			.filter(s -> s.getReadiness() == PatchStatus.Readiness.GROWING)
 			.mapToLong(PatchStatus::getReadyAtSeconds)
 			.min().orElse(0);
-		return soonest > 0 ? "in " + PatchStatus.duration(Math.max(0, soonest - context.getNowSeconds())) : "not seen";
+		return soonest > 0 ? "in " + PatchStatus.shortDuration(Math.max(0, soonest - context.getNowSeconds())) : "not seen";
 	}
 
 	private static PatchStatus.Readiness summaryReadiness(List<LocationsView.PatchLine> patches)
@@ -223,10 +239,20 @@ public final class LocationsViewBuilder
 			.collect(Collectors.joining(", "));
 	}
 
-	private static String patchName(Patch patch)
+	/** "Herb", "Allotment N", "Grapes W 3": the kind, then RuneLite's patch name with compass points shortened. */
+	static String patchName(Patch patch)
 	{
 		String kind = BankViewBuilder.kindName(patch.getKind());
-		return patch.getName().isEmpty() ? kind : kind + " (" + patch.getName() + ")";
+		String name = patch.getName();
+		if (name.isEmpty() || name.equalsIgnoreCase(kind))
+		{
+			return kind;
+		}
+		for (Map.Entry<String, String> point : COMPASS.entrySet())
+		{
+			name = name.replace(point.getKey(), point.getValue());
+		}
+		return kind + " " + name;
 	}
 
 	/** A warning when the teleport can't work as things stand: a spell from another spellbook. */

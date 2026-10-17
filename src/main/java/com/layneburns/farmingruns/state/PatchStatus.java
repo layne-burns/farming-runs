@@ -67,6 +67,40 @@ public class PatchStatus
 		}
 	}
 
+	/** Short, for a table column: "ready", "empty", "dead", "diseased", "1 h 20 m", "not seen". */
+	public String shortState(long nowSeconds)
+	{
+		switch (readiness)
+		{
+			case READY:
+				return "ready";
+			case EMPTY:
+				return "empty";
+			case GROWING:
+				long left = readyAtSeconds - nowSeconds;
+				return left <= 0 ? "ready?" : shortDuration(left);
+			case DISEASED:
+				return "diseased";
+			case DEAD:
+				return "dead";
+			default:
+				return "not seen";
+		}
+	}
+
+	/** "1 h 20 m", "45 m", "<1 m". */
+	public static String shortDuration(long seconds)
+	{
+		long minutes = (seconds + 59) / 60;
+		if (minutes < 1)
+		{
+			return "<1 m";
+		}
+		long hours = minutes / 60;
+		long mins = minutes % 60;
+		return hours == 0 ? mins + " m" : mins == 0 ? hours + " h" : hours + " h " + mins + " m";
+	}
+
 	/** "1 h 20 min", "45 min", "under a minute". */
 	public static String duration(long seconds)
 	{
