@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 /**
  * Works out what a run needs (SPEC §2.4): the seeds and saplings, compost, the gardeners' payments, coins or an axe
  * for clearing trees, tools, and the items or runes for each stop's teleport. Recommended extras (magic secateurs,
- * the farmer's outfit) are only listed when you own them. Pure: unit tested.
+ * the farmer's outfit) are only listed when you own them; a rake only without autoweed. Pure: unit tested.
  */
 public final class RequirementsBuilder
 {
@@ -61,9 +61,10 @@ public final class RequirementsBuilder
 	 * @param teleportRefs your ranked teleports for each location, by location id
 	 * @param ledger       your items everywhere, to pick teleports you own and the extras you have
 	 * @param treeGrown    whether a tree patch holds a grown tree to clear (unknown should count as grown)
+	 * @param autoweed     autoweed is on, so weeds don't grow back and no rake is needed
 	 */
 	public static RunRequirements build(RunSetup setup, PlantingPlan plan, Map<String, List<String>> teleportRefs,
-		GameData data, PlayerFacts facts, ItemLedger ledger, Predicate<Patch> treeGrown)
+		GameData data, PlayerFacts facts, ItemLedger ledger, Predicate<Patch> treeGrown, boolean autoweed)
 	{
 		List<PlantingPlan.Assignment> assignments = plan.getAssignments();
 		if (assignments.isEmpty())
@@ -80,7 +81,10 @@ public final class RequirementsBuilder
 		addTreeClearing(list, setup, assignments, data, items, treeGrown);
 
 		list.add("Spade", items.group("spade"), 1, Importance.NEED, true, "harvesting and clearing", false);
-		list.add("Rake", items.group("rake"), 1, Importance.RECOMMENDED, true, "weeds", false);
+		if (!autoweed)
+		{
+			list.add("Rake", items.group("rake"), 1, Importance.RECOMMENDED, true, "weeds", false);
+		}
 		addIfOwned(list, ledger, "Magic secateurs", items.group("magic_secateurs"), true,
 			"+10% herbs, allotment crops and hops");
 		List<PlantingPlan.Assignment> allotments = assignments.stream()

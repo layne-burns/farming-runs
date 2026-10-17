@@ -58,7 +58,7 @@ public class RequirementsBuilderTest
 
 	private static RunRequirements build(RunSetup setup, PlantingPlan plan)
 	{
-		return RequirementsBuilder.build(setup, plan, defaults, data, NORMAL_BOOK, ItemLedger.EMPTY, p -> true);
+		return RequirementsBuilder.build(setup, plan, defaults, data, NORMAL_BOOK, ItemLedger.EMPTY, p -> true, false);
 	}
 
 	private static Requirement find(RunRequirements needs, int itemId)
@@ -84,6 +84,17 @@ public class RequirementsBuilderTest
 		// Herbs can't be protected, so nothing to pay; extras you don't own aren't listed.
 		assertNull(find(needs, data.getItems().group("coins").iterator().next()));
 		assertNull(find(needs, data.getItems().group("farmers_boots").iterator().next()));
+	}
+
+	@Test
+	public void noRakeWithAutoweed()
+	{
+		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.HERB));
+		PlantingPlan herbs = plan(data.seedByItem(RANARR), "catherby.herb");
+		int rake = data.getItems().group("rake").iterator().next();
+		assertNotNull(find(build(setup, herbs), rake));
+		assertNull(find(RequirementsBuilder.build(setup, herbs, defaults, data, NORMAL_BOOK, ItemLedger.EMPTY,
+			p -> true, true), rake));
 	}
 
 	@Test

@@ -119,7 +119,7 @@ public class RunCheckService
 			return readiness == PatchStatus.Readiness.READY || readiness == PatchStatus.Readiness.UNKNOWN;
 		};
 		RunRequirements requirements = RequirementsBuilder.build(setup, plan, teleports, data, player.getFacts(),
-			ledger, grown);
+			ledger, grown, states.isAutoweedOn());
 		List<InventoryChecker.Line> lines = InventoryChecker.check(requirements.getRequirements(), ledger,
 			data.getItems().group("seed_box"));
 		setBankItems(lines);

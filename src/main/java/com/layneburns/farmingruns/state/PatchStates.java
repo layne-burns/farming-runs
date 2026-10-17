@@ -52,8 +52,14 @@ public class PatchStates
 		String stored = configManager.getRSProfileConfiguration(GROUP, patch.getRegionId() + "." + patch.getVarbitId());
 		Integer precision = configManager.getRSProfileConfiguration(GROUP, TICK_OFFSET_PRECISION, Integer.class);
 		Integer offset = configManager.getRSProfileConfiguration(GROUP, TICK_OFFSET, Integer.class);
-		boolean autoweed = AUTOWEED_ON.equals(configManager.getRSProfileConfiguration(GROUP, AUTOWEED));
+		boolean autoweed = isAutoweedOn();
 		return ReadyPredictor.predict(stored, patch.getKind(), precision, offset, autoweed, nowSeconds);
+	}
+
+	/** True when Time Tracking has seen your autoweed setting switched on: weeds don't grow back. */
+	public boolean isAutoweedOn()
+	{
+		return AUTOWEED_ON.equals(configManager.getRSProfileConfiguration(GROUP, AUTOWEED));
 	}
 
 	/** False when Time Tracking has been switched off (then patch states stop updating). */
