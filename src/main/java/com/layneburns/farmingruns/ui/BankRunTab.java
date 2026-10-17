@@ -83,6 +83,13 @@ public class BankRunTab
 		});
 	}
 
+	/** From the bank search's button: closes the search, then opens the tab. Client thread. */
+	void openFromSearch()
+	{
+		bankSearch.reset(true);
+		open();
+	}
+
 	@Subscribe
 	public void onWidgetLoaded(WidgetLoaded event)
 	{
