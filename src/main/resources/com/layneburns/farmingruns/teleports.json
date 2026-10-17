@@ -468,6 +468,16 @@
 			]
 		},
 		{
+			"id": "chronicle",
+			"name": "Chronicle (Champions' Guild)",
+			"group": "Items",
+			"type": "item",
+			"itemIds": [
+				13660
+			],
+			"usedUp": false
+		},
+		{
 			"id": "stony_basalt",
 			"name": "Stony basalt (Troll Stronghold)",
 			"group": "Items",
