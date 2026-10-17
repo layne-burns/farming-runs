@@ -14,7 +14,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import net.runelite.client.game.ItemManager;
-import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 
 /**
@@ -29,8 +28,8 @@ class ItemRow extends JPanel
 	ItemRow(ItemManager itemManager, BankView.Row row)
 	{
 		super(new BorderLayout(6, 0));
-		setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.DARK_GRAY_COLOR));
+		setBackground(Palette.SURFACE);
+		setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Palette.BACKGROUND));
 		setAlignmentX(LEFT_ALIGNMENT);
 		setToolTipText(tooltipHtml(row));
 
@@ -41,7 +40,7 @@ class ItemRow extends JPanel
 		JPanel text = new JPanel(new GridLayout(row.getDetail() == null ? 1 : 2, 1));
 		text.setOpaque(false);
 		JLabel name = new JLabel(row.getLabel());
-		name.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		name.setForeground(Palette.TEXT);
 		text.add(name);
 		if (row.getDetail() != null)
 		{
@@ -55,7 +54,7 @@ class ItemRow extends JPanel
 		text.setPreferredSize(new Dimension(0, ICON_SIZE.height));
 
 		JLabel value = new JLabel(row.getValue());
-		value.setForeground(ColorScheme.TEXT_COLOR);
+		value.setForeground(Palette.TEXT);
 		value.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 6));
 
 		add(icon, BorderLayout.WEST);
@@ -64,21 +63,21 @@ class ItemRow extends JPanel
 		setMaximumSize(new Dimension(Integer.MAX_VALUE, ICON_SIZE.height + 1));
 	}
 
-	/** Green for a full run, yellow for part of one, red for none; grey when there's nothing to judge. */
+	/** Green for a full run, yellow for part of one, red for none; plain secondary text when there's nothing to judge. */
 	static Color colour(BankView.Coverage coverage)
 	{
 		if (coverage == null)
 		{
-			return ColorScheme.MEDIUM_GRAY_COLOR;
+			return Palette.SECONDARY_TEXT;
 		}
 		switch (coverage)
 		{
 			case FULL:
-				return ColorScheme.PROGRESS_COMPLETE_COLOR;
+				return Palette.FULL;
 			case PARTIAL:
-				return ColorScheme.PROGRESS_INPROGRESS_COLOR;
+				return Palette.PARTIAL;
 			default:
-				return ColorScheme.PROGRESS_ERROR_COLOR;
+				return Palette.NONE;
 		}
 	}
 

@@ -7,7 +7,10 @@
 package com.layneburns.farmingruns.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.function.BiFunction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -16,7 +19,6 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.components.IconTextField;
 
 /**
@@ -34,12 +36,12 @@ class BankToolbar extends JPanel
 	{
 		super(new BorderLayout(4, 0));
 		this.onChange = onChange;
-		setBackground(ColorScheme.DARK_GRAY_COLOR);
+		setBackground(Palette.BACKGROUND);
 		setBorder(BorderFactory.createEmptyBorder(6, 0, 4, 0));
 
 		search.setIcon(IconTextField.Icon.SEARCH);
-		search.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		search.setHoverBackgroundColor(ColorScheme.DARK_GRAY_HOVER_COLOR);
+		search.setBackground(Palette.SURFACE);
+		search.setHoverBackgroundColor(Palette.SURFACE_HOVER);
 		search.setPreferredSize(new Dimension(0, 30));
 		search.setToolTipText("Search every page: an item name or a patch kind (e.g. \"ranarr\", \"fruit\")");
 		search.getDocument().addDocumentListener(new DocumentListener()
@@ -73,6 +75,23 @@ class BankToolbar extends JPanel
 			BankFilters::withEnoughForRun));
 		menu.add(filterItem("Can plant", "Only seeds at or below your Farming level.", BankFilters::withCanPlant));
 		filtersButton.setFocusable(false);
+		filtersButton.setBackground(Palette.SURFACE);
+		filtersButton.setForeground(Color.WHITE);
+		filtersButton.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+		filtersButton.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				filtersButton.setBackground(Palette.SURFACE_HOVER);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				filtersButton.setBackground(Palette.SURFACE);
+			}
+		});
 		filtersButton.setToolTipText("Filter the seed list (they combine)");
 		filtersButton.addActionListener(e -> menu.show(filtersButton, 0, filtersButton.getHeight()));
 		updateButtonText();

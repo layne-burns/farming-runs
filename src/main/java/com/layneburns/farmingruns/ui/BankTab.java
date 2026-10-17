@@ -25,7 +25,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import net.runelite.client.game.ItemManager;
-import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
@@ -67,10 +66,10 @@ public class BankTab extends TabPanel
 
 		JPanel top = new JPanel();
 		top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
-		top.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		top.setBackground(Palette.BACKGROUND);
 		top.add(toolbar);
 		top.add(pageSwitch());
-		seenLine.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		seenLine.setBackground(Palette.BACKGROUND);
 		seenLine.setToolTipText("When the bank, seed vault and seed box were last opened. Their contents are only "
 			+ "visible while open, so the log uses what it saw then.");
 		top.add(seenLine);
@@ -95,7 +94,7 @@ public class BankTab extends TabPanel
 	private MaterialTabGroup pageSwitch()
 	{
 		MaterialTabGroup tabs = new MaterialTabGroup();
-		tabs.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		tabs.setBackground(Palette.BACKGROUND);
 		// One equal column per page, so all three always fit on one line (the default flow layout wraps).
 		tabs.setLayout(new GridLayout(1, BankView.Page.values().length));
 		MaterialTab first = null;
@@ -126,7 +125,7 @@ public class BankTab extends TabPanel
 		{
 			JLabel label = new JLabel(seen, JLabel.CENTER);
 			label.setFont(FontManager.getRunescapeSmallFont());
-			label.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
+			label.setForeground(Palette.SECONDARY_TEXT);
 			seenLine.add(label);
 		}
 

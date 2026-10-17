@@ -18,7 +18,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 
 /**
@@ -39,11 +38,11 @@ class SectionPanel extends JPanel
 	{
 		super(new BorderLayout());
 		this.text = text;
-		setBackground(ColorScheme.DARK_GRAY_COLOR);
+		setBackground(Palette.BACKGROUND);
 		setBorder(BorderFactory.createEmptyBorder(6, 0, 2, 0));
 		setAlignmentX(LEFT_ALIGNMENT);
 
-		title.setForeground(ColorScheme.BRAND_ORANGE);
+		title.setForeground(Palette.ACCENT);
 		title.setFont(title.getFont().deriveFont(Font.BOLD));
 		title.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		title.addMouseListener(new MouseAdapter()
@@ -57,7 +56,7 @@ class SectionPanel extends JPanel
 		});
 
 		body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
-		body.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		body.setBackground(Palette.BACKGROUND);
 		add(title, BorderLayout.NORTH);
 		add(body, BorderLayout.CENTER);
 		setCollapsed(collapsed);
@@ -68,7 +67,7 @@ class SectionPanel extends JPanel
 	{
 		JLabel label = new JLabel(heading);
 		label.setFont(FontManager.getRunescapeSmallFont());
-		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		label.setForeground(Palette.SECONDARY_TEXT);
 		label.setBorder(BorderFactory.createEmptyBorder(4, 4, 1, 0));
 		label.setAlignmentX(LEFT_ALIGNMENT);
 		label.setMaximumSize(new Dimension(Integer.MAX_VALUE, label.getPreferredSize().height));

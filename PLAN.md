@@ -89,6 +89,8 @@ ui/
   BankFilters            (pure) applies those filters; colours the detail line green / yellow
   BankTooltips           (pure) tooltip wording: level, growth, XP, protection, uses, where
   SuppliesBuilder        (pure) Supplies and Leprechaun page rows
+  Palette                every colour the panel uses, in one place
+  DarkScrollBarUI        RuneLite's scroll bar with a dark grey handle
   SectionPanel, ItemRow, TabPanel, FitWidthPanel   shared look: collapsible sections with kind sub-headings,
                          two-line icon rows, dark background, lists that never scroll sideways
   LocationsTab           unlock state + reason, override box, teleport dropdown, patch ready times

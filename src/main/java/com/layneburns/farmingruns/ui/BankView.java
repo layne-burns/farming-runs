@@ -36,7 +36,8 @@ public class BankView
 	{
 		SEEDS("Seeds"),
 		SUPPLIES("Supplies"),
-		LEPRECHAUN("Leprechaun");
+		/** The tool leprechaun's storage ("Leprechaun" doesn't fit a third of the panel). */
+		LEPRECHAUN("Tools");
 
 		private final String title;
 	}

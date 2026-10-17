@@ -15,8 +15,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
-import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.ui.laf.RuneLiteScrollBarUI;
 
 /**
  * Base for the side panel's tabs, so every tab gets RuneLite's dark background and the same layout.
@@ -26,7 +24,7 @@ abstract class TabPanel extends JPanel
 	TabPanel()
 	{
 		super(new BorderLayout());
-		setBackground(ColorScheme.DARK_GRAY_COLOR);
+		setBackground(Palette.BACKGROUND);
 	}
 
 	/** Width of the scroll bar in our tabs: thinner than RuneLite's default 17. */
@@ -40,11 +38,11 @@ abstract class TabPanel extends JPanel
 		JScrollPane scroll = new JScrollPane(content);
 		scroll.setBorder(BorderFactory.createEmptyBorder());
 		scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		scroll.getViewport().setBackground(ColorScheme.DARK_GRAY_COLOR);
+		scroll.getViewport().setBackground(Palette.BACKGROUND);
 		JScrollBar bar = scroll.getVerticalScrollBar();
-		bar.setUI(new RuneLiteScrollBarUI());
+		bar.setUI(new DarkScrollBarUI());
 		bar.setPreferredSize(new Dimension(SCROLL_BAR_WIDTH, 0));
-		bar.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		bar.setBackground(Palette.BACKGROUND);
 		bar.setUnitIncrement(16);
 		return scroll;
 	}
@@ -53,7 +51,7 @@ abstract class TabPanel extends JPanel
 	static JLabel text(String html)
 	{
 		JLabel label = new JLabel("<html>" + html + "</html>");
-		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		label.setForeground(Palette.SECONDARY_TEXT);
 		return label;
 	}
 }

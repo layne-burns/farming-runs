@@ -11,7 +11,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
@@ -28,12 +27,12 @@ public class FarmingRunsPanel extends PluginPanel
 		// Not wrapped in RuneLite's scroll pane (each tab scrolls itself), which also means PluginPanel
 		// doesn't set its dark background: set it here.
 		super(false);
-		setBackground(ColorScheme.DARK_GRAY_COLOR);
+		setBackground(Palette.BACKGROUND);
 		setLayout(new BorderLayout());
 		setBorder(new EmptyBorder(10, 10, 10, 10));
 
 		JPanel display = new JPanel(new BorderLayout());
-		display.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		display.setBackground(Palette.BACKGROUND);
 		MaterialTabGroup tabs = new MaterialTabGroup(display);
 		MaterialTab run = new MaterialTab("Run", tabs, runTab);
 		tabs.addTab(run);

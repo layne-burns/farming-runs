@@ -11,7 +11,6 @@ import java.awt.Rectangle;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.Scrollable;
-import net.runelite.client.ui.ColorScheme;
 
 /**
  * A vertical list for inside a scroll pane that always takes the scroll pane's width, so long text is shortened
@@ -22,7 +21,7 @@ class FitWidthPanel extends JPanel implements Scrollable
 	FitWidthPanel()
 	{
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-		setBackground(ColorScheme.DARK_GRAY_COLOR);
+		setBackground(Palette.BACKGROUND);
 	}
 
 	@Override
