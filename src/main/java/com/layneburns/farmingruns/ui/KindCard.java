@@ -58,10 +58,11 @@ class KindCard extends JPanel
 	 * @param notes    things to know, shown in yellow, e.g. "Grow first: 2 × Magic sapling (from Magic seed)"
 	 * @param amulet   allotments: whether the amulet of bounty will be worn (your choice or the default); null for
 	 *                 other kinds
+	 * @param collapsed which collapsible parts are closed, by key; kept by the Run tab across redraws
 	 */
 	KindCard(String title, KindPlan plan, List<Seed> seeds, List<PlantingPlan.Assignment> planned, int patches,
 		@Nullable String payTooltip, boolean isTree, boolean harvests, List<String> notes, @Nullable Boolean amulet,
-		Consumer<KindPlan> onChange)
+		Map<String, Boolean> collapsed, Consumer<KindPlan> onChange)
 	{
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(Palette.SURFACE);
@@ -83,20 +84,24 @@ class KindCard extends JPanel
 			routine.setSelectedItem(plan.getTreeRoutine());
 			routine.setFocusable(false);
 			routine.setToolTipText("What to do with a grown tree before replanting. \"Pick, leave the tree\" is a harvest"
-				+ " run for every tree; to keep only some types, tick them below instead.");
+				+ " run: the crop is picked and the tree left (choose which types below).");
 			routine.addActionListener(e -> onChange.accept(plan.withTreeRoutine((TreeRoutine) routine.getSelectedItem())));
 			add(left(routine));
 		}
-		if (harvests && plan.getTreeRoutine() != TreeRoutine.LEAVE_STANDING && seeds.size() > 1)
-		{
-			add(new KeepStandingPanel(plan, seeds, onChange));
-		}
 		if (harvests && plan.getTreeRoutine() == TreeRoutine.LEAVE_STANDING)
 		{
-			add(left(TabPanel.text("Harvest run: pick the crop and leave the tree. Nothing is planted, paid or"
-				+ " cleared.")));
-			setMaximumSize(new Dimension(Integer.MAX_VALUE, getPreferredSize().height));
-			return;
+			if (seeds.size() > 1)
+			{
+				add(new KeepStandingPanel(plan, seeds, onChange, collapsed, "keep:" + title));
+			}
+			if (plan.getReplaceStanding().isEmpty())
+			{
+				add(left(TabPanel.text("Harvest run: pick the crop and leave the tree. Nothing is planted, paid or"
+					+ " cleared.")));
+				setMaximumSize(new Dimension(Integer.MAX_VALUE, getPreferredSize().height));
+				return;
+			}
+			// Some types are replaced: the seed choice below is for those patches.
 		}
 
 		JCheckBox auto = check("Auto: best seeds you can spare", plan.isAuto());

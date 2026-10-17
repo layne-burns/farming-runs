@@ -126,25 +126,27 @@ public class SeedPickerTest
 	}
 
 	@Test
-	public void treesOfAKeptTypeAreLeftStandingAndTheRestReplanted()
+	public void aHarvestRunReplacesOnlyTheTypesYouUntick()
 	{
 		List<Patch> fruitTrees = data.patches().stream().filter(p -> p.getKind() == PatchImplementation.FRUIT_TREE)
 			.sorted((a, b) -> a.getId().compareTo(b.getId())).limit(4).collect(Collectors.toList());
 		Seed papaya = data.seedByItem(5288);
 		Seed apple = data.seedForCrop(PatchImplementation.FRUIT_TREE, "Apple");
-		// Growing: papaya, papaya, apple, unknown. Keep papaya standing.
+		// Growing: papaya, papaya, apple, unknown. A harvest run that replaces apple trees.
 		Map<Patch, Seed> growing = new HashMap<>();
 		growing.put(fruitTrees.get(0), papaya);
 		growing.put(fruitTrees.get(1), papaya);
 		growing.put(fruitTrees.get(2), apple);
 		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.FRUIT_TREE)).withKindPlan(
-			PatchImplementation.FRUIT_TREE, KindPlan.AUTO.withKeepStanding(Set.of(papaya.getItemId())));
+			PatchImplementation.FRUIT_TREE, KindPlan.AUTO.withTreeRoutine(TreeRoutine.LEAVE_STANDING)
+				.withReplaceStanding(Set.of(apple.getItemId())));
 		PlantingPlan plan = SeedPicker.plan(setup, fruitTrees, Map.of(5501, 20), BUFFERS, 99, data, null,
 			growing::get);
-		assertEquals(2, plan.keptCount());
-		assertEquals(2, plan.plantedCount());
-		assertTrue(plan.getAssignments().stream().filter(PlantingPlan.Assignment::isKeptStanding)
-			.allMatch(a -> a.getStanding() == papaya));
+		// The papayas and the unknown tree stay; the apple patch is replanted.
+		assertEquals(3, plan.keptCount());
+		assertEquals(1, plan.plantedCount());
+		assertEquals(fruitTrees.get(2), plan.getAssignments().stream().filter(a -> a.getSeed() != null)
+			.findFirst().orElseThrow().getPatch());
 		assertTrue(plan.getWarnings().isEmpty());
 	}
 

@@ -25,7 +25,7 @@ import lombok.Value;
  * Decides what to plant in each patch of a run (SPEC §2.3). Pure: unit tested.
  * <ul>
  * <li>A farming contract's seed goes in its Farming Guild patch first; the buffer doesn't apply to it.</li>
- * <li>Trees with a crop that are kept standing (a harvest run, or a type you keep) are picked and left.</li>
+ * <li>On a harvest run, trees are picked and left standing, except types you chose to replace.</li>
  * <li>Auto: the highest-level seeds you can plant and spare, mixing in the next best when one runs short.</li>
  * <li>Chosen crops: patches shared by {@link ShareSplitter} (exact counts, then by weight); patches a crop can't
  * fill (not enough spare) are filled the auto way, with a warning.</li>
@@ -101,7 +101,7 @@ public final class SeedPicker
 					return true;
 				});
 			}
-			// Trees picked and left standing (a harvest run, or a type you keep) get no seed and need none.
+			// Trees picked and left standing (a harvest run, minus types to replace) get no seed and need none.
 			PatchImplementation kind = entry.getKey();
 			open.removeIf(p ->
 			{

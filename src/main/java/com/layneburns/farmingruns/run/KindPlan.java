@@ -50,16 +50,18 @@ public class KindPlan
 	 */
 	boolean growSaplings;
 	/**
-	 * Trees with a crop: seed item ids of the trees to pick and leave standing; patches growing anything else are
-	 * cleared and replanted. "Pick, leave the tree" keeps every type.
+	 * On a harvest run ("Pick, leave the tree"): seed item ids of tree types to clear and replant anyway, by paying the
+	 * gardener. Empty: every tree is left standing.
 	 */
-	Set<Integer> keepStanding;
+	Set<Integer> replaceStanding;
 
-	/** True when a patch of this kind growing {@code standing} (null if unknown) is picked and left, not replanted. */
+	/**
+	 * True when a patch of this kind growing {@code standing} (null if unknown) is picked and left, not replanted: on a
+	 * harvest run, unless it's a type you chose to replace. An unknown tree is left alone.
+	 */
 	public boolean keeps(PatchImplementation kind, @Nullable Seed standing)
 	{
-		return harvestOnly(kind) || (TreeRoutine.hasHarvest(kind) && standing != null
-			&& keepStanding.contains(standing.getItemId()));
+		return harvestOnly(kind) && (standing == null || !replaceStanding.contains(standing.getItemId()));
 	}
 
 	/** True for a harvest run on this kind: pick the crop, leave the tree, plant nothing. */

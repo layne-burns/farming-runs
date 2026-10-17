@@ -7,6 +7,8 @@
 package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.inventory.RunCheckService;
+import java.util.ArrayList;
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
@@ -25,35 +27,36 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
 
 /**
- * A "Farm Run Items" column at the right of the chatbox while you search the bank, so the run's bank tab is one click away without
- * the side panel. It shows only when the run check has something to take from the bank, and is hidden again when
+ * A raised "Farm Run Items" button down the right of the chatbox while you search the bank, so the run's bank tab
+ * is one click away without the side panel. It shows only when the run check has something to take from the bank, and is hidden again when
  * the search closes (the chatbox's prompt area is shared with other prompts). Client thread.
  */
 @Singleton
 public class BankSearchButton
 {
-	/** Two lines, centred in the column. */
+	/** Two lines, centred on the button. */
 	private static final String LABEL = "Farm Run<br>Items";
-	/** The column's width: clear of the prompt's centred text even in the fixed-size chatbox. */
-	private static final int WIDTH = 80;
-	private static final int DIVIDER_WIDTH = 2;
-	/** Inset from the top and bottom, so the divider stops short of the chatbox frame. */
-	private static final int INSET = 4;
-	/** The game's chatbox text colour, and the dark brown of its frame for the divider. */
-	private static final int TEXT_COLOUR = 0x000000;
-	private static final int DIVIDER_COLOUR = 0x3f3628;
-	/** A faint shade over the column on hover; opacity runs from 0 (solid) to 255 (invisible). */
-	private static final int SHADE_COLOUR = 0x000000;
-	private static final int SHADE_HOVER_OPACITY = 215;
-	private static final int SHADE_IDLE_OPACITY = 255;
+	/** The button's width: clear of the prompt's centred text even in the fixed-size chatbox. */
+	private static final int WIDTH = 84;
+	/** Gap between the button and the chatbox frame, on every side. */
+	private static final int MARGIN = 6;
+	/** Stone-button colours, as on the game's own interfaces: outline, lit top-left edge, shadowed bottom-right. */
+	private static final int OUTLINE = 0x0e0e0c;
+	private static final int HIGHLIGHT = 0x726451;
+	private static final int SHADOW = 0x1d1a15;
+	private static final int FACE = 0x4a3f33;
+	private static final int FACE_HOVER = 0x5b4e3f;
+	/** The game's orange button text, white on hover. */
+	private static final int TEXT_COLOUR = 0xff981f;
+	private static final int TEXT_HOVER = 0xffffff;
 
 	private final Client client;
 	private final ClientThread clientThread;
 	private final BankRunTab bankRunTab;
 	private final RunCheckService checks;
 	/** Our widgets in the chatbox prompt layer, or null when not added (or the game rebuilt the layer). */
-	private Widget shade;
-	private Widget divider;
+	private final List<Widget> parts = new ArrayList<>();
+	private Widget face;
 	private Widget text;
 
 	@Inject
@@ -99,44 +102,61 @@ public class BankSearchButton
 		{
 			return;
 		}
-		shade = layer.createChild(-1, WidgetType.RECTANGLE);
-		place(shade, WIDTH, 0);
-		shade.setFilled(true);
-		shade.setTextColor(SHADE_COLOUR);
-		shade.setOpacity(SHADE_IDLE_OPACITY);
-		shade.revalidate();
-
-		divider = layer.createChild(-1, WidgetType.RECTANGLE);
-		place(divider, DIVIDER_WIDTH, WIDTH);
-		divider.setFilled(true);
-		divider.setTextColor(DIVIDER_COLOUR);
-		divider.revalidate();
+		parts.clear();
+		// Drawn in order: outline, lit edge (up-left), shadow edge (down-right), face on top. Each is
+		// (inset from the outline's left/top, inset from its right/bottom).
+		rectangle(layer, OUTLINE, 0, 0, 0, 0);
+		rectangle(layer, HIGHLIGHT, 1, 1, 2, 2);
+		rectangle(layer, SHADOW, 2, 2, 1, 1);
+		face = rectangle(layer, FACE, 2, 2, 2, 2);
 
 		text = layer.createChild(-1, WidgetType.TEXT);
-		place(text, WIDTH, 0);
+		place(text, 2, 2, 2, 2);
 		text.setText(LABEL);
 		text.setFontId(FontID.BOLD_12);
 		text.setTextColor(TEXT_COLOUR);
+		text.setTextShadowed(true);
 		text.setXTextAlignment(WidgetTextAlignment.CENTER);
 		text.setYTextAlignment(WidgetTextAlignment.CENTER);
 		text.setHasListener(true);
 		text.setAction(0, "Show");
 		text.setOnOpListener((JavaScriptCallback) e -> bankRunTab.openFromSearch());
-		text.setOnMouseOverListener((JavaScriptCallback) e -> shade.setOpacity(SHADE_HOVER_OPACITY));
-		text.setOnMouseLeaveListener((JavaScriptCallback) e -> shade.setOpacity(SHADE_IDLE_OPACITY));
+		text.setOnMouseOverListener((JavaScriptCallback) e -> hover(true));
+		text.setOnMouseLeaveListener((JavaScriptCallback) e -> hover(false));
 		text.revalidate();
+		parts.add(text);
 	}
 
-	/** A full-height strip at the right of the prompt area, {@code fromRight} pixels in. */
-	private static void place(Widget widget, int width, int fromRight)
+	private void hover(boolean on)
 	{
-		widget.setOriginalWidth(width);
-		widget.setOriginalHeight(2 * INSET);
-		widget.setHeightMode(WidgetSizeMode.MINUS);
+		face.setTextColor(on ? FACE_HOVER : FACE);
+		text.setTextColor(on ? TEXT_HOVER : TEXT_COLOUR);
+	}
+
+	private Widget rectangle(Widget layer, int colour, int left, int top, int right, int bottom)
+	{
+		Widget rect = layer.createChild(-1, WidgetType.RECTANGLE);
+		place(rect, left, top, right, bottom);
+		rect.setFilled(true);
+		rect.setTextColor(colour);
+		rect.revalidate();
+		parts.add(rect);
+		return rect;
+	}
+
+	/**
+	 * Places a widget within the button's outline (which runs down the right of the prompt area, {@link #MARGIN} from
+	 * its edges), inset by the given pixels on each side. Top-anchored so odd insets land exactly.
+	 */
+	private static void place(Widget widget, int left, int top, int right, int bottom)
+	{
+		widget.setOriginalWidth(WIDTH - left - right);
 		widget.setXPositionMode(WidgetPositionMode.ABSOLUTE_RIGHT);
-		widget.setYPositionMode(WidgetPositionMode.ABSOLUTE_CENTER);
-		widget.setOriginalX(fromRight);
-		widget.setOriginalY(0);
+		widget.setOriginalX(MARGIN + right);
+		widget.setHeightMode(WidgetSizeMode.MINUS);
+		widget.setOriginalHeight(2 * MARGIN + top + bottom);
+		widget.setYPositionMode(WidgetPositionMode.ABSOLUTE_TOP);
+		widget.setOriginalY(MARGIN + top);
 	}
 
 	/** True when our button is still among the layer's children (the game may have cleared them). */
@@ -164,9 +184,11 @@ public class BankSearchButton
 		{
 			return;
 		}
-		shade.setHidden(hidden);
-		divider.setHidden(hidden);
-		text.setHidden(hidden);
+		parts.forEach(w -> w.setHidden(hidden));
+		if (hidden)
+		{
+			hover(false);
+		}
 	}
 
 	private boolean isBankOpen()

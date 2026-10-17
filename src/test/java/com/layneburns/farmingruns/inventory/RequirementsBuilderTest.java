@@ -125,6 +125,20 @@ public class RequirementsBuilderTest
 	}
 
 	@Test
+	public void aReplacedTypeOnAHarvestRunIsPaidToClearAndReplanted()
+	{
+		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.FRUIT_TREE))
+			.withKindPlan(PatchImplementation.FRUIT_TREE, KindPlan.AUTO.withTreeRoutine(TreeRoutine.LEAVE_STANDING));
+		PlantingPlan plan = new PlantingPlan(List.of(
+			new PlantingPlan.Assignment(data.patch("gnome_stronghold.fruit_tree"), null, false, true, null),
+			new PlantingPlan.Assignment(data.patch("catherby_fruit_tree.fruit_tree"), data.seedByItem(PAPAYA_SAPLING),
+				false)), List.of());
+		RunRequirements needs = build(setup, plan);
+		assertEquals(1, find(needs, PAPAYA_SAPLING).getAmount());
+		assertEquals(200, find(needs, data.getItems().group("coins").iterator().next()).getAmount());
+	}
+
+	@Test
 	public void fertileSoilNeedsRunesPerPatchAndTheLunarSpellbook()
 	{
 		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.HERB)).withCompost(CompostChoice.FERTILE_SOIL);

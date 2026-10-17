@@ -59,7 +59,7 @@ public final class PresetCombiner
 	/**
 	 * One kind across presets: the presets that chose crops each get an equal share of the patches, split inside
 	 * that share by their own weights. Exact counts are kept as they are. Pay if any preset pays; harvest unless
-	 * every preset skips it; grow saplings from seed if any preset does; keep standing what any keeps. The tree routine, fill order and amulet choice come from the first preset that set this
+	 * every preset skips it; grow saplings from seed if any preset does; replace on a harvest run what any replaces. The tree routine, fill order and amulet choice come from the first preset that set this
 	 * kind.
 	 */
 	private static KindPlan combineKind(List<RunSetup> presets, PatchImplementation kind)
@@ -71,14 +71,14 @@ public final class PresetCombiner
 		FillOrder order = null;
 		Boolean amulet = null;
 		boolean grow = false;
-		Set<Integer> keep = new HashSet<>();
+		Set<Integer> replace = new HashSet<>();
 		for (RunSetup preset : presets)
 		{
 			KindPlan plan = preset.kindPlan(kind);
 			pay |= plan.isPay();
 			skipHarvest &= plan.isSkipHarvest();
 			grow |= plan.isGrowSaplings();
-			keep.addAll(plan.getKeepStanding());
+			replace.addAll(plan.getReplaceStanding());
 			if (routine == null && preset.getKinds().containsKey(kind))
 			{
 				routine = plan.getTreeRoutine();
@@ -94,7 +94,7 @@ public final class PresetCombiner
 		order = order == null ? FillOrder.SHARES : order;
 		if (chosen.isEmpty())
 		{
-			return new KindPlan(true, List.of(), pay, routine, skipHarvest, order, amulet, grow, Set.copyOf(keep));
+			return new KindPlan(true, List.of(), pay, routine, skipHarvest, order, amulet, grow, Set.copyOf(replace));
 		}
 		// Scale each preset's weights so every preset's total is the same (PRESET_TOTAL), keeping its own split.
 		List<CropShare> crops = new ArrayList<>();
@@ -107,7 +107,7 @@ public final class PresetCombiner
 				crops.add(new CropShare(crop.getSeedItemId(), weight, crop.getPatches()));
 			}
 		}
-		return new KindPlan(false, List.copyOf(crops), pay, routine, skipHarvest, order, amulet, grow, Set.copyOf(keep));
+		return new KindPlan(false, List.copyOf(crops), pay, routine, skipHarvest, order, amulet, grow, Set.copyOf(replace));
 	}
 
 	private static long totalWeight(KindPlan plan)

@@ -25,7 +25,6 @@ import com.layneburns.farmingruns.run.TreeRoutine;
 import com.layneburns.farmingruns.state.ContractService;
 import com.layneburns.farmingruns.state.ItemStore;
 import com.layneburns.farmingruns.state.PatchStates;
-import com.layneburns.farmingruns.state.PatchStatus;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.SetupStore;
 import com.layneburns.farmingruns.state.UnlockService;
@@ -159,9 +158,9 @@ public class RunTab extends TabPanel
 			boolean isTree = seeds.stream().anyMatch(Seed::isPlantedAsSapling);
 			content.add(new KindCard(BankViewBuilder.kindName(kind), setup.kindPlan(kind), seeds, planned,
 				planned.size(), canPay ? PaymentTooltip.build(planned, items.ledger()) : null, isTree,
-				TreeRoutine.hasHarvest(kind), kindNotes(setup, plan, kind, planned, now),
+				TreeRoutine.hasHarvest(kind), kindNotes(setup, plan, kind, planned),
 				kind == PatchImplementation.ALLOTMENT ? BountyAmulet.wanted(setup.kindPlan(kind), planned, data) : null,
-				kp -> update(s -> s.withKindPlan(kind, kp))));
+				collapsed, kp -> update(s -> s.withKindPlan(kind, kp))));
 		}
 
 		SectionPanel compost = section("Compost");
@@ -267,10 +266,12 @@ public class RunTab extends TabPanel
 		return section;
 	}
 
-	/** Yellow notes for a kind's card: saplings to grow first, and patches Time Tracking hasn't seen when keeping some
-	 * tree types (their tree isn't known, so they're replanted). */
+	/**
+	 * Yellow notes for a kind's card: saplings to grow first, and on a harvest run that replaces some types, patches
+	 * Time Tracking hasn't seen (their tree isn't known, so they're left standing).
+	 */
 	private List<String> kindNotes(RunSetup setup, PlantingPlan plan, PatchImplementation kind,
-		List<PlantingPlan.Assignment> planned, long now)
+		List<PlantingPlan.Assignment> planned)
 	{
 		List<String> notes = new ArrayList<>();
 		List<String> grow = plan.growNotes(kind);
@@ -279,13 +280,12 @@ public class RunTab extends TabPanel
 			notes.add("Grow first: " + String.join(", ", grow));
 		}
 		KindPlan kindPlan = setup.kindPlan(kind);
-		if (!kindPlan.getKeepStanding().isEmpty() && !kindPlan.harvestOnly(kind))
+		if (kindPlan.harvestOnly(kind) && !kindPlan.getReplaceStanding().isEmpty())
 		{
-			long unseen = planned.stream().filter(a -> !a.isKeptStanding()
-				&& checks.status(a.getPatch(), now).getReadiness() == PatchStatus.Readiness.UNKNOWN).count();
+			long unseen = planned.stream().filter(a -> a.isKeptStanding() && a.getStanding() == null).count();
 			if (unseen > 0)
 			{
-				notes.add(unseen + (unseen == 1 ? " patch" : " patches") + " not seen by Time Tracking, so replanted");
+				notes.add(unseen + (unseen == 1 ? " patch" : " patches") + " not seen by Time Tracking, so left standing");
 			}
 		}
 		return notes;
