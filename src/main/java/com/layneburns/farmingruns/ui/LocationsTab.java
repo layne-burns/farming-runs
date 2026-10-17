@@ -9,10 +9,12 @@ package com.layneburns.farmingruns.ui;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.RunType;
 import com.layneburns.farmingruns.state.LocationPrefs;
+import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.UnlockService;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -31,6 +33,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import net.runelite.client.callback.ClientThread;
@@ -50,6 +53,7 @@ public class LocationsTab extends TabPanel
 	private final LocationPrefs prefs;
 	private final PlayerInfo player;
 	private final ClientThread clientThread;
+	private final PatchStates patchStates;
 
 	private final IconTextField search = new IconTextField();
 	private final JButton typesButton = button("Types", "Choose which run types to list");
@@ -63,17 +67,22 @@ public class LocationsTab extends TabPanel
 	private final AtomicBoolean redrawQueued = new AtomicBoolean();
 
 	@Inject
-	LocationsTab(GameData data, UnlockService unlocks, LocationPrefs prefs, PlayerInfo player, ClientThread clientThread)
+	LocationsTab(GameData data, UnlockService unlocks, LocationPrefs prefs, PlayerInfo player, ClientThread clientThread,
+		PatchStates patchStates)
 	{
 		this.data = data;
 		this.unlocks = unlocks;
 		this.prefs = prefs;
 		this.player = player;
 		this.clientThread = clientThread;
+		this.patchStates = patchStates;
 
 		add(top(), BorderLayout.NORTH);
 		add(scrollPane(content), BorderLayout.CENTER);
 		unlocks.addListener(this::refresh);
+		patchStates.addListener(this::refresh);
+		// Ready-in times count down: redraw once a minute.
+		new Timer(60_000, e -> refresh()).start();
 		refresh();
 	}
 
@@ -198,16 +207,22 @@ public class LocationsTab extends TabPanel
 	{
 		redrawQueued.set(false);
 		String query = search.getText().trim();
+		long now = Instant.now().getEpochSecond();
 		LocationsContext context = LocationsContext.builder()
 			.statusOf(unlocks::status)
 			.patchRuleOf(unlocks::patchRuleStatus)
 			.teleportsOf(prefs::teleportsFor)
 			.customTeleports(l -> prefs.hasCustomTeleports(l.getId()))
 			.spellbook(player.getFacts().spellbookName())
+			.patchStateOf(p -> patchStates.status(p, now))
+			.nowSeconds(now)
+			.timeTrackingOn(patchStates.isTimeTrackingOn())
 			.build();
 		LocationsView view = LocationsViewBuilder.build(data, context, query, Set.copyOf(runTypes));
 
-		summary.setText(view.getSummary());
+		summary.setText(view.isTimeTrackingOff()
+			? "<html>" + view.getSummary() + "<br>Turn on RuneLite's Time Tracking plugin to see patch states.</html>"
+			: view.getSummary());
 		content.removeAll();
 		for (LocationsView.Section section : view.getSections())
 		{

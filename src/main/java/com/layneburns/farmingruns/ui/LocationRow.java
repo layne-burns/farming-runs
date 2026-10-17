@@ -7,6 +7,7 @@
 package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.state.LocationStatus;
+import com.layneburns.farmingruns.state.PatchStatus;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -73,8 +74,10 @@ class LocationRow extends JPanel
 		text.setMinimumSize(new Dimension(0, 0));
 		text.setPreferredSize(new Dimension(0, 30));
 
-		JLabel state = new JLabel(shortStatus(entry.getStatus()));
-		state.setForeground(statusColour(entry.getStatus()));
+		// Locked locations say so; the rest show their patches at a glance ("3 ready", "in 1 h 20 min").
+		boolean locked = entry.getStatus().getAccess() == LocationStatus.Access.LOCKED;
+		JLabel state = new JLabel(locked ? shortStatus(entry.getStatus()) : entry.getReadySummary());
+		state.setForeground(locked ? statusColour(entry.getStatus()) : readinessColour(entry.getSummaryReadiness()));
 
 		header.add(text, BorderLayout.CENTER);
 		header.add(state, BorderLayout.EAST);
@@ -118,7 +121,8 @@ class LocationRow extends JPanel
 		details.add(caption("Patches"));
 		for (LocationsView.PatchLine patch : entry.getPatches())
 		{
-			details.add(patch.isUsable() ? wrapped("✓ " + patch.getName(), Palette.FULL)
+			details.add(patch.isUsable()
+				? wrapped(patch.getName() + " · " + patch.getStateText(), readinessColour(patch.getReadiness()))
 				: wrapped("✗ " + patch.getName() + ": " + patch.getReason(), Palette.NONE));
 		}
 		if (entry.getNote() != null)
@@ -145,6 +149,24 @@ class LocationRow extends JPanel
 				return status.isOverridden() ? "Locked*" : "Locked";
 			default:
 				return "?";
+		}
+	}
+
+	/** Green: something to do (harvest, plant); yellow: growing; red: diseased or dead; grey: not seen. */
+	private static Color readinessColour(PatchStatus.Readiness readiness)
+	{
+		switch (readiness)
+		{
+			case READY:
+			case EMPTY:
+				return Palette.FULL;
+			case GROWING:
+				return Palette.PARTIAL;
+			case DISEASED:
+			case DEAD:
+				return Palette.NONE;
+			default:
+				return Palette.SECONDARY_TEXT;
 		}
 	}
 

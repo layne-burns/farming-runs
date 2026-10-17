@@ -7,6 +7,7 @@
 package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.state.LocationStatus;
+import com.layneburns.farmingruns.state.PatchStatus;
 import java.util.List;
 import javax.annotation.Nullable;
 import lombok.Value;
@@ -21,6 +22,8 @@ public class LocationsView
 	String summary;
 	/** One section per chosen run type, then "Locked" last; empty sections are left out. */
 	List<Section> sections;
+	/** True when RuneLite's Time Tracking plugin is off, so patch states aren't being updated. */
+	boolean timeTrackingOff;
 
 	@Value
 	public static class Section
@@ -40,6 +43,9 @@ public class LocationsView
 		/** The patches there, e.g. "2 allotment, flower, herb". */
 		String kinds;
 		LocationStatus status;
+		/** The patches at a glance, e.g. "3 ready" or "in 1 h 20 min"; and how to colour it. */
+		String readySummary;
+		PatchStatus.Readiness summaryReadiness;
 		/** E.g. "Unlocked", "Locked: Quest: Song of the Elves", "Unlocked (your override)". */
 		String statusText;
 		/** Teleports in order of preference: the first one you can use is used. */
@@ -103,6 +109,9 @@ public class LocationsView
 	{
 		/** E.g. "Allotment (North)". */
 		String name;
+		/** What's in it, e.g. "Ranarr: ready in 1 h 20 min"; and its readiness for colour. */
+		String stateText;
+		PatchStatus.Readiness readiness;
 		boolean usable;
 		/** Why it isn't usable, e.g. "Farming 85"; null if it is. */
 		@Nullable

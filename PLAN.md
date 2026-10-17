@@ -62,8 +62,10 @@ state/                   the only package that reads the client (varbits, contai
   BufferSettings         (pure) seeds kept back per type: allotment / sapling / other
   PlayerFacts            (pure, immutable) quests, diary varbits, levels, spellbook, read in one go
   PlayerInfo             reads PlayerFacts on the first tick after login, on level-ups, spellbook/diary changes, Recheck
-  PatchStates            reads Time Tracking's config + vendored decode → PatchStatus (ready / ready in / dead…)
-  ReadyPredictor         (pure) next-ready-time maths, adapted from Time Tracking's prediction
+  PatchStates            the only reader of Time Tracking's saved states ("regionId.varbit" -> "value:epochSeconds",
+                         tick offset, autoweed); tells listeners when Time Tracking saves; knows if it's switched off
+  ReadyPredictor         (pure) port of Time Tracking's predictPatch/getTickTime: crop, stage, ready time
+  PatchStatus            (pure) ready / empty / growing / diseased / dead / unknown, crop, ready-at; readable text
   ContractService        current contract → seed + Farming Guild patch, if not yet planted
 
 run/
@@ -139,8 +141,8 @@ The tool leprechaun needs no data file: its encoding is the game's own `farming_
 | 0 | **Scaffold** ✅ | `git init`, remote, build, checkstyle, launcher; an empty plugin with a three-tab panel; vendored timetracking plus its sync script; README | The build compiles; the plugin loads in the test harness | The panel appears with three empty tabs |
 | 1 | **Data** ✅ | All the §3 files, their scripts and `DataLoader` | `DataIntegrityTest`, `CostTableTest` | The plugin starts (data loads); the tabs are dark |
 | 2 | **Seed log and leprechaun** ✅ | `ItemStore`, `ContainerWatcher`, `LeprechaunWatcher`, `BankTab` (via the pure `BankViewBuilder`), buffer settings, profile persistence | `LeprechaunDecoderTest`, `ItemLedgerTest`, `BankViewBuilderTest` | Counts match the bank, vault and seed box after opening each, and the leprechaun matches its Exchange screen. **Verify:** is the seed-box container sent at login or only once opened? What do bottomless bucket types 2–4 mean (log line `[leprechaun]`)? |
-| 3 | **Unlocks** | `PlayerFacts`/`PlayerInfo`, `UnlockEvaluator`, `LocationPrefs`, `UnlockService`, `LocationsTab` (via `LocationsViewBuilder`); Bank "full run" uses unlocked patches. POH nexus / jewellery box tick boxes moved to phase 6, where teleports are checked | `UnlockEvaluatorTest`, `LocationsViewBuilderTest` | Prifddinas is locked (SotE) and everything else unlocked; overrides and teleport choices survive a relog |
-| 4 | **Patch states** | `PatchStates`, `ReadyPredictor`, ready times in `LocationsTab` | Decode and predict on recorded Time Tracking values | Ready times match Time Tracking's own Farming tab |
+| 3 | **Unlocks** ✅ | `PlayerFacts`/`PlayerInfo`, `UnlockEvaluator`, `LocationPrefs`, `UnlockService`, `LocationsTab` (via `LocationsViewBuilder`); Bank "full run" uses unlocked patches. POH nexus / jewellery box tick boxes moved to phase 6, where teleports are checked | `UnlockEvaluatorTest`, `LocationsViewBuilderTest` | Prifddinas is locked (SotE) and everything else unlocked; overrides and teleport choices survive a relog |
+| 4 | **Patch states** | `PatchStates`, `ReadyPredictor`, `PatchStatus`; Locations rows show "3 ready" / "in 1 h 20 min" / "not seen", each patch's crop and ready time, a note if Time Tracking is off; redraw every minute | `ReadyPredictorTest`, `LocationsViewBuilderTest` | Ready times match Time Tracking's own Farming tab |
 | 5 | **Run setup** | `RunSetup`, `PresetStore`, `SeedPicker`, `ContractService`, `RunTab` setup form; goal presets (e.g. Prayer potion → ranarr + snape grass), combinable (open questions in SPEC §2.3) | Picker: best spare seed, buffers 9/2/3, mixing, contract override, manual mode | Auto picks look right; save, load and relog a preset |
 | 6 | **Start checks** | `RunRequirements`, `ItemCounts`, `InventoryChecker`, `BankHighlightOverlay`, `NotReadyDialog`, `StartAnywayDialog` | Requirements per routine, payment and compost; leprechaun counts as available; missing counts | Remove an item → it's listed and highlighted in the bank → "Start anyway" works |
 | 7 | **Route and run loop** | `CostTable`, `RoutePlanner`, `ShortestPathClient`, `RunSession`, `RunController`, the stop list in `RunTab` | Planner matches brute force on random small cases; session advance, skip and jump | A herb + allotment run: SP draws each leg and auto-advances when a stop is planted (and paid) |

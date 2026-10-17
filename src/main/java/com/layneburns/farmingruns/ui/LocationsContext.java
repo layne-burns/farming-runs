@@ -9,6 +9,7 @@ package com.layneburns.farmingruns.ui;
 import com.layneburns.farmingruns.data.Location;
 import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.state.LocationStatus;
+import com.layneburns.farmingruns.state.PatchStatus;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -34,4 +35,9 @@ public class LocationsContext
 	/** Your spellbook ("Normal", "Lunar"...), or null if not known. */
 	@Nullable
 	String spellbook;
+	/** What's in a patch and when it'll be ready (from Time Tracking). */
+	Function<Patch, PatchStatus> patchStateOf;
+	/** "Now", in epoch seconds, for ready-in times. */
+	long nowSeconds;
+	boolean timeTrackingOn;
 }

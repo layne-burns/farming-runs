@@ -15,6 +15,7 @@ import com.layneburns.farmingruns.data.TeleportChoice;
 import com.layneburns.farmingruns.data.TeleportDestination;
 import com.layneburns.farmingruns.data.TeleportType;
 import com.layneburns.farmingruns.state.LocationStatus;
+import com.layneburns.farmingruns.state.PatchStatus;
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -110,7 +111,7 @@ public final class LocationsViewBuilder
 		}
 		String summary = known ? usable + " of " + locations.size() + " locations unlocked"
 			: "Log in to check which locations you've unlocked.";
-		return new LocationsView(summary, sections);
+		return new LocationsView(summary, sections, !context.isTimeTrackingOn());
 	}
 
 	private static LocationsView.Entry entry(GameData data, Location location, LocationStatus status,
@@ -120,8 +121,9 @@ public final class LocationsViewBuilder
 			.map(p ->
 			{
 				LocationStatus rule = context.getPatchRuleOf().apply(p);
-				return new LocationsView.PatchLine(patchName(p), rule.isUsable(),
-					rule.isUsable() ? null : String.join(", ", rule.getMissing()));
+				PatchStatus state = context.getPatchStateOf().apply(p);
+				return new LocationsView.PatchLine(patchName(p), state.describe(context.getNowSeconds()),
+					state.getReadiness(), rule.isUsable(), rule.isUsable() ? null : String.join(", ", rule.getMissing()));
 			})
 			.collect(Collectors.toList());
 		List<String> order = context.getTeleportsOf().apply(location);
@@ -131,8 +133,9 @@ public final class LocationsViewBuilder
 				c.getDestination() == null ? null : c.getDestination().getDetail(),
 				teleportWarning(c.getMethod(), context.getSpellbook())))
 			.collect(Collectors.toList());
+		PatchStatus.Readiness summaryReadiness = summaryReadiness(patches);
 		return new LocationsView.Entry(location.getId(), location.getName(), kinds(location), status,
-			statusText(status), teleports, addMenu(data, order), context.getCustomTeleports().test(location), patches,
+			readySummary(patches, location, context), summaryReadiness, statusText(status), teleports, addMenu(data, order), context.getCustomTeleports().test(location), patches,
 			location.getNote(), location.getWikiTeleports());
 	}
 
@@ -159,6 +162,38 @@ public final class LocationsViewBuilder
 		return groups.entrySet().stream()
 			.map(e -> new LocationsView.TeleportMenuGroup(e.getKey(), e.getValue()))
 			.collect(Collectors.toList());
+	}
+
+	/** At a glance: "3 ready" when there's something to do, else when the first one is ready, else "not seen". */
+	static String readySummary(List<LocationsView.PatchLine> patches, Location location, LocationsContext context)
+	{
+		long toDo = patches.stream().filter(p -> p.isUsable() && isToDo(p.getReadiness())).count();
+		if (toDo > 0)
+		{
+			return toDo + " ready";
+		}
+		long soonest = location.getPatches().stream()
+			.map(context.getPatchStateOf())
+			.filter(s -> s.getReadiness() == PatchStatus.Readiness.GROWING)
+			.mapToLong(PatchStatus::getReadyAtSeconds)
+			.min().orElse(0);
+		return soonest > 0 ? "in " + PatchStatus.duration(Math.max(0, soonest - context.getNowSeconds())) : "not seen";
+	}
+
+	private static PatchStatus.Readiness summaryReadiness(List<LocationsView.PatchLine> patches)
+	{
+		if (patches.stream().anyMatch(p -> p.isUsable() && isToDo(p.getReadiness())))
+		{
+			return PatchStatus.Readiness.READY;
+		}
+		return patches.stream().anyMatch(p -> p.getReadiness() == PatchStatus.Readiness.GROWING)
+			? PatchStatus.Readiness.GROWING : PatchStatus.Readiness.UNKNOWN;
+	}
+
+	/** Something to do there: harvest, plant, cure or clear (not just "never seen"). */
+	private static boolean isToDo(PatchStatus.Readiness readiness)
+	{
+		return readiness != PatchStatus.Readiness.GROWING && readiness != PatchStatus.Readiness.UNKNOWN;
 	}
 
 	static String statusText(LocationStatus status)

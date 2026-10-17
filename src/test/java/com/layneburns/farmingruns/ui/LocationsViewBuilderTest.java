@@ -14,8 +14,10 @@ import com.google.gson.Gson;
 import com.layneburns.farmingruns.data.DataLoader;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.Location;
+import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.data.RunType;
 import com.layneburns.farmingruns.state.LocationStatus;
+import com.layneburns.farmingruns.state.PatchStatus;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +28,15 @@ import org.junit.Test;
 public class LocationsViewBuilderTest
 {
 	private static final LocationStatus OPEN = LocationStatus.of(true, List.of(), null);
+	private static final long NOW = 1_800_000_000L;
+
+	/** Catherby's herb is ready; everything else is growing, ready in an hour. */
+	private static PatchStatus state(Patch patch)
+	{
+		return patch.getId().equals("catherby.herb")
+			? new PatchStatus(PatchStatus.Readiness.READY, "Ranarr", 0, 4, 5)
+			: new PatchStatus(PatchStatus.Readiness.GROWING, "Guam", NOW + 3600, 1, 5);
+	}
 	private static GameData data;
 
 	@BeforeClass
@@ -45,6 +56,9 @@ public class LocationsViewBuilderTest
 			.teleportsOf(Location::getDefaultTeleports)
 			.customTeleports(l -> false)
 			.spellbook("Normal")
+			.patchStateOf(LocationsViewBuilderTest::state)
+			.nowSeconds(NOW)
+			.timeTrackingOn(true)
 			.build();
 		return LocationsViewBuilder.build(data, context, query, types);
 	}
@@ -98,6 +112,22 @@ public class LocationsViewBuilderTest
 		LocationsView.PatchLine fruit = guild.getPatches().stream()
 			.filter(p -> p.getName().equals("Fruit tree")).findFirst().orElseThrow();
 		assertEquals("Farming 85", fruit.getReason());
+	}
+
+	@Test
+	public void patchStatesShowAtAGlanceAndPerPatch()
+	{
+		LocationsView view = buildAll("catherby");
+		LocationsView.Entry catherby = section(view, "HERB").getEntries().get(0);
+		assertEquals("1 ready", catherby.getReadySummary());
+		assertEquals(PatchStatus.Readiness.READY, catherby.getSummaryReadiness());
+		LocationsView.PatchLine herb = catherby.getPatches().stream()
+			.filter(p -> p.getName().equals("Herb")).findFirst().orElseThrow();
+		assertEquals("Ranarr: ready", herb.getStateText());
+
+		LocationsView.Entry fruit = section(view, "FRUIT_TREE").getEntries().get(0);
+		assertEquals("in 1 h", fruit.getReadySummary());
+		assertEquals(PatchStatus.Readiness.GROWING, fruit.getSummaryReadiness());
 	}
 
 	@Test
