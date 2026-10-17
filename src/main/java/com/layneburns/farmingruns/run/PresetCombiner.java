@@ -55,17 +55,20 @@ public final class PresetCombiner
 
 	/**
 	 * One kind across presets: the presets that chose crops each get an equal share of the patches, split inside
-	 * that share by their own weights. Exact counts are kept as they are. Pay if any preset pays.
+	 * that share by their own weights. Exact counts are kept as they are. Pay if any preset pays; harvest unless
+	 * every preset skips it.
 	 */
 	private static KindPlan combineKind(List<RunSetup> presets, PatchImplementation kind)
 	{
 		List<KindPlan> chosen = new ArrayList<>();
 		boolean pay = false;
+		boolean skipHarvest = true;
 		TreeRoutine routine = null;
 		for (RunSetup preset : presets)
 		{
 			KindPlan plan = preset.kindPlan(kind);
 			pay |= plan.isPay();
+			skipHarvest &= plan.isSkipHarvest();
 			if (routine == null && preset.getKinds().containsKey(kind))
 			{
 				routine = plan.getTreeRoutine();
@@ -78,7 +81,7 @@ public final class PresetCombiner
 		routine = routine == null ? TreeRoutine.PAY_TO_REMOVE : routine;
 		if (chosen.isEmpty())
 		{
-			return new KindPlan(true, List.of(), pay, routine);
+			return new KindPlan(true, List.of(), pay, routine, skipHarvest);
 		}
 		// Scale each preset's weights so every preset's total is the same: the product of all the totals.
 		long common = 1;
@@ -95,7 +98,7 @@ public final class PresetCombiner
 				crops.add(new CropShare(crop.getSeedItemId(), (int) (crop.getWeight() * scale), crop.getPatches()));
 			}
 		}
-		return new KindPlan(false, List.copyOf(crops), pay, routine);
+		return new KindPlan(false, List.copyOf(crops), pay, routine, skipHarvest);
 	}
 
 	private static long totalWeight(KindPlan plan)

@@ -17,6 +17,7 @@ import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.PresetCombiner;
 import com.layneburns.farmingruns.run.RunPlanService;
 import com.layneburns.farmingruns.run.RunSetup;
+import com.layneburns.farmingruns.run.TreeRoutine;
 import com.layneburns.farmingruns.state.ContractService;
 import com.layneburns.farmingruns.state.ItemStore;
 import com.layneburns.farmingruns.state.PlayerInfo;
@@ -127,7 +128,7 @@ public class RunTab extends TabPanel
 			boolean canPay = seeds.stream().anyMatch(Seed::canBeProtected);
 			boolean isTree = seeds.stream().anyMatch(Seed::isPlantedAsSapling);
 			content.add(new KindCard(BankViewBuilder.kindName(kind), setup.kindPlan(kind), seeds, planned,
-				planned.size(), canPay, isTree, kp -> update(s -> s.withKindPlan(kind, kp))));
+				planned.size(), canPay, isTree, TreeRoutine.hasHarvest(kind), kp -> update(s -> s.withKindPlan(kind, kp))));
 		}
 
 		SectionPanel compost = section("Compost");

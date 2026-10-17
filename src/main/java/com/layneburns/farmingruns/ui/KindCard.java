@@ -50,9 +50,10 @@ class KindCard extends JPanel
 	 * @param patches  patches of this kind the run visits
 	 * @param canPay   whether any seed of this kind can be protected
 	 * @param isTree   whether a tree routine applies
+	 * @param harvests whether the grown tree has a crop to pick before clearing (fruit trees, calquat, celastrus)
 	 */
 	KindCard(String title, KindPlan plan, List<Seed> seeds, List<PlantingPlan.Assignment> planned, int patches,
-		boolean canPay, boolean isTree, Consumer<KindPlan> onChange)
+		boolean canPay, boolean isTree, boolean harvests, Consumer<KindPlan> onChange)
 	{
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(Palette.SURFACE);
@@ -101,6 +102,13 @@ class KindCard extends JPanel
 			JCheckBox pay = check("Pay the gardener to protect", plan.isPay());
 			pay.addActionListener(e -> onChange.accept(plan.withPay(pay.isSelected())));
 			add(left(pay));
+		}
+		if (harvests)
+		{
+			JCheckBox harvest = check("Harvest before clearing", !plan.isSkipHarvest());
+			harvest.setToolTipText("Pick the crop before paying to remove or chopping the tree");
+			harvest.addActionListener(e -> onChange.accept(plan.withSkipHarvest(!harvest.isSelected())));
+			add(left(harvest));
 		}
 		if (isTree)
 		{

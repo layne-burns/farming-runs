@@ -40,7 +40,7 @@ Assumptions: you play an ironman (payment comes from your own produce), you've c
   - **Buffer:** never use the last *N* of any seed. Settings: Allotment 9, Saplings 2, Other 3.
   - **Farming contract:** a contract you hold but haven't planted makes the matching Farming Guild patch use the contract seed. The buffer doesn't apply to it.
 - **Payment:** one toggle per kind. A data file holds each crop's payment item and amount.
-- **Tree routine,** set per kind: "check health, pay to remove" (200 coins) or "check health, chop and dig" (needs an axe).
+- **Tree routine,** set per kind: "check health, pay to remove" (200 coins) or "check health, chop and dig" (needs an axe). Trees with a crop (fruit trees, calquat, celastrus) are harvested first; you can switch that off per kind (added 2026-10-17).
 - **Compost** setting: None, Compost, Supercompost (current), Ultracompost, Bottomless bucket or Fertile Soil.
 - **Teleports:** each location has a ranked list of teleports (default order from the data, e.g. skills necklace, then fairy ring CIR). You can reorder, add or remove them per location in the Locations tab. The inventory check uses the first one you can use, and warns only if none work (added 2026-10-17).
 - **Goal presets (settled 2026-10-17):** a Presets block at the top of the Run tab. It lists built-in goal presets (pick a product such as Prayer potion, and the run plants its farmable ingredients: ranarr in herb patches, snape grass in allotments) next to your saved presets.

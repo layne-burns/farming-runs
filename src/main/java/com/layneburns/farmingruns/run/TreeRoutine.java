@@ -6,6 +6,8 @@
  */
 package com.layneburns.farmingruns.run;
 
+import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
+import java.util.Set;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +21,17 @@ public enum TreeRoutine
 	/** Check health, chop it down and dig up the roots (needs an axe). */
 	CHOP_AND_DIG("Check health, chop and dig");
 
+	/** Trees with a crop to pick before clearing: fruit, calquat fruit, celastrus bark. */
+	private static final Set<PatchImplementation> HARVESTED = Set.of(
+		PatchImplementation.FRUIT_TREE, PatchImplementation.CALQUAT, PatchImplementation.CELASTRUS);
+
 	private final String title;
+
+	/** True for tree kinds whose crop is picked before the tree is cleared. */
+	public static boolean hasHarvest(PatchImplementation kind)
+	{
+		return HARVESTED.contains(kind);
+	}
 
 	@Override
 	public String toString()
