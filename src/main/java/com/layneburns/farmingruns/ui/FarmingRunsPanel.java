@@ -25,7 +25,10 @@ public class FarmingRunsPanel extends PluginPanel
 	@Inject
 	FarmingRunsPanel(RunTab runTab, BankTab bankTab, LocationsTab locationsTab)
 	{
+		// Not wrapped in RuneLite's scroll pane (each tab scrolls itself), which also means PluginPanel
+		// doesn't set its dark background: set it here.
 		super(false);
+		setBackground(ColorScheme.DARK_GRAY_COLOR);
 		setLayout(new BorderLayout());
 		setBorder(new EmptyBorder(10, 10, 10, 10));
 

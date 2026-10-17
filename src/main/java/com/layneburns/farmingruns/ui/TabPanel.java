@@ -7,6 +7,7 @@
 package com.layneburns.farmingruns.ui;
 
 import java.awt.BorderLayout;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import net.runelite.client.ui.ColorScheme;
 
@@ -19,5 +20,13 @@ abstract class TabPanel extends JPanel
 	{
 		super(new BorderLayout());
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
+	}
+
+	/** A text label in the panel's standard light grey, readable on the dark background. */
+	static JLabel text(String html)
+	{
+		JLabel label = new JLabel("<html>" + html + "</html>");
+		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		return label;
 	}
 }

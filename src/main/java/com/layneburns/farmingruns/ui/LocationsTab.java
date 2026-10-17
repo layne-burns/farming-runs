@@ -8,7 +8,6 @@ package com.layneburns.farmingruns.ui;
 
 import java.awt.BorderLayout;
 import javax.inject.Singleton;
-import javax.swing.JLabel;
 
 /**
  * Locations tab: unlock state per location, overrides, teleport choice and patch ready times (SPEC §2.1).
@@ -18,6 +17,6 @@ public class LocationsTab extends TabPanel
 {
 	LocationsTab()
 	{
-		add(new JLabel("<html>Coming in phase 3.</html>"), BorderLayout.NORTH);
+		add(text("Coming in phase 3."), BorderLayout.NORTH);
 	}
 }
