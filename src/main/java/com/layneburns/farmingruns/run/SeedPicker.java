@@ -123,13 +123,33 @@ public final class SeedPicker
 				open.removeIf(p ->
 				{
 					Seed same = standing.apply(p);
-					if (same == null || (farmingLevel >= 0 && same.getLevel() > farmingLevel) || stock.capacity(same) == 0)
+					if (same == null || (farmingLevel >= 0 && same.getLevel() > farmingLevel))
 					{
 						return false;
 					}
-					stock.take(same, same.getPerPatch());
-					assignments.add(new PlantingPlan.Assignment(p, same, false, false, same));
-					return true;
+					if (stock.capacity(same) > 0)
+					{
+						stock.take(same, same.getPerPatch());
+						assignments.add(new PlantingPlan.Assignment(p, same, false, false, same));
+						return true;
+					}
+					if (!payableOnly)
+					{
+						return false;
+					}
+					// Not enough payment for it: the same crop still goes in, unprotected, rather than another.
+					stock.setPaymentLimited(false);
+					boolean spare = stock.capacity(same) > 0;
+					if (spare)
+					{
+						stock.take(same, same.getPerPatch());
+					}
+					stock.setPaymentLimited(true);
+					if (spare)
+					{
+						assignments.add(new PlantingPlan.Assignment(p, same, false, false, same, true));
+					}
+					return spare;
 				});
 			}
 			List<Seed> candidates = data.seedsFor(entry.getKey()).stream()

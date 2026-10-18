@@ -234,6 +234,26 @@ public class SeedPickerTest
 		assertTrue(planted.get(fruitTrees.get(2)).getLevel() >= papaya.getLevel());
 	}
 
+	@Test
+	public void replantTheSameEvenWithoutThePaymentForIt()
+	{
+		List<Patch> fruitTrees = data.patches().stream().filter(p -> p.getKind() == PatchImplementation.FRUIT_TREE)
+			.sorted((a, b) -> a.getId().compareTo(b.getId())).limit(2).collect(Collectors.toList());
+		Seed papaya = data.seedByItem(5288);
+		Seed palm = data.seedForCrop(PatchImplementation.FRUIT_TREE, "Palm");
+		Map<Patch, Seed> growing = Map.of(fruitTrees.get(0), palm, fruitTrees.get(1), papaya);
+		// Saplings of both, and the papaya's payment, but no papaya fruit to pay for the palm.
+		Map<Integer, Integer> held = new HashMap<>(Map.of(palm.plantItemId(), 10, papaya.plantItemId(), 10));
+		papaya.getPayment().forEach(pay -> held.put(pay.getItemId(), pay.getAmount() * 5));
+		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.FRUIT_TREE)).withKindPlan(
+			PatchImplementation.FRUIT_TREE, KindPlan.AUTO.withReplantSame(true).withPay(true).withPayableOnly(true));
+		PlantingPlan plan = SeedPicker.plan(setup, fruitTrees, held, BUFFERS, 99, data, null, growing::get);
+		PlantingPlan.Assignment palmPatch = plan.getAssignments().stream()
+			.filter(a -> a.getPatch().equals(fruitTrees.get(0))).findFirst().orElseThrow();
+		assertEquals(palm, palmPatch.getSeed());
+		assertTrue(palmPatch.isUnprotected());
+	}
+
 	private static RunSetup herbRun()
 	{
 		return RunSetup.EMPTY.withRunTypes(Set.of(RunType.HERB));
