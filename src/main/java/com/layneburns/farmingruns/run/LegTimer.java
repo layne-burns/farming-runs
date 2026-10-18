@@ -7,6 +7,7 @@
 package com.layneburns.farmingruns.run;
 
 import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.state.TravelLog;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -26,11 +27,12 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.util.Text;
 
 /**
- * Times each stop of a run, to tune the travel costs (phase 9): you leave at your first teleport towards it (a
- * recognised teleport click, or any jump in position too big to be running), or when the stop before is finished if
- * you walk; you arrive at your first click on one of its patches, its gardener or the tool leprechaun; and you're done
- * when the stop is finished. So travel = arrive − leave and work = done − arrive.
- * Each stop is logged as "[farmrun] leg ..." (with Debug logging on), and the last run's legs go in the debug info.
+ * Times each stop of a run: you leave at your first teleport towards it (a recognised teleport click, or any jump in
+ * position too big to be running), or when the stop before is finished if you walk; you arrive at your first click on
+ * one of its patches, its gardener or the tool leprechaun; and you're done when the stop is finished. So travel =
+ * arrive − leave and work = done − arrive. Each finished stop goes to the {@link TravelLog}, so the route planner
+ * learns how long things take you. Each stop is logged as "[farmrun] leg ..." (with Debug logging on), and the last
+ * run's legs go in the debug info.
  * Client thread.
  */
 @Slf4j
@@ -52,6 +54,8 @@ public class LegTimer
 		/** With no teleport: the stop you walked from (null for the first stop). Tunes the link between the two. */
 		@Nullable
 		String walkedFrom;
+		/** How many patches the stop had (bins included), to work out the time each took. */
+		int patches;
 
 		/** "via chronicle", "teleported", "walking from champions_guild" or "walking". */
 		public String how()
@@ -77,6 +81,7 @@ public class LegTimer
 	private final GameData data;
 	private final RunSession session;
 	private final PatchClicks clicks;
+	private final TravelLog travelLog;
 
 	private long run;
 	@Nullable
@@ -98,8 +103,9 @@ public class LegTimer
 	private volatile List<Leg> lastRun = List.of();
 
 	@Inject
-	LegTimer(Client client, GameData data, RunSession session, PatchClicks clicks)
+	LegTimer(Client client, GameData data, RunSession session, PatchClicks clicks, TravelLog travelLog)
 	{
+		this.travelLog = travelLog;
 		this.client = client;
 		this.data = data;
 		this.session = session;
@@ -179,12 +185,14 @@ public class LegTimer
 		{
 			return;
 		}
-		if (stopId != null && active.getProgress().getStops().stream()
-			.anyMatch(s -> s.getLocationId().equals(stopId) && active.getProgress().isDone(s)))
+		RunProgress.Stop finished = stopId == null ? null : active.getProgress().getStops().stream()
+			.filter(s -> s.getLocationId().equals(stopId) && active.getProgress().isDone(s)).findFirst().orElse(null);
+		if (finished != null)
 		{
 			Leg leg = new Leg(stopId, arriveAt < 0 ? -1 : arriveAt - leaveAt, now - (arriveAt < 0 ? leaveAt : arriveAt),
-				teleport, left, left ? null : fromStopId);
+				teleport, left, left ? null : fromStopId, finished.getPatches().size());
 			legs.add(leg);
+			travelLog.record(leg);
 			log.debug("[farmrun] leg {}: travel {} {}, work {}s", leg.getLocationId(),
 				leg.getTravelMillis() < 0 ? "?" : leg.getTravelMillis() / 1000 + "s", leg.how(), leg.getWorkMillis() / 1000);
 			fromStopId = stopId;

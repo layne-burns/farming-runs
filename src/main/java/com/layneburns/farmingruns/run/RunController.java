@@ -16,6 +16,7 @@ import com.layneburns.farmingruns.pathing.ShortestPathClient;
 import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PatchStatus;
 import com.layneburns.farmingruns.state.PlayerInfo;
+import com.layneburns.farmingruns.state.TravelLog;
 import com.layneburns.farmingruns.vendor.timetracking.PatchState;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -68,6 +69,7 @@ public class RunController
 	@Nullable
 	private String earlyCheckedFor;
 	private final GrowingWait growingWait;
+	private final TravelLog travelLog;
 	/** The region you were in last tick, to notice arriving somewhere. */
 	private int lastRegion = -1;
 
@@ -75,8 +77,9 @@ public class RunController
 	RunController(Client client, ClientThread clientThread, GameData data, RunSession session,
 		ShortestPathClient shortestPath, FarmingRunsConfig config,
 		PlayerInfo player, GuidanceTracker guidance, PatchStates states, PatchClicks clicks, GrowingWait growingWait,
-		FairyRingRoute fairyRings, CompostBinPlanner compostBins)
+		FairyRingRoute fairyRings, CompostBinPlanner compostBins, TravelLog travelLog)
 	{
+		this.travelLog = travelLog;
 		this.compostBins = compostBins;
 		this.fairyRings = fairyRings;
 		this.growingWait = growingWait;
@@ -120,8 +123,9 @@ public class RunController
 			Map<String, List<Patch>> patches = new LinkedHashMap<>();
 			byLocation.forEach((id, list) -> patches.put(id, list.stream().map(PlantingPlan.Assignment::getPatch)
 				.collect(Collectors.toList())));
-			List<String> order = RoutePlanner.order(here, byLocation.keySet(), data.getCosts()::cost,
-				growingWait.timing(patches, waitFor));
+			LearnedCosts costs = travelLog.costs();
+			List<String> order = RoutePlanner.order(here, byLocation.keySet(), costs,
+				growingWait.timing(patches, waitFor, costs));
 			List<RunProgress.Stop> stops = new ArrayList<>();
 			order.forEach(id -> stops.add(new RunProgress.Stop(id, List.copyOf(byLocation.get(id)))));
 			log.debug("[farmrun] route from {}: {}", here, order);
@@ -203,7 +207,7 @@ public class RunController
 			.filter(s -> !progress.isDone(s) && !progress.isSkipped(s) && s != clicked)
 			.map(RunProgress.Stop::getLocationId).collect(Collectors.toList());
 		rest.add(0, clicked.getLocationId());
-		List<String> order = RoutePlanner.order(clicked.getLocationId(), rest, data.getCosts()::cost);
+		List<String> order = RoutePlanner.order(clicked.getLocationId(), rest, travelLog.costs());
 		log.debug("[farmrun] you went to {} first; route now {}", clicked.getLocationId(), order);
 		earlyCheckedFor = clicked.getLocationId();
 		session.update(p -> p.reroute(order));

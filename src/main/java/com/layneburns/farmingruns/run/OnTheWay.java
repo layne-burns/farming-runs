@@ -23,10 +23,20 @@ import javax.annotation.Nullable;
  */
 public final class OnTheWay
 {
-	/** About 45 seconds at each patch (picking, planting, composting, paying), from timed runs (2026-10-17/18). */
+	/**
+	 * About 45 seconds at each patch (picking, planting, composting, paying), from timed runs (2026-10-17/18); used
+	 * until you have your own times ({@link LearnedCosts}).
+	 */
 	public static final int WORK_TICKS_PER_PATCH = 75;
 	/** Game ticks are 0.6 seconds. */
 	private static final double SECONDS_PER_TICK = 0.6;
+
+	/** How long you'd spend at a stop with this many patches, in ticks ({@link LearnedCosts#work}). */
+	@FunctionalInterface
+	public interface Work
+	{
+		int ticks(String stop, int patches);
+	}
 
 	private OnTheWay()
 	{
@@ -34,22 +44,23 @@ public final class OnTheWay
 
 	/**
 	 * @param readyInTicks how long until each patch is ready, in ticks (0 or less when it is)
+	 * @param work how long you'd spend at each stop
 	 * @param start where you'll start from, if a known location
 	 * @return the patches to visit: the ready ones, and growing ones ready by the time you'd get there
 	 */
 	public static List<Patch> patches(List<Patch> candidates, ToIntFunction<Patch> readyInTicks, RoutePlanner.Cost cost,
-		@Nullable String start)
+		Work work, @Nullable String start)
 	{
 		List<Patch> kept = new ArrayList<>(candidates);
 		// Quick first cut: a patch not ready until after you'd have visited every stop (without waiting) can't be.
 		Map<String, List<Patch>> all = byStop(kept);
-		RoutePlanner.Timing noWait = timing(all, p -> 0);
+		RoutePlanner.Timing noWait = timing(all, p -> 0, work);
 		long done = RoutePlanner.finish(start, RoutePlanner.order(start, all.keySet(), cost, noWait), cost, noWait);
 		kept.removeIf(p -> readyInTicks.applyAsInt(p) > done);
 		while (true)
 		{
 			Map<String, List<Patch>> byStop = byStop(kept);
-			RoutePlanner.Timing timing = timing(byStop, readyInTicks);
+			RoutePlanner.Timing timing = timing(byStop, readyInTicks, work);
 			List<String> route = RoutePlanner.order(start, byStop.keySet(), cost, timing);
 			List<Long> arrivals = RoutePlanner.arrivals(start, route, cost, timing);
 			// The patch you'd reach longest before it's ready goes; one far off (hours) would otherwise make every
@@ -76,8 +87,9 @@ public final class OnTheWay
 		}
 	}
 
-	/** Each stop is ready when its last patch is; the time there is {@link #WORK_TICKS_PER_PATCH} a patch. */
-	public static RoutePlanner.Timing timing(Map<String, List<Patch>> byStop, ToIntFunction<Patch> readyInTicks)
+	/** Each stop is ready when its last patch is; the time there is what {@code work} says for its patches. */
+	public static RoutePlanner.Timing timing(Map<String, List<Patch>> byStop, ToIntFunction<Patch> readyInTicks,
+		Work work)
 	{
 		Map<String, Integer> ready = new LinkedHashMap<>();
 		byStop.forEach((stop, patches) -> ready.put(stop,
@@ -93,7 +105,7 @@ public final class OnTheWay
 			@Override
 			public int work(String stop)
 			{
-				return WORK_TICKS_PER_PATCH * byStop.getOrDefault(stop, List.of()).size();
+				return work.ticks(stop, byStop.getOrDefault(stop, List.of()).size());
 			}
 		};
 	}

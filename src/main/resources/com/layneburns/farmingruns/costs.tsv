@@ -6,6 +6,7 @@
 # A leg costs the cheaper of its link (if there is one) and the destination's arrive cost.
 # The arrive costs come from timed runs (2026-10-17/18): the median travel time to each location, in ticks.
 # Locations not timed then (or timed once on a detour) keep their hand-tuned guess.
+# Once you've done a leg twice, the plugin plans with your own times instead (TravelLog, LearnedCosts).
 type	from	to	ticks
 arrive	al_kharid	-	8
 arrive	aldarin	-	37

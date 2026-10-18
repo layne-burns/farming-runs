@@ -15,6 +15,7 @@ import com.layneburns.farmingruns.data.TeleportChoice;
 import com.layneburns.farmingruns.run.CompostBinPlanner;
 import com.layneburns.farmingruns.run.CompostBins;
 import com.layneburns.farmingruns.run.CompostChoice;
+import com.layneburns.farmingruns.run.LearnedCosts;
 import com.layneburns.farmingruns.run.OnTheWay;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.RunPlanService;
@@ -26,6 +27,7 @@ import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PatchStatus;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.TeleportLimits;
+import com.layneburns.farmingruns.state.TravelLog;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -80,6 +82,7 @@ public class RunCheckService
 	private final TeleportLimits limits;
 	private final FarmingRunsConfig config;
 	private final CompostBinPlanner compostBins;
+	private final TravelLog travelLog;
 	/** Reuse a {@link OnTheWay} answer for the same patches this many seconds. */
 	private static final int CACHE_SECONDS = 30;
 	private volatile OnTheWayCache onTheWay;
@@ -100,8 +103,10 @@ public class RunCheckService
 
 	@Inject
 	RunCheckService(GameData data, RunPlanService planner, LocationPrefs prefs, PlayerInfo player, ItemStore items,
-		PatchStates states, TeleportLimits limits, FarmingRunsConfig config, CompostBinPlanner compostBins)
+		PatchStates states, TeleportLimits limits, FarmingRunsConfig config, CompostBinPlanner compostBins,
+		TravelLog travelLog)
 	{
+		this.travelLog = travelLog;
 		this.compostBins = compostBins;
 		this.config = config;
 		this.limits = limits;
@@ -143,8 +148,9 @@ public class RunCheckService
 		{
 			return cached.ready;
 		}
+		LearnedCosts costs = travelLog.costs();
 		List<Patch> ready = List.copyOf(OnTheWay.patches(patches, p -> isGrowing(p, nowSeconds)
-			? OnTheWay.ticks(status(p, nowSeconds).getReadyAtSeconds() - nowSeconds) : 0, data.getCosts()::cost, null));
+			? OnTheWay.ticks(status(p, nowSeconds).getReadyAtSeconds() - nowSeconds) : 0, costs, costs::work, null));
 		onTheWay = new OnTheWayCache(patches, nowSeconds, ready);
 		return ready;
 	}

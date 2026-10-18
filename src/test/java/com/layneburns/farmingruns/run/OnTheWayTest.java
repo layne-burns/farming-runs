@@ -29,7 +29,8 @@ public class OnTheWayTest
 		Patch late = herbs.get(2);
 		// Every leg takes 100 ticks; one herb is ready in 150 (fine as the 2nd or 3rd stop), one in 10,000.
 		Map<String, Integer> readyIn = Map.of(soon.getId(), 150, late.getId(), 10_000);
-		List<Patch> kept = OnTheWay.patches(herbs, p -> readyIn.getOrDefault(p.getId(), 0), (from, to) -> 100, null);
+		List<Patch> kept = OnTheWay.patches(herbs, p -> readyIn.getOrDefault(p.getId(), 0), (from, to) -> 100,
+			(stop, patches) -> OnTheWay.WORK_TICKS_PER_PATCH * patches, null);
 		assertEquals(List.of(herbs.get(0), soon), kept);
 	}
 

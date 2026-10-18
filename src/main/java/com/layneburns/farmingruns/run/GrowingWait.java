@@ -6,10 +6,10 @@
  */
 package com.layneburns.farmingruns.run;
 
-import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PatchStatus;
+import com.layneburns.farmingruns.state.TravelLog;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,26 +22,27 @@ import javax.inject.Singleton;
 /**
  * For a run that includes patches still growing ({@link OnTheWay}): when each stop is ready, so the route gets there
  * no sooner, and a better order when you'd reach the next stop before it's ready. Only the patches the run chose
- * to wait for count; ones you ticked to "visit anyway" don't hold a stop back.
+ * to wait for count; ones you ticked to "visit anyway" don't hold a stop back. Travel and work times are your own where
+ * known ({@link TravelLog}).
  */
 @Singleton
 public class GrowingWait
 {
-	private final GameData data;
+	private final TravelLog travelLog;
 	private final PatchStates states;
 
 	@Inject
-	GrowingWait(GameData data, PatchStates states)
+	GrowingWait(TravelLog travelLog, PatchStates states)
 	{
-		this.data = data;
+		this.travelLog = travelLog;
 		this.states = states;
 	}
 
-	/** Each stop's readiness and time there, for these stops' patches. */
-	public RoutePlanner.Timing timing(Map<String, List<Patch>> byStop, Set<String> waitFor)
+	/** Each stop's readiness and time there, for these stops' patches, with these travel and work times. */
+	public RoutePlanner.Timing timing(Map<String, List<Patch>> byStop, Set<String> waitFor, LearnedCosts costs)
 	{
 		long now = System.currentTimeMillis() / 1000;
-		return OnTheWay.timing(byStop, p -> waitFor.contains(p.getId()) ? readyIn(p, now) : 0);
+		return OnTheWay.timing(byStop, p -> waitFor.contains(p.getId()) ? readyIn(p, now) : 0, costs::work);
 	}
 
 	/**
@@ -63,12 +64,13 @@ public class GrowingWait
 		rest.put(current.getLocationId(), patches(current));
 		progress.getStops().stream().filter(s -> !progress.isDone(s) && !progress.isSkipped(s))
 			.forEach(s -> rest.putIfAbsent(s.getLocationId(), patches(s)));
-		RoutePlanner.Timing timing = timing(rest, run.getWaitFor());
-		if (timing.readyAt(current.getLocationId()) <= data.getCosts().cost(from, current.getLocationId()))
+		LearnedCosts costs = travelLog.costs();
+		RoutePlanner.Timing timing = timing(rest, run.getWaitFor(), costs);
+		if (timing.readyAt(current.getLocationId()) <= costs.cost(from, current.getLocationId()))
 		{
 			return null;
 		}
-		List<String> order = RoutePlanner.order(from, rest.keySet(), data.getCosts()::cost, timing);
+		List<String> order = RoutePlanner.order(from, rest.keySet(), costs, timing);
 		return order.isEmpty() || order.get(0).equals(current.getLocationId()) ? null : order;
 	}
 
