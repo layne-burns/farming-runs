@@ -81,6 +81,7 @@ public final class RequirementsBuilder
 		ItemCatalog items = data.getItems();
 
 		addSeeds(list, assignments, plan.getSaplingsToGrow());
+		addGrowing(list, plan.getSaplingsToGrow(), items);
 		addCompost(list, notes, setup.getCompost(), (int) plan.plantedCount(), items, facts);
 		addPayments(list, setup, assignments, data, facts);
 		addTreeClearing(list, setup, assignments, data, items, treeGrown);
@@ -132,6 +133,32 @@ public final class RequirementsBuilder
 			list.add(plantName(seed), Set.of(seed.plantItemId()), seed.getPerPatch() * count, Importance.NEED, false,
 				use, true);
 		});
+	}
+
+	/**
+	 * Saplings to grow from seed before the run ("use seeds too"): the tree seeds, a filled plant pot each, a trowel
+	 * to pot them and a watering can to grow them.
+	 */
+	private static void addGrowing(RequirementList list, Map<Seed, Integer> toGrow, ItemCatalog items)
+	{
+		if (toGrow.isEmpty())
+		{
+			return;
+		}
+		int total = 0;
+		for (Map.Entry<Seed, Integer> grow : toGrow.entrySet())
+		{
+			Seed seed = grow.getKey();
+			int count = grow.getValue();
+			total += count;
+			list.add(seed.getName(), Set.of(seed.getItemId()), count, Importance.NEED, false,
+				"growing " + count + " × " + seed.getSaplingName(), true);
+		}
+		list.add("Filled plant pot", items.group("filled_plant_pot"), total, Importance.NEED, false,
+			"growing saplings", true);
+		list.add("Gardening trowel", items.group("gardening_trowel"), 1, Importance.NEED, true, "potting tree seeds",
+			false);
+		list.add("Watering can", items.group("watering_can"), 1, Importance.NEED, false, "watering seedlings", false);
 	}
 
 	private static void addCompost(RequirementList list, List<String> notes, CompostChoice compost, int planted,

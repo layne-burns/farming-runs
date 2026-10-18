@@ -100,6 +100,20 @@
 		],
 		"fishbowl_helmet": [
 			7534
+		],
+		"filled_plant_pot": [
+			5354
+		],
+		"watering_can": [
+			5333,
+			5334,
+			5335,
+			5336,
+			5337,
+			5338,
+			5339,
+			5340,
+			13353
 		]
 	},
 	"descriptions": {
@@ -128,7 +142,9 @@
 		"rune_pouch": "Holds runes in one inventory slot; they count as carried.",
 		"herb_sack": "Picked herbs go straight in when it's open, so they don't fill your inventory.",
 		"diving_apparatus": "Worn with a fishbowl helmet to breathe underwater (seaweed and coral patches).",
-		"fishbowl_helmet": "Worn with a diving apparatus to breathe underwater (seaweed and coral patches)."
+		"fishbowl_helmet": "Worn with a diving apparatus to breathe underwater (seaweed and coral patches).",
+		"filled_plant_pot": "A pot of soil: plant a tree seed in it (with a trowel) to grow a sapling.",
+		"watering_can": "Waters a potted seedling so it grows into a sapling."
 	},
 	"runes": {
 		"Air rune": 556,

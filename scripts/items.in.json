@@ -26,7 +26,9 @@
 		"rune_pouch": [{"page": "Rune pouch"}, {"page": "Divine rune pouch"}],
 		"herb_sack": [{"page": "Herb sack"}],
 		"diving_apparatus": [{"page": "Diving apparatus"}],
-		"fishbowl_helmet": [{"page": "Fishbowl helmet"}]
+		"fishbowl_helmet": [{"page": "Fishbowl helmet"}],
+		"filled_plant_pot": [{"page": "Filled plant pot"}],
+		"watering_can": [{"page": "Watering can", "excludeVersions": ["Empty"]}, {"page": "Gricoller's can"}]
 	},
 	"descriptions": {
 		"spade": "Harvests crops, digs up tree roots and clears dead plants.",
@@ -54,7 +56,9 @@
 		"rune_pouch": "Holds runes in one inventory slot; they count as carried.",
 		"herb_sack": "Picked herbs go straight in when it's open, so they don't fill your inventory.",
 		"diving_apparatus": "Worn with a fishbowl helmet to breathe underwater (seaweed and coral patches).",
-		"fishbowl_helmet": "Worn with a diving apparatus to breathe underwater (seaweed and coral patches)."
+		"fishbowl_helmet": "Worn with a diving apparatus to breathe underwater (seaweed and coral patches).",
+		"filled_plant_pot": "A pot of soil: plant a tree seed in it (with a trowel) to grow a sapling.",
+		"watering_can": "Waters a potted seedling so it grows into a sapling."
 	},
 	"spells": {"fertile_soil": "Fertile Soil"},
 	"runes": ["Air rune", "Water rune", "Earth rune", "Fire rune", "Law rune", "Astral rune", "Nature rune", "Soul rune"]

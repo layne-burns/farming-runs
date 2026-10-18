@@ -128,6 +128,18 @@ public class RequirementsBuilderTest
 	}
 
 	@Test
+	public void saplingsToGrowAskForTheSeedsAndAPotEach()
+	{
+		Seed yew = data.seedByItem(5315);
+		PlantingPlan plan = new PlantingPlan(List.of(new PlantingPlan.Assignment(data.patch("falador_park.tree"), yew,
+			false)), List.of(), Map.of(yew, 1));
+		RunRequirements needs = build(RunSetup.EMPTY.withRunTypes(Set.of(RunType.TREE)), plan);
+		assertEquals(1, find(needs, 5315).getAmount());
+		assertEquals(1, find(needs, data.getItems().group("filled_plant_pot").iterator().next()).getAmount());
+		assertNotNull(find(needs, data.getItems().group("watering_can").iterator().next()));
+	}
+
+	@Test
 	public void fruitTreesNeedPaymentAndCoinsToClear()
 	{
 		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.FRUIT_TREE))
