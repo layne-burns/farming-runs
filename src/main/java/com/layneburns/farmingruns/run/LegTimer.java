@@ -50,8 +50,28 @@ public class LegTimer
 		String locationId;
 		long travelMillis;
 		long workMillis;
+		/** The teleport that took you there, if it was recognised. */
 		@Nullable
 		String teleport;
+		/** True when a teleport was seen (clicked or a jump), even one not recognised. */
+		boolean teleported;
+		/** With no teleport: the stop you walked from (null for the first stop). Tunes the link between the two. */
+		@Nullable
+		String walkedFrom;
+
+		/** "via chronicle", "teleported", "walking from champions_guild" or "walking". */
+		public String how()
+		{
+			if (teleport != null)
+			{
+				return "via " + teleport;
+			}
+			if (teleported)
+			{
+				return "teleported";
+			}
+			return walkedFrom == null ? "walking" : "walking from " + walkedFrom;
+		}
 	}
 
 	private static final Set<MenuAction> OBJECT_ACTIONS = EnumSet.of(MenuAction.GAME_OBJECT_FIRST_OPTION,
@@ -75,6 +95,9 @@ public class LegTimer
 	private long run;
 	@Nullable
 	private String stopId;
+	/** The stop finished just before the current one, for walking legs; null at the start or after a skip. */
+	@Nullable
+	private String fromStopId;
 	private long leaveAt;
 	/** Travel to the current stop has started (a teleport was clicked or seen). */
 	private boolean left;
@@ -144,6 +167,7 @@ public class LegTimer
 			}
 			legs.clear();
 			stopId = null;
+			fromStopId = null;
 			run = active == null ? 0 : active.getStartedAtMillis();
 		}
 		if (active == null)
@@ -160,11 +184,16 @@ public class LegTimer
 			.anyMatch(s -> s.getLocationId().equals(stopId) && active.getProgress().isDone(s)))
 		{
 			Leg leg = new Leg(stopId, arriveAt < 0 ? -1 : arriveAt - leaveAt, now - (arriveAt < 0 ? leaveAt : arriveAt),
-				teleport);
+				teleport, left, left ? null : fromStopId);
 			legs.add(leg);
-			log.debug("[farmrun] leg {}: travel {}, work {}s{}", leg.getLocationId(),
-				leg.getTravelMillis() < 0 ? "?" : leg.getTravelMillis() / 1000 + "s", leg.getWorkMillis() / 1000,
-				teleport == null ? "" : " via " + teleport);
+			log.debug("[farmrun] leg {}: travel {} {}, work {}s", leg.getLocationId(),
+				leg.getTravelMillis() < 0 ? "?" : leg.getTravelMillis() / 1000 + "s", leg.how(), leg.getWorkMillis() / 1000);
+			fromStopId = stopId;
+		}
+		else
+		{
+			// Skipped or jumped away from: the next leg didn't start from there.
+			fromStopId = null;
 		}
 		// The next leg starts now; the first teleport after this (a click or a jump) moves its start there.
 		stopId = next;

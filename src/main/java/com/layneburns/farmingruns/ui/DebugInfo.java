@@ -118,7 +118,7 @@ public class DebugInfo
 			out.append("  ").append(leg.getLocationId()).append(": travel ")
 				.append(leg.getTravelMillis() < 0 ? "?" : leg.getTravelMillis() / 1000 + "s").append(", work ")
 				.append(leg.getWorkMillis() / 1000).append('s')
-				.append(leg.getTeleport() == null ? "" : " via " + leg.getTeleport()).append('\n');
+				.append(" (").append(leg.how()).append(")\n");
 		}
 		out.append("Last run: ").append(tracker.lastSummary()).append('\n');
 		out.append("Stats: ").append(stats.stats()).append('\n');
