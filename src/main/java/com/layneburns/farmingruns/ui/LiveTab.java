@@ -8,6 +8,7 @@ package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.run.GuidanceTracker;
+import com.layneburns.farmingruns.run.LeprechaunNeeds;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.Protection;
 import com.layneburns.farmingruns.run.RunController;
@@ -27,8 +28,10 @@ import java.awt.Dimension;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -184,7 +187,9 @@ public class LiveTab extends TabPanel
 					{
 						return pays.test(assignment);
 					}
-				}));
+				},
+				LeprechaunNeeds.atStop(now, progress, run.getSetup().getCompost(), composted(now), data.getItems(),
+					items.ledger())));
 			RunProgress.Stop next = nextAfter(progress, now);
 			if (next != null)
 			{
@@ -208,6 +213,13 @@ public class LiveTab extends TabPanel
 		}
 		content.add(toCome);
 		content.add(done);
+	}
+
+	/** The patches at a stop treated with compost so far this run. */
+	private Set<String> composted(RunProgress.Stop stop)
+	{
+		return stop.getPatches().stream().map(a -> a.getPatch().getId()).filter(guidance::isComposted)
+			.collect(Collectors.toSet());
 	}
 
 	/** The stop that comes after the current one: the next not done or skipped, in route order. */

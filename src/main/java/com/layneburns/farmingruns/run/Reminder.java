@@ -29,7 +29,7 @@ public final class Reminder
 	/**
 	 * @param composted      patch ids treated with compost this run
 	 * @param pays           whether a patch is to be paid for
-	 * @param fromLeprechaun what the run still needs from the tool leprechaun, e.g. "9 × Supercompost"
+	 * @param fromLeprechaun what to take from the tool leprechaun here ({@link LeprechaunNeeds}), e.g. "1 × Supercompost"
 	 * @return the reminder, or null when there's nothing left to do here
 	 */
 	@Nullable

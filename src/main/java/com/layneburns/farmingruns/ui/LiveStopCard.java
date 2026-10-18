@@ -43,13 +43,19 @@ final class LiveStopCard
 
 	/** The current stop: heading, teleport, and a checklist per patch. */
 	static JPanel now(String locationName, @Nullable TeleportChoice teleport, RunProgress.Stop stop,
-		RunProgress progress, CompostChoice compost, PatchFacts facts)
+		RunProgress progress, CompostChoice compost, PatchFacts facts, List<String> fromLeprechaun)
 	{
 		JPanel card = card();
 		JLabel heading = new JLabel("▶ Now: " + locationName);
 		heading.setForeground(Palette.ACCENT);
 		card.add(heading);
 		card.add(detail(teleport == null ? "Walk there" : "via " + teleport.displayName()));
+		if (!fromLeprechaun.isEmpty())
+		{
+			JLabel take = TabPanel.text("⚠ Take from the leprechaun: " + String.join(", ", fromLeprechaun));
+			take.setForeground(Palette.PARTIAL);
+			card.add(take);
+		}
 		for (PlantingPlan.Assignment a : stop.getPatches())
 		{
 			JLabel patch = new JLabel(patchName(a));

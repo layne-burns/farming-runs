@@ -9,13 +9,14 @@ package com.layneburns.farmingruns.ui;
 import com.layneburns.farmingruns.FarmingRunsConfig;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.Location;
-import com.layneburns.farmingruns.inventory.RunCheckService;
 import com.layneburns.farmingruns.run.GuidanceTracker;
+import com.layneburns.farmingruns.run.LeprechaunNeeds;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.Protection;
 import com.layneburns.farmingruns.run.Reminder;
 import com.layneburns.farmingruns.run.RunProgress;
 import com.layneburns.farmingruns.run.RunSession;
+import com.layneburns.farmingruns.state.ItemStore;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -46,19 +47,19 @@ public class ReminderOverlay extends Overlay
 	private final GameData data;
 	private final RunSession session;
 	private final GuidanceTracker guidance;
-	private final RunCheckService checks;
+	private final ItemStore items;
 	private final PlayerInfo player;
 	private final FarmingRunsConfig config;
 
 	@Inject
-	ReminderOverlay(Client client, GameData data, RunSession session, GuidanceTracker guidance, RunCheckService checks,
+	ReminderOverlay(Client client, GameData data, RunSession session, GuidanceTracker guidance, ItemStore items,
 		PlayerInfo player, FarmingRunsConfig config)
 	{
 		this.client = client;
 		this.data = data;
 		this.session = session;
 		this.guidance = guidance;
-		this.checks = checks;
+		this.items = items;
 		this.player = player;
 		this.config = config;
 		setPosition(OverlayPosition.DYNAMIC);
@@ -83,7 +84,8 @@ public class ReminderOverlay extends Overlay
 			.filter(guidance::isComposted).collect(Collectors.toSet());
 		String text = Reminder.next(stop, run.getProgress(), run.getSetup().getCompost(), composted,
 			(PlantingPlan.Assignment a) -> Protection.shouldPay(a, run.getSetup(), data, player.getFacts()),
-			checks.fromLeprechaun());
+			LeprechaunNeeds.atStop(stop, run.getProgress(), run.getSetup().getCompost(), composted, data.getItems(),
+				items.ledger()));
 		if (text == null)
 		{
 			return null;
