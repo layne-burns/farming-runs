@@ -6,7 +6,9 @@
  */
 package com.layneburns.farmingruns.ui;
 
+import com.layneburns.farmingruns.FarmingRunsConfig;
 import com.layneburns.farmingruns.inventory.RunCheckService;
+import com.layneburns.farmingruns.state.SetupStore;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
@@ -25,9 +27,11 @@ import net.runelite.api.widgets.WidgetTextAlignment;
 import net.runelite.api.widgets.WidgetType;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.util.Text;
 
 /**
- * A raised "Farm Run Items" button down the right of the chatbox while you search the bank or seed vault, so the run's
+ * A raised "Farm Run Items" button ("Sapling Items" while sapling making, or named after the preset you ticked)
+ * down the right of the chatbox while you search the bank or seed vault, so the run's
  * items are one click away without the side panel: in the bank it opens the run's tab, in the seed vault it switches
  * {@link SeedVaultFilter} on (and "Show All Seeds" off again). It shows only when the run check has something to take from the bank, and is hidden again when
  * the search closes (the chatbox's prompt area is shared with other prompts). Client thread.
@@ -37,6 +41,10 @@ public class BankSearchButton
 {
 	/** Two lines, centred on the button. */
 	private static final String LABEL = "Farm Run<br>Items";
+	/** With sapling making on (the setting). */
+	private static final String SAPLING_LABEL = "Sapling<br>Items";
+	/** A preset name longer than this is cut short, to fit the button. */
+	private static final int NAME_CHARS = 12;
 	/** In the seed vault with the filter on: back to every seed. */
 	private static final String SHOW_ALL = "Show All<br>Seeds";
 	/** The button's width: clear of the prompt's centred text even in the fixed-size chatbox. */
@@ -58,6 +66,8 @@ public class BankSearchButton
 	private final BankRunTab bankRunTab;
 	private final RunCheckService checks;
 	private final SeedVaultFilter vault;
+	private final FarmingRunsConfig config;
+	private final SetupStore setups;
 	/** Our widgets in the chatbox prompt layer, or null when not added (or the game rebuilt the layer). */
 	private final List<Widget> parts = new ArrayList<>();
 	private Widget face;
@@ -65,13 +75,34 @@ public class BankSearchButton
 
 	@Inject
 	BankSearchButton(Client client, ClientThread clientThread, BankRunTab bankRunTab, RunCheckService checks,
-		SeedVaultFilter vault)
+		SeedVaultFilter vault, FarmingRunsConfig config, SetupStore setups)
 	{
+		this.setups = setups;
+		this.config = config;
 		this.client = client;
 		this.clientThread = clientThread;
 		this.bankRunTab = bankRunTab;
 		this.checks = checks;
 		this.vault = vault;
+	}
+
+	/**
+	 * What the button says: "Sapling Items" while sapling making, the ticked preset's name ("Herbs Items") when
+	 * there's one, else "Farm Run Items".
+	 */
+	private String label()
+	{
+		if (config.saplingMode())
+		{
+			return SAPLING_LABEL;
+		}
+		String name = setups.chosenName();
+		if (name == null || name.isBlank())
+		{
+			return LABEL;
+		}
+		String shortName = name.length() > NAME_CHARS ? name.substring(0, NAME_CHARS - 2).trim() + "..." : name;
+		return Text.escapeJagex(shortName) + "<br>Items";
 	}
 
 	@Subscribe
@@ -98,7 +129,7 @@ public class BankSearchButton
 		{
 			add();
 			// In the seed vault the button switches the filter; once it's on, it switches it off again.
-			text.setText(vault.isVaultOpen() && vault.isOn() ? SHOW_ALL : LABEL);
+			text.setText(vault.isVaultOpen() && vault.isOn() ? SHOW_ALL : label());
 		}
 		setHidden(!searching);
 	}
@@ -120,7 +151,7 @@ public class BankSearchButton
 
 		text = layer.createChild(-1, WidgetType.TEXT);
 		place(text, 2, 2, 2, 2);
-		text.setText(LABEL);
+		text.setText(label());
 		text.setFontId(FontID.BOLD_12);
 		text.setTextColor(TEXT_COLOUR);
 		text.setTextShadowed(true);

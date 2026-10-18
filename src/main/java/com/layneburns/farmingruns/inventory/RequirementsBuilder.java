@@ -150,6 +150,14 @@ public final class RequirementsBuilder
 	 * Saplings to grow from seed before the run ("use seeds too"): the tree seeds, a filled plant pot each, a trowel
 	 * to pot them and a watering can to grow them.
 	 */
+	/** Just what grows these saplings: the seeds, filled plant pots, a trowel and a watering can (sapling making). */
+	public static List<Requirement> saplingKit(Map<Seed, Integer> toGrow, ItemCatalog items)
+	{
+		RequirementList list = new RequirementList();
+		addGrowing(list, toGrow, items);
+		return list.toList();
+	}
+
 	private static void addGrowing(RequirementList list, Map<Seed, Integer> toGrow, ItemCatalog items)
 	{
 		if (toGrow.isEmpty())

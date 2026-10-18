@@ -23,6 +23,7 @@ public interface FarmingRunsConfig extends Config
 {
 	String GROUP = "farmingruns";
 	String READY_ON_THE_WAY = "readyOnTheWay";
+	String SAPLING_MODE = "saplingMode";
 
 	@ConfigSection(
 		name = "Seed buffers",
@@ -79,6 +80,20 @@ public interface FarmingRunsConfig extends Config
 		position = 9
 	)
 	default boolean readyOnTheWay()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = SAPLING_MODE,
+		name = "Sapling making",
+		description = "The bank button, bank tab, highlights and seed vault filter show what grows the saplings your"
+			+ " next run lacks (tree seeds, filled plant pots, trowel, watering can) instead of the run's items. Set in"
+			+ " the Saplings tab.",
+		position = 9,
+		hidden = true
+	)
+	default boolean saplingMode()
 	{
 		return false;
 	}

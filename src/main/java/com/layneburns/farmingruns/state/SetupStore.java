@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +53,9 @@ public class SetupStore
 	 */
 	private volatile String loadedFor;
 	private volatile boolean everLoaded;
+	/** The preset or goal the setup was last taken from, when just one was ticked; null otherwise. Not saved. */
+	@Nullable
+	private volatile String chosenName;
 
 	@Inject
 	SetupStore(ConfigManager configManager, Gson gson)
@@ -63,6 +67,18 @@ public class SetupStore
 	public void addListener(Runnable listener)
 	{
 		listeners.add(listener);
+	}
+
+	/** The name of the one preset or goal ticked in the Run tab, e.g. "Herbs"; null for none or several. */
+	@Nullable
+	public String chosenName()
+	{
+		return chosenName;
+	}
+
+	public void setChosenName(@Nullable String name)
+	{
+		chosenName = name;
 	}
 
 	public RunSetup current()

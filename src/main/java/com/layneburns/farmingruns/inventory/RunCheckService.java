@@ -10,6 +10,7 @@ import com.layneburns.farmingruns.FarmingRunsConfig;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.Location;
 import com.layneburns.farmingruns.data.Patch;
+import com.layneburns.farmingruns.data.Seed;
 import com.layneburns.farmingruns.data.TeleportChoice;
 import com.layneburns.farmingruns.run.OnTheWay;
 import com.layneburns.farmingruns.run.PlantingPlan;
@@ -22,6 +23,7 @@ import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PatchStatus;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.TeleportLimits;
+import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -88,6 +90,7 @@ public class RunCheckService
 	private volatile Set<Integer> neededItems = Set.of();
 	/** What the last check said to take from the tool leprechaun, e.g. "9 × Supercompost". */
 	private volatile List<String> fromLeprechaun = List.of();
+	private volatile List<String> saplingKit = List.of();
 	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
 	@Inject
@@ -180,13 +183,50 @@ public class RunCheckService
 			data, player.getFacts(), ledger, grown, states.isAutoweedOn()), plan);
 		List<InventoryChecker.Line> lines = InventoryChecker.check(requirements.getRequirements(), ledger,
 			data.getItems().group("seed_box"));
+		if (config.saplingMode())
+		{
+			// The bank shows the sapling kit instead of the run's items.
+			List<Requirement> kit = saplingKit(setup);
+			List<InventoryChecker.Line> kitLines = InventoryChecker.check(kit, ledger, data.getItems().group("seed_box"));
+			setBankItems(kitLines);
+			setNeededItems(kit);
+			fromLeprechaun = List.of();
+			saplingKit = kitLines.stream().map(l -> l.getRequirement().getAmount() + " × " + l.getRequirement().getLabel()
+				+ (l.fromBank() > 0 ? " (" + l.fromBank() + " from the bank)" : "")).collect(Collectors.toUnmodifiableList());
+			return new Check(plan, requirements, lines);
+		}
+		saplingKit = List.of();
 		setBankItems(lines);
-		setNeededItems(requirements);
+		setNeededItems(requirements.getRequirements());
 		fromLeprechaun = lines.stream()
 			.filter(l -> l.getFromLeprechaun() > 0 && l.getRequirement().getImportance() == Requirement.Importance.NEED)
 			.map(l -> l.getFromLeprechaun() + " × " + l.getRequirement().getLabel())
 			.collect(Collectors.toUnmodifiableList());
 		return new Check(plan, requirements, lines);
+	}
+
+	/**
+	 * What grows the saplings the next run lacks: the plan with every sapling kind in the setup set to grow its
+	 * saplings from seed, over all its patches (grown or not), and only the growing kit kept.
+	 */
+	private List<Requirement> saplingKit(RunSetup setup)
+	{
+		RunSetup growing = setup;
+		for (PatchImplementation kind : PatchImplementation.values())
+		{
+			if (setup.includes(kind) && data.seedsFor(kind).stream().anyMatch(Seed::isPlantedAsSapling))
+			{
+				growing = growing.withKindPlan(kind, setup.kindPlan(kind).withGrowSaplings(true));
+			}
+		}
+		PlantingPlan plan = planner.plan(growing, planner.patches(growing));
+		return RequirementsBuilder.saplingKit(plan.getSaplingsToGrow(), data.getItems());
+	}
+
+	/** With sapling making on, the kit from the last check, e.g. "6 × Magic seed (6 from the bank)"; else empty. */
+	public List<String> saplingKit()
+	{
+		return saplingKit;
 	}
 
 	/** A location's teleports without the ones used up for now ({@link TeleportLimits}). */
@@ -235,10 +275,10 @@ public class RunCheckService
 		return neededItems;
 	}
 
-	private void setNeededItems(RunRequirements requirements)
+	private void setNeededItems(List<Requirement> requirements)
 	{
 		Set<Integer> needed = new HashSet<>();
-		requirements.getRequirements().forEach(r -> needed.addAll(r.getItemIds()));
+		requirements.forEach(r -> needed.addAll(r.getItemIds()));
 		if (needed.stream().anyMatch(id -> data.seedByItem(id) != null))
 		{
 			needed.addAll(data.getItems().group("seed_box"));

@@ -337,6 +337,10 @@ public class RunTab extends TabPanel
 			refresh();
 		});
 		section.addRow(onTheWay);
+		if (config.saplingMode())
+		{
+			section.addRow(text("Sapling making is on (Saplings tab): the bank shows sapling items, not the run's."));
+		}
 		long kept = plan.keptCount();
 		section.addRow(text(plan.plantedCount() + " of " + plan.getAssignments().size() + " patches get a seed"
 			+ (kept > 0 ? "; " + kept + " tree" + (kept == 1 ? "" : "s") + " picked and left standing." : ".")));
@@ -370,6 +374,7 @@ public class RunTab extends TabPanel
 		{
 			ticked.remove(name);
 		}
+		setups.setChosenName(ticked.size() == 1 ? nameFor(ticked.iterator().next()) : null);
 		List<RunSetup> chosen = ticked.stream().map(this::setupFor).filter(p -> p != null).collect(Collectors.toList());
 		if (chosen.isEmpty())
 		{
@@ -377,6 +382,19 @@ public class RunTab extends TabPanel
 			return;
 		}
 		setups.setCurrent(PresetCombiner.applyOver(setups.current(), PresetCombiner.combine(chosen)));
+	}
+
+	/** The name shown for a ticked key: the goal's or the preset's. */
+	private String nameFor(String key)
+	{
+		for (GoalPreset goal : data.goals())
+		{
+			if (PresetsPanel.goalKey(goal.getId()).equals(key))
+			{
+				return goal.getName();
+			}
+		}
+		return key.startsWith(PresetsPanel.presetKey("")) ? key.substring(PresetsPanel.presetKey("").length()) : key;
 	}
 
 	/** The setup for a ticked key: a goal turned into a setup, or a saved preset; null if it's gone. */
@@ -415,6 +433,7 @@ public class RunTab extends TabPanel
 			JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
 		{
 			ticked.remove(PresetsPanel.presetKey(name));
+			setups.setChosenName(ticked.size() == 1 ? nameFor(ticked.iterator().next()) : null);
 			setups.deletePreset(name);
 		}
 	}
