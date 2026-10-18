@@ -11,10 +11,12 @@ import com.layneburns.farmingruns.inventory.RunCheckService;
 import com.layneburns.farmingruns.state.SetupStore;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.FontID;
+import net.runelite.api.FontTypeFace;
 import net.runelite.api.events.VarClientIntChanged;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.VarClientID;
@@ -39,14 +41,16 @@ import net.runelite.client.util.Text;
 @Singleton
 public class BankSearchButton
 {
-	/** Two lines, centred on the button. */
-	private static final String LABEL = "Farm Run<br>Items";
+	/** Each part starts a new line, and wraps onto more if it's too wide; centred on the button. */
+	private static final List<String> LABEL = List.of("Farm Run", "Items");
 	/** With sapling making on (the setting). */
-	private static final String SAPLING_LABEL = "Sapling<br>Items";
-	/** A preset name longer than this is cut short, to fit the button. */
-	private static final int NAME_CHARS = 12;
+	private static final List<String> SAPLING_LABEL = List.of("Sapling", "Items");
+	/** Largest first: the label takes the first that fits the button. */
+	private static final List<Integer> FONTS = List.of(FontID.BOLD_12, FontID.PLAIN_12, FontID.PLAIN_11);
+	/** Pixels between lines, beyond the font's baseline. */
+	private static final int LINE_GAP = 3;
 	/** In the seed vault with the filter on: back to every seed. */
-	private static final String SHOW_ALL = "Show All<br>Seeds";
+	private static final List<String> SHOW_ALL = List.of("Show All", "Seeds");
 	/** The button's width: clear of the prompt's centred text even in the fixed-size chatbox. */
 	private static final int WIDTH = 84;
 	/** Gap between the button and the chatbox frame, on every side. */
@@ -90,19 +94,42 @@ public class BankSearchButton
 	 * What the button says: "Sapling Items" while sapling making, the ticked preset's name ("Herbs Items") when
 	 * there's one, else "Farm Run Items".
 	 */
-	private String label()
+	private List<String> label()
 	{
 		if (config.saplingMode())
 		{
 			return SAPLING_LABEL;
 		}
 		String name = setups.chosenName();
-		if (name == null || name.isBlank())
+		return name == null || name.isBlank() ? LABEL : List.of(name.trim(), "Items");
+	}
+
+	/**
+	 * Shows the label in the largest font in which it fits the button, wrapping words onto more lines as needed. In
+	 * the smallest font a word still too wide is split.
+	 */
+	private void setLabel(List<String> parts)
+	{
+		int width = text.getWidth() > 0 ? text.getWidth() : WIDTH - 4;
+		int height = text.getHeight();
+		List<String> lines = null;
+		for (int font : FONTS)
 		{
-			return LABEL;
+			text.setFontId(font);
+			FontTypeFace face = text.getFont();
+			if (face == null)
+			{
+				continue;
+			}
+			boolean last = font == FONTS.get(FONTS.size() - 1);
+			lines = ButtonText.wrap(parts, face::getTextWidth, width, last);
+			if (lines != null && (height <= 0 || lines.size() * (face.getBaseline() + LINE_GAP) <= height))
+			{
+				break;
+			}
 		}
-		String shortName = name.length() > NAME_CHARS ? name.substring(0, NAME_CHARS - 2).trim() + "..." : name;
-		return Text.escapeJagex(shortName) + "<br>Items";
+		text.setText(lines == null ? String.join("<br>", parts) : lines.stream().map(Text::escapeJagex)
+			.collect(Collectors.joining("<br>")));
 	}
 
 	@Subscribe
@@ -129,7 +156,7 @@ public class BankSearchButton
 		{
 			add();
 			// In the seed vault the button switches the filter; once it's on, it switches it off again.
-			text.setText(vault.isVaultOpen() && vault.isOn() ? SHOW_ALL : label());
+			setLabel(vault.isVaultOpen() && vault.isOn() ? SHOW_ALL : label());
 		}
 		setHidden(!searching);
 	}
@@ -151,7 +178,6 @@ public class BankSearchButton
 
 		text = layer.createChild(-1, WidgetType.TEXT);
 		place(text, 2, 2, 2, 2);
-		text.setText(label());
 		text.setFontId(FontID.BOLD_12);
 		text.setTextColor(TEXT_COLOUR);
 		text.setTextShadowed(true);

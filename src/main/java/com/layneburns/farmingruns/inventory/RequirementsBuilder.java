@@ -44,6 +44,8 @@ import java.util.stream.Collectors;
 public final class RequirementsBuilder
 {
 	private static final int REMOVAL_COINS = 200;
+	/** For sapling making: a full can waters 8 seedlings, and an inventory holds about 20 pots. */
+	public static final int SAPLING_WATERING_CANS = 3;
 	/** Patches under the sea: you need diving gear to reach them. */
 	private static final Set<PatchImplementation> UNDERWATER = Set.of(PatchImplementation.SEAWEED,
 		PatchImplementation.CORAL);
@@ -150,11 +152,26 @@ public final class RequirementsBuilder
 	 * Saplings to grow from seed before the run ("use seeds too"): the tree seeds, a filled plant pot each, a trowel
 	 * to pot them and a watering can to grow them.
 	 */
-	/** Just what grows these saplings: the seeds, filled plant pots, a trowel and a watering can (sapling making). */
-	public static List<Requirement> saplingKit(Map<Seed, Integer> toGrow, ItemCatalog items)
+	/**
+	 * Sapling making: these seeds, filled plant pots (as many as there are seeds, up to {@code maxPots}), a trowel
+	 * and {@link #SAPLING_WATERING_CANS} watering cans.
+	 */
+	public static List<Requirement> saplingKit(Map<Seed, Integer> seeds, int maxPots, ItemCatalog items)
 	{
 		RequirementList list = new RequirementList();
-		addGrowing(list, toGrow, items);
+		if (seeds.isEmpty())
+		{
+			return list.toList();
+		}
+		seeds.forEach((seed, count) -> list.add(seed.getName(), Set.of(seed.getItemId()), count, Importance.NEED, false,
+			"potting into " + seed.getSaplingName() + "s", true));
+		int total = seeds.values().stream().mapToInt(Integer::intValue).sum();
+		list.add("Filled plant pot", items.group("filled_plant_pot"), Math.min(total, maxPots), Importance.NEED, false,
+			"potting tree seeds", true);
+		list.add("Gardening trowel", items.group("gardening_trowel"), 1, Importance.NEED, true, "potting tree seeds",
+			false);
+		list.add("Watering can", items.group("watering_can"), SAPLING_WATERING_CANS, Importance.NEED, false,
+			"watering seedlings", false);
 		return list.toList();
 	}
 

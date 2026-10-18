@@ -42,13 +42,13 @@ public class FarmingRunsPanel extends PluginPanel
 		MaterialTabGroup tabs = new MaterialTabGroup(display);
 		// Two rows of three share the width evenly, so no tab name is cut off.
 		tabs.setLayout(new GridLayout(0, 3, 4, 4));
-		MaterialTab run = new MaterialTab("Run", tabs, runTab);
-		MaterialTab live = new MaterialTab("Live", tabs, liveTab);
+		MaterialTab run = new CompactTab("Run", tabs, runTab);
+		MaterialTab live = new CompactTab("Live", tabs, liveTab);
 		tabs.addTab(run);
 		tabs.addTab(live);
-		tabs.addTab(new MaterialTab("Bank", tabs, bankTab));
-		tabs.addTab(new MaterialTab("Locations", tabs, locationsTab));
-		tabs.addTab(new MaterialTab("Saplings", tabs, saplingTab));
+		tabs.addTab(new CompactTab("Bank", tabs, bankTab));
+		tabs.addTab(new CompactTab("Locations", tabs, locationsTab));
+		tabs.addTab(new CompactTab("Saplings", tabs, saplingTab));
 		tabs.select(run);
 
 		// Starting a run brings up the Live tab (once per run, so you can still look elsewhere during it).

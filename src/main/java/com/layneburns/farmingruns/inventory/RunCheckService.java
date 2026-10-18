@@ -23,10 +23,11 @@ import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PatchStatus;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.TeleportLimits;
-import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -91,6 +92,7 @@ public class RunCheckService
 	/** What the last check said to take from the tool leprechaun, e.g. "9 × Supercompost". */
 	private volatile List<String> fromLeprechaun = List.of();
 	private volatile List<String> saplingKit = List.of();
+	private static final int INVENTORY_SLOTS = 28;
 	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
 	@Inject
@@ -186,7 +188,7 @@ public class RunCheckService
 		if (config.saplingMode())
 		{
 			// The bank shows the sapling kit instead of the run's items.
-			List<Requirement> kit = saplingKit(setup);
+			List<Requirement> kit = buildSaplingKit();
 			List<InventoryChecker.Line> kitLines = InventoryChecker.check(kit, ledger, data.getItems().group("seed_box"));
 			setBankItems(kitLines);
 			setNeededItems(kit);
@@ -206,21 +208,42 @@ public class RunCheckService
 	}
 
 	/**
-	 * What grows the saplings the next run lacks: the plan with every sapling kind in the setup set to grow its
-	 * saplings from seed, over all its patches (grown or not), and only the growing kit kept.
+	 * Sapling making: every seed you have that's planted as a sapling (bank, vault, inventory, seed box), with filled
+	 * plant pots for as many as one inventory holds, a trowel and a watering can. Runs grow what they need on their
+	 * own; this is for potting the lot now.
 	 */
-	private List<Requirement> saplingKit(RunSetup setup)
+	private List<Requirement> buildSaplingKit()
 	{
-		RunSetup growing = setup;
-		for (PatchImplementation kind : PatchImplementation.values())
+		Set<String> skipped = saplingSkipped();
+		Map<Seed, Integer> seeds = new LinkedHashMap<>(saplingSeedsHeld());
+		seeds.keySet().removeIf(seed -> skipped.contains(String.valueOf(seed.getItemId())));
+		// The trowel, the watering cans and a slot per kind of seed; the rest of the inventory is pots.
+		int pots = Math.max(0, INVENTORY_SLOTS - 1 - RequirementsBuilder.SAPLING_WATERING_CANS - seeds.size());
+		return RequirementsBuilder.saplingKit(seeds, pots, data.getItems());
+	}
+
+	/** Every seed you have that's planted as a sapling, with how many (bank, vault, inventory, seed box). */
+	public Map<Seed, Integer> saplingSeedsHeld()
+	{
+		Map<Integer, Integer> held = planner.held();
+		Map<Seed, Integer> seeds = new LinkedHashMap<>();
+		for (Seed seed : data.seeds())
 		{
-			if (setup.includes(kind) && data.seedsFor(kind).stream().anyMatch(Seed::isPlantedAsSapling))
+			int count = held.getOrDefault(seed.getItemId(), 0);
+			if (seed.isPlantedAsSapling() && count > 0)
 			{
-				growing = growing.withKindPlan(kind, setup.kindPlan(kind).withGrowSaplings(true));
+				seeds.put(seed, count);
 			}
 		}
-		PlantingPlan plan = planner.plan(growing, planner.patches(growing));
-		return RequirementsBuilder.saplingKit(plan.getSaplingsToGrow(), data.getItems());
+		return seeds;
+	}
+
+	/** Seed item ids (as text) left out of sapling making, from the Saplings tab. */
+	public Set<String> saplingSkipped()
+	{
+		String saved = config.saplingSkipped();
+		return saved == null || saved.isBlank() ? Set.of()
+			: Arrays.stream(saved.split(",")).map(String::trim).collect(Collectors.toUnmodifiableSet());
 	}
 
 	/** With sapling making on, the kit from the last check, e.g. "6 × Magic seed (6 from the bank)"; else empty. */
