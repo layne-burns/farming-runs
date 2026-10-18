@@ -167,7 +167,7 @@ public class RunTab extends TabPanel
 		data.goals().forEach(g -> g.getCrops().forEach(c -> goalsBySeed.computeIfAbsent(c.getSeed(),
 			k -> new ArrayList<>()).add(g.getName())));
 		Function<Seed, String> seedInfo = seed -> BankTooltips.html(seed.getName(),
-			BankTooltips.seedChoice(seed, goalsBySeed.getOrDefault(seed, List.of())));
+			BankTooltips.seedChoice(seed, goalsBySeed.getOrDefault(seed, List.of()), data.paysFor(seed)));
 		for (PatchImplementation kind : kindsIn(setup))
 		{
 			List<PlantingPlan.Assignment> planned = plan.getAssignments().stream()

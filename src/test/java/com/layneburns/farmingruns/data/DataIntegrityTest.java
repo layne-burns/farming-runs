@@ -219,4 +219,14 @@ public class DataIntegrityTest
 			}
 		}
 	}
+
+	@Test
+	public void cropsKnowWhatTheyPayFor()
+	{
+		assertEquals(List.of("Palm tree (15 × Papaya fruit)"), data.paysFor(data.seedByItem(5288)));
+		// Baskets count: strawberries pay for dwellberries and orange trees.
+		List<String> strawberry = data.paysFor(data.seedForCrop(PatchImplementation.ALLOTMENT, "Strawberry"));
+		assertTrue(strawberry.stream().anyMatch(s -> s.startsWith("Dwellberry")));
+		assertTrue(strawberry.stream().anyMatch(s -> s.startsWith("Orange tree")));
+	}
 }

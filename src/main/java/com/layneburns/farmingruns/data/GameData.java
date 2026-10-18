@@ -7,10 +7,14 @@
 package com.layneburns.farmingruns.data;
 
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
+import com.layneburns.farmingruns.vendor.timetracking.Produce;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -106,6 +110,37 @@ public final class GameData
 		String prefix = crop.toLowerCase() + " ";
 		return seeds.stream().filter(s -> s.getKind() == kind && s.getName().toLowerCase().startsWith(prefix))
 			.findFirst().orElse(null);
+	}
+
+	/**
+	 * What a crop pays for: the seeds whose protection payment is its produce, or a basket or sack of it, e.g. papaya
+	 * gives ["Palm tree (15 × Papaya fruit)"]. Empty when it pays for nothing.
+	 */
+	public List<String> paysFor(Seed seed)
+	{
+		Produce produce = Arrays.stream(Produce.values())
+			.filter(p -> p.getPatchImplementation() == seed.getKind()
+				&& seed.getName().toLowerCase(Locale.ROOT).startsWith(p.getName().toLowerCase(Locale.ROOT) + " "))
+			.findFirst().orElse(null);
+		if (produce == null)
+		{
+			return List.of();
+		}
+		// "Strawberry" matches "Strawberries(5)", "Apple" matches "Apples(5)".
+		String stem = produce.getName().toLowerCase(Locale.ROOT).replaceFirst("y$", "");
+		List<String> paid = new ArrayList<>();
+		for (Seed other : seeds)
+		{
+			for (ItemAmount pay : other.getPayment())
+			{
+				if (pay.getItemId() == produce.getItemID() || pay.getName().toLowerCase(Locale.ROOT).startsWith(stem))
+				{
+					paid.add(other.getName().replaceFirst(" seed$", "") + " (" + pay.getAmount() + " × " + pay.getName()
+						+ ")");
+				}
+			}
+		}
+		return paid;
 	}
 
 	/** Seeds for a kind of patch, lowest level first. */

@@ -33,9 +33,9 @@ final class BankTooltips
 
 	/**
 	 * A seed in the Run tab's seed choices: level, growth, XP (and roughly per patch), seeds per patch, protection,
-	 * and the goals that use its crop.
+	 * the goals that use its crop, and the crops its produce pays the gardener for.
 	 */
-	static String seedChoice(Seed seed, List<String> goals)
+	static String seedChoice(Seed seed, List<String> goals, List<String> paysFor)
 	{
 		List<String> lines = new ArrayList<>(about(seed));
 		if (seed.getXp().getTotal() > 0)
@@ -44,6 +44,10 @@ final class BankTooltips
 		}
 		lines.add(protection(seed));
 		lines.add(goals.isEmpty() ? "Not part of any goal" : "Used for: " + String.join(", ", goals));
+		if (!paysFor.isEmpty())
+		{
+			lines.add("Pays for: " + String.join(", ", paysFor));
+		}
 		return String.join("\n", lines);
 	}
 

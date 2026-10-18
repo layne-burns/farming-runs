@@ -112,7 +112,7 @@ class KindCard extends JPanel
 		{
 			if (seeds.size() > 1)
 			{
-				add(new KeepStandingPanel(plan, seeds, onChange, collapsed, "keep:" + title));
+				add(new KeepStandingPanel(plan, seeds, onChange, collapsed, "keep:" + title, seedInfo));
 			}
 			if (plan.getReplaceStanding().isEmpty())
 			{

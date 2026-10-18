@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -31,8 +32,9 @@ import net.runelite.client.ui.FontManager;
  */
 class KeepStandingPanel extends JPanel
 {
+	/** @param seedInfo a seed's tooltip (XP, protection, goals, what it pays for), shown on its tick */
 	KeepStandingPanel(KindPlan plan, List<Seed> seeds, Consumer<KindPlan> onChange, Map<String, Boolean> collapsed,
-		String key)
+		String key, Function<Seed, String> seedInfo)
 	{
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setOpaque(false);
@@ -52,7 +54,7 @@ class KeepStandingPanel extends JPanel
 		grid.setAlignmentX(LEFT_ALIGNMENT);
 		for (Seed seed : seeds)
 		{
-			grid.add(tick(plan, seed, onChange));
+			grid.add(tick(plan, seed, onChange, seedInfo));
 		}
 		grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, grid.getPreferredSize().height));
 		add(grid);
@@ -80,14 +82,16 @@ class KeepStandingPanel extends JPanel
 	}
 
 	/** Ticked: leave this type standing. Unticked: replace it. */
-	private static JCheckBox tick(KindPlan plan, Seed seed, Consumer<KindPlan> onChange)
+	private static JCheckBox tick(KindPlan plan, Seed seed, Consumer<KindPlan> onChange,
+		Function<Seed, String> seedInfo)
 	{
 		JCheckBox box = new JCheckBox(treeName(seed), !plan.getReplaceStanding().contains(seed.getItemId()));
 		box.setForeground(Palette.TEXT);
 		box.setOpaque(false);
 		box.setFocusable(false);
-		box.setToolTipText("Ticked: " + treeName(seed).toLowerCase() + " is picked and left standing. Unticked:"
-			+ " cleared and replanted.");
+		// What ticking does, above the seed's own facts (including what its crop pays for).
+		box.setToolTipText(seedInfo.apply(seed).replaceFirst("<html>", "<html><i>Ticked: picked and left standing."
+			+ " Unticked: cleared and replanted.</i><br>"));
 		box.addActionListener(e ->
 		{
 			Set<Integer> replace = new HashSet<>(plan.getReplaceStanding());
