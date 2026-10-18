@@ -90,6 +90,10 @@
 			24416,
 			27281,
 			27509
+		],
+		"herb_sack": [
+			13226,
+			24478
 		]
 	},
 	"descriptions": {
@@ -115,7 +119,8 @@
 		"coins": "Pays gardeners to clear grown trees (200 coins each).",
 		"house_tablet": "Teleports you into your house, for its portals (used up).",
 		"construction_cape": "Unlimited teleports into your house, for its portals.",
-		"rune_pouch": "Holds runes in one inventory slot; they count as carried."
+		"rune_pouch": "Holds runes in one inventory slot; they count as carried.",
+		"herb_sack": "Picked herbs go straight in when it's open, so they don't fill your inventory."
 	},
 	"runes": {
 		"Air rune": 556,

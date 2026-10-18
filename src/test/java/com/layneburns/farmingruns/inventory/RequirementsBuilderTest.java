@@ -101,6 +101,19 @@ public class RequirementsBuilderTest
 	}
 
 	@Test
+	public void aHerbSackIsRecommendedOnHerbRunsWhenYouHaveOne()
+	{
+		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.HERB));
+		PlantingPlan herbs = plan(data.seedByItem(RANARR), "catherby.herb");
+		int sack = data.getItems().group("herb_sack").iterator().next();
+		assertNull(find(build(setup, herbs), sack));
+		ItemLedger owned = TeleportPickerTest.ledger(ItemSource.BANK, Map.of(sack, 1));
+		Requirement recommended = find(RequirementsBuilder.build(setup, herbs, defaults, data, NORMAL_BOOK, owned,
+			p -> true, false), sack);
+		assertEquals(Requirement.Importance.RECOMMENDED, recommended.getImportance());
+	}
+
+	@Test
 	public void fruitTreesNeedPaymentAndCoinsToClear()
 	{
 		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.FRUIT_TREE))

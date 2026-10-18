@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 /**
  * Works out what a run needs (SPEC §2.4): the seeds and saplings, compost, the gardeners' payments, coins or an axe
  * for clearing trees, tools, and the items or runes for each stop's teleport. Recommended extras (magic secateurs,
- * the farmer's outfit) are only listed when you own them; a rake only without autoweed. Pure: unit tested.
+ * a herb sack on herb runs, the farmer's outfit) are only listed when you own them; a rake only without autoweed. Pure: unit tested.
  */
 public final class RequirementsBuilder
 {
@@ -88,6 +88,10 @@ public final class RequirementsBuilder
 		}
 		addIfOwned(list, ledger, "Magic secateurs", items.group("magic_secateurs"), true,
 			"+10% herbs, allotment crops and hops");
+		if (assignments.stream().anyMatch(a -> a.getPatch().getKind() == PatchImplementation.HERB))
+		{
+			addIfOwned(list, ledger, "Herb sack", items.group("herb_sack"), false, "picking herbs");
+		}
 		List<PlantingPlan.Assignment> allotments = assignments.stream()
 			.filter(a -> a.getPatch().getKind() == PatchImplementation.ALLOTMENT && a.getSeed() != null)
 			.collect(Collectors.toList());
