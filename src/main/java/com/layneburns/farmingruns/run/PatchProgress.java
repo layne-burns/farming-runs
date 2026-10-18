@@ -33,6 +33,7 @@ public final class PatchProgress
 	 * <li>A seed to plant: something is growing there, freshly planted (stage 0).</li>
 	 * <li>A tree kept standing: its crop has all been picked (harvestable, none left).</li>
 	 * <li>Nothing to plant: the patch has been cleared, or something was planted anyway.</li>
+	 * <li>A compost bin: filled and closed, rotting.</li>
 	 * </ul>
 	 * The run only ticks a patch when its state changes to done while you're there, not from a first look.
 	 */
@@ -41,6 +42,10 @@ public final class PatchProgress
 		if (state == null)
 		{
 			return false;
+		}
+		if (assignment.getPatch().isCompostBin())
+		{
+			return CompostBins.isDone(state);
 		}
 		boolean freshlyPlanted = state.getProduce() != Produce.WEEDS && state.getCropState() == CropState.GROWING
 			&& state.getStage() == 0;

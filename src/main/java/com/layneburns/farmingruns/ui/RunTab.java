@@ -15,6 +15,7 @@ import com.layneburns.farmingruns.data.Seed;
 import com.layneburns.farmingruns.inventory.RunCheckService;
 import com.layneburns.farmingruns.run.BountyAmulet;
 import com.layneburns.farmingruns.run.CompostChoice;
+import com.layneburns.farmingruns.run.PineappleErrand;
 import com.layneburns.farmingruns.run.GoalSetups;
 import com.layneburns.farmingruns.run.KindPlan;
 import com.layneburns.farmingruns.run.PlantingPlan;
@@ -86,6 +87,7 @@ public class RunTab extends TabPanel
 	private final BankRunTab bankRunTab;
 	private final FarmingRunsConfig config;
 	private final ConfigManager configManager;
+	private final PineappleErrand pineapples;
 
 	private final FitWidthPanel content = new FitWidthPanel();
 	/** Goals and presets ticked (see PresetsPanel's keys), in the order ticked: the first one's compost wins. */
@@ -97,8 +99,9 @@ public class RunTab extends TabPanel
 	RunTab(GameData data, SetupStore setups, RunPlanService planner, UnlockService unlocks, ItemStore items,
 		PlayerInfo player, ContractService contract, RunCheckService checks, RunSession session, PatchStates states,
 		ItemManager itemManager, BankRunTab bankRunTab, RunController controller, ShortestPathClient shortestPath,
-		FarmingRunsConfig config, ConfigManager configManager)
+		FarmingRunsConfig config, ConfigManager configManager, PineappleErrand pineapples)
 	{
+		this.pineapples = pineapples;
 		this.config = config;
 		this.configManager = configManager;
 		this.data = data;
@@ -204,7 +207,7 @@ public class RunTab extends TabPanel
 			content.add(skipList(setup));
 			content.add(summary(plan, growing));
 			SectionPanel inventory = section("Inventory");
-			CheckSection.fill(inventory, check, itemManager, bankRunTab::show);
+			CheckSection.fill(inventory, check, itemManager, bankRunTab::show, pineapples::start);
 			content.add(inventory);
 		}
 

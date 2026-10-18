@@ -27,8 +27,10 @@ WIKI_PAGES = ["Allotment patch/Patches", "Hops patch/Patches", "Bush patch/Patch
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "src/main/resources/com/layneburns/farmingruns/patch_locations.json"
 
-# Patch kinds we don't visit: compost bins.
-SKIP_KINDS = {"COMPOST", "BIG_COMPOST"}
+# Patch kinds we don't visit: the small compost bins. (The Farming Guild's big bin is kept: runs fill it.)
+SKIP_KINDS = {"COMPOST"}
+# Patches the wiki's patch tables don't list, by (region, kind): the Farming Guild's big compost bin.
+EXTRA_TILES = {(4922, "BIG_COMPOST"): {"x": 1272, "y": 3729, "plane": 0}}
 
 # Wiki map "group" -> the RuneLite patch kinds it can describe.
 WIKI_GROUP_KINDS = {
@@ -190,11 +192,12 @@ def main() -> None:
                 match = nearest_row(rows, used, p["kind"], region["regionId"])
             if match is not None:
                 used.add(match)
+            extra = EXTRA_TILES.get((region["regionId"], p["kind"]))
             suffix = "_" + slug(p["name"]) if p["name"] and slug(p["name"]) != p["kind"].lower() else ""
             patches.append({
                 "id": f"{location_id}.{p['kind'].lower()}{suffix}", "name": p["name"], "kind": p["kind"],
                 "varbit": p["varbit"], "gardener": p["gardener"],
-                "tile": rows[match]["tile"] if match is not None else None,
+                "tile": extra or (rows[match]["tile"] if match is not None else None),
                 "wikiTeleports": rows[match]["teleports"] if match is not None else [],
             })
 

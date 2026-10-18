@@ -28,6 +28,7 @@
 		"diving_apparatus": [{"page": "Diving apparatus"}],
 		"fishbowl_helmet": [{"page": "Fishbowl helmet"}],
 		"filled_plant_pot": [{"page": "Filled plant pot"}],
+		"pineapple": [{"page": "Pineapple"}],
 		"watering_can": [{"page": "Watering can", "excludeVersions": ["Empty"]}, {"page": "Gricoller's can"}]
 	},
 	"descriptions": {

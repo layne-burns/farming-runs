@@ -42,4 +42,10 @@ public class Patch
 	{
 		return gardenerNpcId != NO_GARDENER;
 	}
+
+	/** The Farming Guild's big compost bin: filled and emptied on a run, never planted. */
+	public boolean isCompostBin()
+	{
+		return kind == PatchImplementation.BIG_COMPOST || kind == PatchImplementation.COMPOST;
+	}
 }

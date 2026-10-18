@@ -28,6 +28,7 @@ import com.layneburns.farmingruns.run.KeepStandingGuard;
 import com.layneburns.farmingruns.run.LegTimer;
 import com.layneburns.farmingruns.run.PatchClicks;
 import com.layneburns.farmingruns.run.RunTracker;
+import com.layneburns.farmingruns.run.PineappleErrand;
 import com.layneburns.farmingruns.run.TeleportFallback;
 import com.layneburns.farmingruns.run.TeleportWatcher;
 import com.layneburns.farmingruns.ui.BankHighlightOverlay;
@@ -186,6 +187,9 @@ public class FarmingRunsPlugin extends Plugin
 	private TeleportMenuOverlay teleportMenuOverlay;
 
 	@Inject
+	private PineappleErrand pineappleErrand;
+
+	@Inject
 	private PatchObjects patchObjects;
 
 	private NavigationButton navigationButton;
@@ -232,6 +236,7 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(teleportLimits);
 		eventBus.register(patchObjects);
 		eventBus.register(teleportMenuOverlay);
+		eventBus.register(pineappleErrand);
 		bankRunTab.register();
 		itemStore.loadRemembered();
 		locationPrefs.load();
@@ -258,6 +263,8 @@ public class FarmingRunsPlugin extends Plugin
 	protected void shutDown()
 	{
 		runController.stop();
+		eventBus.unregister(pineappleErrand);
+		pineappleErrand.stop();
 		eventBus.unregister(teleportMenuOverlay);
 		eventBus.unregister(patchObjects);
 		eventBus.unregister(teleportLimits);

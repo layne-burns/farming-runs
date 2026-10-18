@@ -51,6 +51,12 @@ public final class Reminder
 			}
 			String kind = a.getPatch().getKind().name().toLowerCase(Locale.ROOT).replace('_', ' ');
 			boolean worked = progress.getWorkedPatches().contains(id);
+			if (a.getPatch().isCompostBin())
+			{
+				return progress.hasHarvestFirst(id) && !progress.isHarvested(id)
+					? "Collect the compost from the " + kind + " bin"
+					: "Fill the " + kind + " bin with pineapples, then close it";
+			}
 			if (a.isKeptStanding())
 			{
 				return "Pick the " + kind + ", leave it standing";

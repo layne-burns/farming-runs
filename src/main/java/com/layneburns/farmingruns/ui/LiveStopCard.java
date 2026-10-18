@@ -81,6 +81,15 @@ final class LiveStopCard
 				card.add(step("Pick the crop, leave it standing", worked, () -> facts.markWorked(id)));
 				continue;
 			}
+			if (a.getPatch().isCompostBin())
+			{
+				if (progress.hasHarvestFirst(id))
+				{
+					card.add(step("Collect the compost", progress.isHarvested(id), () -> facts.markHarvested(id)));
+				}
+				card.add(step("Fill with pineapples, close the lid", worked, () -> facts.markWorked(id)));
+				continue;
+			}
 			if (a.getSeed() == null)
 			{
 				card.add(step("Harvest and clear (nothing to plant)", worked, () -> facts.markWorked(id)));
@@ -118,7 +127,8 @@ final class LiveStopCard
 		heading.setForeground(Palette.TEXT);
 		card.add(heading);
 		card.add(detail((teleport == null ? "Walk there" : "via " + teleport.displayName()) + " · "
-			+ stop.getPatches().stream().map(a -> kind(a) + (a.isKeptStanding() ? ": pick"
+			+ stop.getPatches().stream().map(a -> kind(a) + (a.getPatch().isCompostBin() ? ": fill"
+				: a.isKeptStanding() ? ": pick"
 				: a.getSeed() == null ? ": harvest" : pays.test(a) ? ": plant + pay" : ": plant"))
 				.collect(Collectors.joining(", "))));
 		card.setMaximumSize(new Dimension(Integer.MAX_VALUE, card.getPreferredSize().height));

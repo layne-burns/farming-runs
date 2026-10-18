@@ -67,6 +67,7 @@ public class RunController
 	private String heldForHouse;
 	private final FairyRingRoute fairyRings;
 	private final LegTimer legs;
+	private final CompostBinPlanner compostBins;
 	/** The current stop already checked for being reached too early ({@link GrowingWait}). Client thread. */
 	@Nullable
 	private String earlyCheckedFor;
@@ -78,8 +79,9 @@ public class RunController
 	RunController(Client client, ClientThread clientThread, GameData data, RunSession session,
 		ShortestPathClient shortestPath, FarmingRunsConfig config,
 		PlayerInfo player, GuidanceTracker guidance, PatchStates states, PatchClicks clicks, GrowingWait growingWait,
-		FairyRingRoute fairyRings, LegTimer legs)
+		FairyRingRoute fairyRings, LegTimer legs, CompostBinPlanner compostBins)
 	{
+		this.compostBins = compostBins;
 		this.fairyRings = fairyRings;
 		this.legs = legs;
 		this.growingWait = growingWait;
@@ -109,6 +111,16 @@ public class RunController
 			Map<String, List<PlantingPlan.Assignment>> byLocation = new LinkedHashMap<>();
 			plan.getAssignments().forEach(a -> byLocation.computeIfAbsent(a.getPatch().getLocationId(),
 				k -> new ArrayList<>()).add(a));
+			// Compost bins at these stops that need collecting or filling join their stop.
+			Set<String> harvest = new HashSet<>(harvestFirst(plan));
+			compostBins.work(byLocation.keySet()).forEach((bin, work) ->
+			{
+				byLocation.get(bin.getLocationId()).add(new PlantingPlan.Assignment(bin, null, false));
+				if (work.getCollect() > 0)
+				{
+					harvest.add(bin.getId());
+				}
+			});
 			String here = locationHere(byLocation.keySet());
 			Map<String, List<Patch>> patches = new LinkedHashMap<>();
 			byLocation.forEach((id, list) -> patches.put(id, list.stream().map(PlantingPlan.Assignment::getPatch)
@@ -120,7 +132,7 @@ public class RunController
 			log.debug("[farmrun] route from {}: {}", here, order);
 			earlyCheckedFor = null;
 			session.start(new RunSession.ActiveRun(setup, plan, teleports, System.currentTimeMillis(),
-				RunProgress.start(stops, payFor(setup, plan), compostFor(setup, plan), harvestFirst(plan)),
+				RunProgress.start(stops, payFor(setup, plan), compostFor(setup, plan), harvest),
 				Set.copyOf(waitFor)));
 			checkPatchesHere();
 			point();

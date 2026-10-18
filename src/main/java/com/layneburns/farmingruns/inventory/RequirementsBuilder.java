@@ -153,6 +153,19 @@ public final class RequirementsBuilder
 	 * to pot them and a watering can to grow them.
 	 */
 	/**
+	 * The compost bins at a run's stops: pineapples to fill them (for supercompost) and an empty bucket per item to
+	 * collect, unless it goes into the bottomless bucket.
+	 */
+	public static List<Requirement> compostBinKit(int pineapples, int buckets, ItemCatalog items)
+	{
+		RequirementList list = new RequirementList();
+		list.add("Pineapple", items.group("pineapple"), pineapples, Importance.NEED, false,
+			"filling the big compost bin", true);
+		list.add("Bucket", items.group("bucket"), buckets, Importance.NEED, true, "collecting the compost", false);
+		return list.toList();
+	}
+
+	/**
 	 * Sapling making: these seeds, a filled plant pot for each, a trowel and {@link #SAPLING_WATERING_CANS} watering
 	 * cans.
 	 */

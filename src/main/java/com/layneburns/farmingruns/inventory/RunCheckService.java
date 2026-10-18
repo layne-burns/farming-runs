@@ -12,6 +12,9 @@ import com.layneburns.farmingruns.data.Location;
 import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.data.Seed;
 import com.layneburns.farmingruns.data.TeleportChoice;
+import com.layneburns.farmingruns.run.CompostBinPlanner;
+import com.layneburns.farmingruns.run.CompostBins;
+import com.layneburns.farmingruns.run.CompostChoice;
 import com.layneburns.farmingruns.run.OnTheWay;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.RunPlanService;
@@ -76,6 +79,7 @@ public class RunCheckService
 	private final PatchStates states;
 	private final TeleportLimits limits;
 	private final FarmingRunsConfig config;
+	private final CompostBinPlanner compostBins;
 	/** Reuse a {@link OnTheWay} answer for the same patches this many seconds. */
 	private static final int CACHE_SECONDS = 30;
 	private volatile OnTheWayCache onTheWay;
@@ -96,8 +100,9 @@ public class RunCheckService
 
 	@Inject
 	RunCheckService(GameData data, RunPlanService planner, LocationPrefs prefs, PlayerInfo player, ItemStore items,
-		PatchStates states, TeleportLimits limits, FarmingRunsConfig config)
+		PatchStates states, TeleportLimits limits, FarmingRunsConfig config, CompostBinPlanner compostBins)
 	{
+		this.compostBins = compostBins;
 		this.config = config;
 		this.limits = limits;
 		this.data = data;
@@ -180,8 +185,8 @@ public class RunCheckService
 			PatchStatus.Readiness readiness = status(p, nowSeconds).getReadiness();
 			return readiness == PatchStatus.Readiness.READY || readiness == PatchStatus.Readiness.UNKNOWN;
 		};
-		RunRequirements requirements = withLimitNotes(RequirementsBuilder.build(setup, plan, teleports, prefs::fare,
-			data, player.getFacts(), ledger, grown, states.isAutoweedOn()), plan);
+		RunRequirements requirements = withCompostBins(withLimitNotes(RequirementsBuilder.build(setup, plan, teleports,
+			prefs::fare, data, player.getFacts(), ledger, grown, states.isAutoweedOn()), plan), setup, plan);
 		List<InventoryChecker.Line> lines = InventoryChecker.check(requirements.getRequirements(), ledger,
 			data.getItems().group("seed_box"));
 		if (config.saplingMode())
@@ -253,6 +258,24 @@ public class RunCheckService
 	public List<String> usable(List<String> refs)
 	{
 		return refs.stream().filter(r -> !limits.isUsedUp(r)).collect(Collectors.toList());
+	}
+
+	/** Adds what the compost bins at the run's stops need: pineapples to fill, buckets to collect. */
+	private RunRequirements withCompostBins(RunRequirements requirements, RunSetup setup, PlantingPlan plan)
+	{
+		Set<String> visited = plan.getAssignments().stream().map(a -> a.getPatch().getLocationId())
+			.collect(Collectors.toSet());
+		Map<Patch, CompostBins.Work> bins = compostBins.work(visited);
+		if (bins.isEmpty())
+		{
+			return requirements;
+		}
+		int fill = bins.values().stream().mapToInt(CompostBins.Work::getFill).sum();
+		int collect = setup.getCompost() == CompostChoice.BOTTOMLESS_BUCKET ? 0
+			: bins.values().stream().mapToInt(CompostBins.Work::getCollect).sum();
+		List<Requirement> all = new ArrayList<>(requirements.getRequirements());
+		all.addAll(RequirementsBuilder.compostBinKit(fill, collect, data.getItems()));
+		return new RunRequirements(all, requirements.getTeleports(), requirements.getNotes());
 	}
 
 	/** Says which first-choice teleports are used up for now, so the next one is being used. */

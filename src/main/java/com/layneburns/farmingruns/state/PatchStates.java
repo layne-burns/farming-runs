@@ -7,8 +7,10 @@
 package com.layneburns.farmingruns.state;
 
 import com.layneburns.farmingruns.data.Patch;
+import com.layneburns.farmingruns.vendor.timetracking.PatchState;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.client.config.ConfigManager;
@@ -54,6 +56,25 @@ public class PatchStates
 		Integer offset = configManager.getRSProfileConfiguration(GROUP, TICK_OFFSET, Integer.class);
 		boolean autoweed = isAutoweedOn();
 		return ReadyPredictor.predict(stored, patch.getKind(), precision, offset, autoweed, nowSeconds);
+	}
+
+	/** The patch's last seen state as the game reported it (e.g. a compost bin's fill), or null if never seen. */
+	@Nullable
+	public PatchState lastSeen(Patch patch)
+	{
+		String stored = configManager.getRSProfileConfiguration(GROUP, patch.getRegionId() + "." + patch.getVarbitId());
+		if (stored == null)
+		{
+			return null;
+		}
+		try
+		{
+			return patch.getKind().forVarbitValue(Integer.parseInt(stored.split(":")[0]));
+		}
+		catch (NumberFormatException e)
+		{
+			return null;
+		}
 	}
 
 	/** True when Time Tracking has seen your autoweed setting switched on: weeds don't grow back. */

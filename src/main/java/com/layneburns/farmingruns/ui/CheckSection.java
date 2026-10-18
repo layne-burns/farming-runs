@@ -16,6 +16,7 @@ import java.awt.Dimension;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -32,8 +33,12 @@ final class CheckSection
 	{
 	}
 
-	/** @param showInBank opens the bank tab of things to take out */
-	static void fill(SectionPanel section, Check check, ItemManager itemManager, Runnable showInBank)
+	/**
+	 * @param showInBank      opens the bank tab of things to take out
+	 * @param buyPineapples   starts a trip to buy pineapples, given how many you want in all; shown when short
+	 */
+	static void fill(SectionPanel section, Check check, ItemManager itemManager, Runnable showInBank,
+		IntConsumer buyPineapples)
 	{
 		List<Line> lines = check.getLines();
 		if (lines.isEmpty())
@@ -54,6 +59,20 @@ final class CheckSection
 			row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
 			section.addRow(row);
 		}
+		lines.stream().filter(l -> l.getShortBy() > 0 && "Pineapple".equals(l.getRequirement().getLabel()))
+			.findFirst().ifPresent(l ->
+			{
+				JButton buy = TabPanel.button("Buy pineapples at Deepfin Point", "Shortest Path to the Trader"
+					+ " Crewmember at Deepfin Point; hop worlds when the stock runs out. Ends when you have "
+					+ l.getRequirement().getAmount() + ".");
+				buy.addActionListener(e -> buyPineapples.accept(l.getRequirement().getAmount()));
+				JPanel row = new JPanel(new BorderLayout());
+				row.setBackground(Palette.BACKGROUND);
+				row.add(buy, BorderLayout.CENTER);
+				row.setAlignmentX(Component.LEFT_ALIGNMENT);
+				row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
+				section.addRow(row);
+			});
 		for (String note : check.getRequirements().getNotes())
 		{
 			JLabel label = TabPanel.text("⚠ " + note);

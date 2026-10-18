@@ -43,6 +43,10 @@ public class DataIntegrityTest
 	{
 		for (Patch patch : data.patches())
 		{
+			if (patch.isCompostBin())
+			{
+				continue;
+			}
 			assertFalse("no seeds for " + patch.getKind() + " (" + patch.getId() + ")",
 				data.seedsFor(patch.getKind()).isEmpty());
 		}
@@ -53,6 +57,10 @@ public class DataIntegrityTest
 	{
 		for (Patch patch : data.patches())
 		{
+			if (patch.isCompostBin())
+			{
+				continue;
+			}
 			long types = Arrays.stream(RunType.values()).filter(t -> t.covers(patch.getKind())).count();
 			assertEquals(patch.getKind() + " should be in one run type", 1, types);
 		}

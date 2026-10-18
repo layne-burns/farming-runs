@@ -14,6 +14,7 @@ import com.layneburns.farmingruns.run.GuidanceTracker;
 import com.layneburns.farmingruns.run.FairyRingRoute;
 import com.layneburns.farmingruns.run.LegTimer;
 import com.layneburns.farmingruns.run.LeprechaunNeeds;
+import com.layneburns.farmingruns.run.PineappleErrand;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.Protection;
 import com.layneburns.farmingruns.run.Reminder;
@@ -53,14 +54,17 @@ public class ReminderOverlay extends Overlay
 	private final GuidanceTracker guidance;
 	private final LegTimer legs;
 	private final FairyRingRoute fairyRings;
+	private final PineappleErrand pineapples;
 	private final ItemStore items;
 	private final PlayerInfo player;
 	private final FarmingRunsConfig config;
 
 	@Inject
 	ReminderOverlay(Client client, GameData data, RunSession session, GuidanceTracker guidance, LegTimer legs,
-		ItemStore items, PlayerInfo player, FarmingRunsConfig config, FairyRingRoute fairyRings)
+		ItemStore items, PlayerInfo player, FarmingRunsConfig config, FairyRingRoute fairyRings,
+		PineappleErrand pineapples)
 	{
+		this.pineapples = pineapples;
 		this.fairyRings = fairyRings;
 		this.client = client;
 		this.data = data;
@@ -79,8 +83,18 @@ public class ReminderOverlay extends Overlay
 	{
 		RunSession.ActiveRun run = session.active();
 		Player me = client.getLocalPlayer();
-		if (!config.overheadReminders() || run == null || me == null)
+		if (!config.overheadReminders() || me == null)
 		{
+			return null;
+		}
+		if (run == null)
+		{
+			int toBuy = pineapples.stillToBuy();
+			if (toBuy > 0)
+			{
+				draw(graphics, me, "Buy " + toBuy + " pineapple" + (toBuy == 1 ? "" : "s")
+					+ " · Trader Crewmember, Deepfin Point · hop worlds");
+			}
 			return null;
 		}
 		RunProgress.Stop stop = run.getProgress().currentStop();
