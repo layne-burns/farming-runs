@@ -24,41 +24,44 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
- * Fairy ring legs from a house with a fairy ring: rather than let Shortest Path walk you to the nearest ring (often
- * the Ardougne cloak to the monastery), you teleport home and use the house's ring. Applies before you set off on a
- * fairy ring leg, when the setting is on and you carry a way home. Client thread.
+ * Fairy ring legs through your house: house teleport, then a house portal (the setting, e.g. Salve Graveyard) to the
+ * fairy ring there. Shortest Path may use your house's portals on these legs so it can find that way (otherwise it
+ * walks to the nearest ring, often the Ardougne monastery's), and the overhead line shows the chain
+ * ({@link TravelChain}). Needs a way home you carry. Client thread.
  */
 @Singleton
 public class FairyRingRoute
 {
 	private final GameData data;
 	private final FarmingRunsConfig config;
-	private final LegTimer legs;
 	private final ItemStore items;
 	private final PlayerInfo player;
 
 	@Inject
-	FairyRingRoute(GameData data, FarmingRunsConfig config, LegTimer legs, ItemStore items,
+	FairyRingRoute(GameData data, FarmingRunsConfig config, ItemStore items,
 		PlayerInfo player)
 	{
 		this.data = data;
 		this.config = config;
-		this.legs = legs;
 		this.items = items;
 		this.player = player;
 	}
 
-	/** True when this leg's fairy ring is to be reached through your house, so Shortest Path waits. */
-	public boolean viaHouse(@Nullable TeleportChoice teleport)
+	/**
+	 * The house portal this leg's fairy ring is reached through (the setting, e.g. "Salve Graveyard"), or null when
+	 * it isn't a fairy ring leg, the setting is blank, or you carry no way home.
+	 */
+	@Nullable
+	public String via(@Nullable TeleportChoice teleport)
 	{
-		if (teleport == null || teleport.getMethod().getType() != TeleportType.FAIRY_RING || !config.houseFairyRing()
-			|| legs.hasLeft())
+		String portal = config.fairyRingVia() == null ? "" : config.fairyRingVia().trim();
+		if (teleport == null || teleport.getMethod().getType() != TeleportType.FAIRY_RING || portal.isEmpty())
 		{
-			return false;
+			return null;
 		}
 		Teleport house = data.teleports().stream().filter(t -> t.getType() == TeleportType.HOUSE).findFirst()
 			.orElse(null);
-		return canGoHome(items.ledger(), data.getItems(), house, player.getFacts().spellbookName());
+		return canGoHome(items.ledger(), data.getItems(), house, player.getFacts().spellbookName()) ? portal : null;
 	}
 
 	/**

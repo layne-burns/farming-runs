@@ -6,7 +6,6 @@
  */
 package com.layneburns.farmingruns.run;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import com.google.gson.Gson;
@@ -47,10 +46,4 @@ public class FairyRingRouteTest
 		assertTrue(FairyRingRoute.canGoHome(worn, data.getItems(), house, "Normal"));
 	}
 
-	@Test
-	public void theOverheadLineSaysViaHouse()
-	{
-		assertEquals("Next: Great Conch · Fairy ring CKQ via house teleport",
-			Reminder.travel("Great Conch", data.teleportChoice("fairy_ring:ckq"), true));
-	}
 }

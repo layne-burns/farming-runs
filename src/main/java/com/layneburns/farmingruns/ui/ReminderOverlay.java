@@ -20,10 +20,13 @@ import com.layneburns.farmingruns.run.Protection;
 import com.layneburns.farmingruns.run.Reminder;
 import com.layneburns.farmingruns.run.RunProgress;
 import com.layneburns.farmingruns.run.RunSession;
+import com.layneburns.farmingruns.run.TravelChain;
 import com.layneburns.farmingruns.state.ItemStore;
+import com.layneburns.farmingruns.state.LocationPrefs;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -55,6 +58,7 @@ public class ReminderOverlay extends Overlay
 	private final LegTimer legs;
 	private final FairyRingRoute fairyRings;
 	private final PineappleErrand pineapples;
+	private final LocationPrefs prefs;
 	private final ItemStore items;
 	private final PlayerInfo player;
 	private final FarmingRunsConfig config;
@@ -62,8 +66,9 @@ public class ReminderOverlay extends Overlay
 	@Inject
 	ReminderOverlay(Client client, GameData data, RunSession session, GuidanceTracker guidance, LegTimer legs,
 		ItemStore items, PlayerInfo player, FarmingRunsConfig config, FairyRingRoute fairyRings,
-		PineappleErrand pineapples)
+		PineappleErrand pineapples, LocationPrefs prefs)
 	{
+		this.prefs = prefs;
 		this.pineapples = pineapples;
 		this.fairyRings = fairyRings;
 		this.client = client;
@@ -104,12 +109,14 @@ public class ReminderOverlay extends Overlay
 		}
 		if (!isAt(stop, me.getWorldLocation().getRegionID()))
 		{
-			// Before setting off: where to and how. Once you've teleported, Shortest Path shows the rest.
-			if (!legs.hasLeft())
+			// On the way: where to, and the steps still to take; each teleport takes one off, the last clears it.
+			TeleportChoice teleport = run.getTeleports().get(stop.getLocationId());
+			List<String> learned = prefs.chain(stop.getLocationId(), teleport == null ? TravelChain.WALK : teleport.getRef());
+			List<String> steps = TravelChain.remaining(TravelChain.steps(teleport, fairyRings.via(teleport), learned),
+				legs.jumps());
+			if (!steps.isEmpty())
 			{
-				TeleportChoice teleport = run.getTeleports().get(stop.getLocationId());
-				draw(graphics, me, Reminder.travel(data.location(stop.getLocationId()).getName(), teleport,
-					fairyRings.viaHouse(teleport)));
+				draw(graphics, me, Reminder.travel(data.location(stop.getLocationId()).getName(), steps));
 			}
 			return null;
 		}

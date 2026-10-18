@@ -9,7 +9,6 @@ package com.layneburns.farmingruns.run;
 import com.layneburns.farmingruns.data.ItemAmount;
 import com.layneburns.farmingruns.data.Seed;
 import com.layneburns.farmingruns.data.TeleportChoice;
-import com.layneburns.farmingruns.data.TeleportType;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -104,15 +103,13 @@ public final class Reminder
 	 */
 	public static String travel(String locationName, @Nullable TeleportChoice teleport)
 	{
-		return travel(locationName, teleport, false);
+		return travel(locationName, TravelChain.steps(teleport, null));
 	}
 
-	/** @param viaHouse a fairy ring reached through your house: "Next: Great Conch · Fairy ring CKQ via house teleport" */
-	public static String travel(String locationName, @Nullable TeleportChoice teleport, boolean viaHouse)
+	/** The steps still to take ({@link TravelChain}): "Next: Great Conch · Salve Graveyard portal → Fairy ring CKQ". */
+	public static String travel(String locationName, List<String> steps)
 	{
-		boolean walk = teleport == null || teleport.getMethod().getType() == TeleportType.WALK;
-		return "Next: " + locationName + " · " + (walk ? "walk" : teleport.displayName())
-			+ (viaHouse ? " via house teleport" : "");
+		return "Next: " + locationName + " · " + String.join(" → ", steps);
 	}
 
 	/** "8 × Mushroom" for each item, for the payment wording. */

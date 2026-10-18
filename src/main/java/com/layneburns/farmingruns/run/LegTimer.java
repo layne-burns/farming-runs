@@ -87,6 +87,8 @@ public class LegTimer
 	private long leaveAt;
 	/** Travel to the current stop has started (a teleport was clicked or seen). */
 	private boolean left;
+	/** Teleport-sized jumps on the way to the current stop so far: each is a step of its travel chain. */
+	private int jumps;
 	@Nullable
 	private WorldPoint lastPosition;
 	private long arriveAt = -1;
@@ -103,6 +105,12 @@ public class LegTimer
 		this.session = session;
 		this.clicks = clicks;
 		session.addListener(this::sessionChanged);
+	}
+
+	/** How many steps of the way to the current stop you've taken (teleports, portals, fairy rings). */
+	public int jumps()
+	{
+		return jumps;
 	}
 
 	/** You've set off for the current stop (teleported or jumped far), so you no longer need telling how. */
@@ -190,6 +198,7 @@ public class LegTimer
 		stopId = next;
 		leaveAt = now;
 		left = false;
+		jumps = 0;
 		arriveAt = -1;
 		teleport = null;
 	}
@@ -209,7 +218,16 @@ public class LegTimer
 		WorldPoint here = player.getWorldLocation();
 		WorldPoint before = lastPosition;
 		lastPosition = here;
-		if (run == 0 || stopId == null || arriveAt >= 0 || left || before == null)
+		if (run == 0 || stopId == null || arriveAt >= 0 || before == null)
+		{
+			return;
+		}
+		if (before.distanceTo2D(here) > TELEPORT_TILES)
+		{
+			// A step of the way there: a teleport, a portal, a fairy ring (not just stairs).
+			jumps++;
+		}
+		if (left)
 		{
 			return;
 		}

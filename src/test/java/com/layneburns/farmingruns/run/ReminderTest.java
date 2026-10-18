@@ -11,6 +11,7 @@ import static org.junit.Assert.assertNull;
 import com.google.gson.Gson;
 import com.layneburns.farmingruns.data.DataLoader;
 import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.data.TeleportChoice;
 import com.layneburns.farmingruns.data.Seed;
 import java.util.List;
 import java.util.Set;
@@ -52,8 +53,8 @@ public class ReminderTest
 	public void onTheWaySaysWhereAndHow()
 	{
 		GameData data = new DataLoader(new Gson()).load();
-		assertEquals("Next: Weiss · House portal → Weiss",
+		assertEquals("Next: Weiss · House teleport → Weiss portal",
 			Reminder.travel("Weiss", data.teleportChoice("house_portal:weiss")));
-		assertEquals("Next: Lumbridge hops · walk", Reminder.travel("Lumbridge hops", null));
+		assertEquals("Next: Lumbridge hops · walk", Reminder.travel("Lumbridge hops", (TeleportChoice) null));
 	}
 }

@@ -39,6 +39,7 @@ public class LocationPrefs
 	private static final String OVERRIDES_KEY = "unlockOverrides";
 	private static final String TELEPORTS_KEY = "teleportOrders";
 	private static final String FARES_KEY = "teleportFares";
+	private static final String CHAINS_KEY = "travelChains";
 	/** Before ranked lists, a single teleport per location was saved here; it's moved to the front on load. */
 	private static final String OLD_TELEPORT_KEY = "teleportChoices";
 	private static final Type BOOLEAN_MAP = new TypeToken<Map<String, Boolean>>()
@@ -62,6 +63,8 @@ public class LocationPrefs
 	private volatile Map<String, List<String>> teleports = Map.of();
 	/** Coins spent on the way (boat fares) after a stop's teleport, by "location/teleport ref". */
 	private volatile Map<String, Integer> fares = Map.of();
+	/** The steps you last took to a location with a teleport planned, by "location/teleport ref". */
+	private volatile Map<String, List<String>> chains = Map.of();
 	/** The account these were loaded for, or null before login; see {@link #ensureLoaded()}. */
 	private volatile String loadedFor;
 	private volatile boolean everLoaded;
@@ -175,6 +178,29 @@ public class LocationPrefs
 		save(FARES_KEY, fares);
 	}
 
+	/** The steps you last took to this location with this teleport planned, e.g. a boat after it; null if none. */
+	@Nullable
+	public List<String> chain(String locationId, String ref)
+	{
+		ensureLoaded();
+		return chains.get(locationId + "/" + ref);
+	}
+
+	/** Remembers the steps you took to a location with a teleport planned. */
+	public void setChain(String locationId, String ref, List<String> steps)
+	{
+		ensureLoaded();
+		String key = locationId + "/" + ref;
+		if (steps.equals(chains.get(key)))
+		{
+			return;
+		}
+		Map<String, List<String>> copy = new HashMap<>(chains);
+		copy.put(key, List.copyOf(steps));
+		chains = Map.copyOf(copy);
+		save(CHAINS_KEY, chains);
+	}
+
 	/** Loads the saved choices for the current profile. */
 	public void load()
 	{
@@ -183,6 +209,7 @@ public class LocationPrefs
 		overrides = read(OVERRIDES_KEY, BOOLEAN_MAP);
 		teleports = read(TELEPORTS_KEY, LIST_MAP);
 		fares = read(FARES_KEY, INT_MAP);
+		chains = read(CHAINS_KEY, LIST_MAP);
 		migrateSingleChoices();
 		upgradeSavedNames();
 		listeners.forEach(Runnable::run);

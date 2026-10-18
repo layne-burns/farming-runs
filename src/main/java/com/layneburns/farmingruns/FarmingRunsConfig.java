@@ -111,15 +111,16 @@ public interface FarmingRunsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "houseFairyRing",
-		name = "Fairy rings from your house",
-		description = "Your house has a fairy ring: a fairy ring leg starts with a teleport home (the overhead line"
-			+ " says so) instead of Shortest Path's way to the nearest ring.",
+		keyName = "fairyRingVia",
+		name = "Fairy rings via your house",
+		description = "The house portal you take to get to a fairy ring, e.g. Salve Graveyard. Fairy ring legs then let"
+			+ " Shortest Path use your house's portals (not just the nearest ring, like the Ardougne monastery's), and"
+			+ " the overhead line shows the chain: house teleport, that portal, the ring. Blank: off.",
 		position = 10
 	)
-	default boolean houseFairyRing()
+	default String fairyRingVia()
 	{
-		return true;
+		return "Salve Graveyard";
 	}
 
 	@ConfigItem(
