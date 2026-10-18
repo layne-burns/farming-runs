@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.events.PluginMessage;
 import net.runelite.client.plugins.Plugin;
@@ -22,8 +23,9 @@ import net.runelite.client.plugins.PluginManager;
 
 /**
  * The only class that talks to the Shortest Path plugin, over its plugin messages: "path" with targets draws the
- * route to the nearest of them from wherever you are, "clear" removes it. A path can override Shortest Path's settings for that leg:
- * {@link #CARRIED_ONLY} keeps it to the teleport items you carry, with no bank trips. Sends only when the
+ * route to the nearest of them from wherever you are, "clear" removes it. Each path overrides some of Shortest Path's
+ * settings for that leg: a longer search cutoff, {@link #CARRIED_ONLY} (only the teleport items you carry, no bank
+ * trips), and house portals when the stop is reached by one. Sends only when the
  * target changes, and again after a logout or world hop, when Shortest Path may have dropped it. Nothing comes back,
  * so it can't tell whether Shortest Path is listening; {@link #isAvailable()} checks it's installed and on.
  */
@@ -38,7 +40,12 @@ public class ShortestPathClient
 		"useTeleportationItems", "Inventory",
 		"includeBankPath", false);
 
+	/** Shortest Path's setting for how long a search may go without progress, in ticks (its default is 5). */
+	private static final String CUTOFF_KEY = "calculationCutoff";
+	private static final int MIN_CUTOFF_TICKS = 15;
+
 	private final EventBus eventBus;
+	private final ConfigManager configManager;
 	private final PluginManager pluginManager;
 	/** What was last sent: a target, or null for "clear". Starts as "clear" so we never wipe a path you set yourself. */
 	@Nullable
@@ -47,8 +54,9 @@ public class ShortestPathClient
 	private boolean sentAnything;
 
 	@Inject
-	ShortestPathClient(EventBus eventBus, PluginManager pluginManager)
+	ShortestPathClient(EventBus eventBus, PluginManager pluginManager, ConfigManager configManager)
 	{
+		this.configManager = configManager;
 		this.eventBus = eventBus;
 		this.pluginManager = pluginManager;
 	}
@@ -62,6 +70,8 @@ public class ShortestPathClient
 	public void target(Set<WorldPoint> targets, boolean carriedOnly, boolean housePortals)
 	{
 		Map<String, Object> config = new HashMap<>();
+		// Long routes (out of Weiss, say) need longer than Shortest Path's default cutoff to be found.
+		config.put(CUTOFF_KEY, Math.max(MIN_CUTOFF_TICKS, yourCutoff()));
 		if (carriedOnly)
 		{
 			config.putAll(CARRIED_ONLY);
@@ -113,6 +123,13 @@ public class ShortestPathClient
 	public Set<WorldPoint> lastTarget()
 	{
 		return sent;
+	}
+
+	/** Your own Shortest Path cutoff, or 0 if it can't be read. */
+	private int yourCutoff()
+	{
+		Integer cutoff = configManager.getConfiguration(NAMESPACE, CUTOFF_KEY, Integer.class);
+		return cutoff == null ? 0 : cutoff;
 	}
 
 	/** True when the Shortest Path plugin is installed and switched on. */
