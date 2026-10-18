@@ -23,6 +23,7 @@ import com.layneburns.farmingruns.state.SetupStore;
 import com.layneburns.farmingruns.state.StatsStore;
 import com.layneburns.farmingruns.run.GuidanceTracker;
 import com.layneburns.farmingruns.run.RunController;
+import com.layneburns.farmingruns.run.KeepStandingGuard;
 import com.layneburns.farmingruns.run.LegTimer;
 import com.layneburns.farmingruns.run.RunTracker;
 import com.layneburns.farmingruns.run.TeleportWatcher;
@@ -147,6 +148,9 @@ public class FarmingRunsPlugin extends Plugin
 	private LegTimer legTimer;
 
 	@Inject
+	private KeepStandingGuard keepStandingGuard;
+
+	@Inject
 	private StatsStore statsStore;
 
 	@Inject
@@ -204,6 +208,7 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(guidanceTracker);
 		eventBus.register(runTracker);
 		eventBus.register(legTimer);
+		eventBus.register(keepStandingGuard);
 		eventBus.register(statsStore);
 		eventBus.register(patchObjects);
 		bankRunTab.register();
@@ -233,6 +238,7 @@ public class FarmingRunsPlugin extends Plugin
 		runController.stop();
 		eventBus.unregister(patchObjects);
 		eventBus.unregister(statsStore);
+		eventBus.unregister(keepStandingGuard);
 		eventBus.unregister(legTimer);
 		eventBus.unregister(runTracker);
 		eventBus.unregister(guidanceTracker);

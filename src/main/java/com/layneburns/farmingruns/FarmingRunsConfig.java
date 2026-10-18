@@ -82,6 +82,18 @@ public interface FarmingRunsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "blockClearingKept",
+		name = "Block clearing kept plants",
+		description = "On a harvest run, ignore clicks that would clear a plant you're keeping standing (chop down,"
+			+ " clear, dig up, or paying its gardener). Shift-click to do it anyway.",
+		position = 13
+	)
+	default boolean blockClearingKept()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "overheadReminders",
 		name = "Overhead reminders",
 		description = "During a run, show the next thing to do at a stop above your head (compost, plant, pay...)",
