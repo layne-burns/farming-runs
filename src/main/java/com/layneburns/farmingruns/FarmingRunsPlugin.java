@@ -38,6 +38,7 @@ import com.layneburns.farmingruns.ui.BankTab;
 import com.layneburns.farmingruns.ui.DepositOverlay;
 import com.layneburns.farmingruns.ui.PatchOutlineOverlay;
 import com.layneburns.farmingruns.ui.ReminderOverlay;
+import com.layneburns.farmingruns.ui.TeleportMenuOverlay;
 import com.layneburns.farmingruns.ui.GardenerOverlay;
 import com.layneburns.farmingruns.ui.RunItemOverlay;
 import com.layneburns.farmingruns.ui.FarmingRunsPanel;
@@ -182,6 +183,9 @@ public class FarmingRunsPlugin extends Plugin
 	private ReminderOverlay reminderOverlay;
 
 	@Inject
+	private TeleportMenuOverlay teleportMenuOverlay;
+
+	@Inject
 	private PatchObjects patchObjects;
 
 	private NavigationButton navigationButton;
@@ -203,6 +207,7 @@ public class FarmingRunsPlugin extends Plugin
 		overlayManager.add(depositOverlay);
 		overlayManager.add(patchOutlineOverlay);
 		overlayManager.add(reminderOverlay);
+		overlayManager.add(teleportMenuOverlay);
 
 		eventBus.register(itemStore);
 		eventBus.register(containerWatcher);
@@ -226,6 +231,7 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(statsStore);
 		eventBus.register(teleportLimits);
 		eventBus.register(patchObjects);
+		eventBus.register(teleportMenuOverlay);
 		bankRunTab.register();
 		itemStore.loadRemembered();
 		locationPrefs.load();
@@ -252,6 +258,7 @@ public class FarmingRunsPlugin extends Plugin
 	protected void shutDown()
 	{
 		runController.stop();
+		eventBus.unregister(teleportMenuOverlay);
 		eventBus.unregister(patchObjects);
 		eventBus.unregister(teleportLimits);
 		eventBus.unregister(statsStore);
@@ -277,6 +284,7 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.unregister(containerWatcher);
 		eventBus.unregister(itemStore);
 		overlayManager.remove(reminderOverlay);
+		overlayManager.remove(teleportMenuOverlay);
 		overlayManager.remove(patchOutlineOverlay);
 		overlayManager.remove(depositOverlay);
 		overlayManager.remove(gardenerOverlay);

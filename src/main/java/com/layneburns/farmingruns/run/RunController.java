@@ -62,6 +62,11 @@ public class RunController
 	private final PatchStates states;
 	/** Each run patch's last reading in the region you're in, to tick patches on changes. Client thread. */
 	private final Map<String, PatchState> seen = new HashMap<>();
+	/** The stop whose fairy ring leg goes through your house ({@link FairyRingRoute}), while on it. Client thread. */
+	@Nullable
+	private String heldForHouse;
+	private final FairyRingRoute fairyRings;
+	private final LegTimer legs;
 	/** The current stop already checked for being reached too early ({@link GrowingWait}). Client thread. */
 	@Nullable
 	private String earlyCheckedFor;
@@ -72,8 +77,11 @@ public class RunController
 	@Inject
 	RunController(Client client, ClientThread clientThread, GameData data, RunSession session,
 		ShortestPathClient shortestPath, FarmingRunsConfig config,
-		PlayerInfo player, GuidanceTracker guidance, PatchStates states, PatchClicks clicks, GrowingWait growingWait)
+		PlayerInfo player, GuidanceTracker guidance, PatchStates states, PatchClicks clicks, GrowingWait growingWait,
+		FairyRingRoute fairyRings, LegTimer legs)
 	{
+		this.fairyRings = fairyRings;
+		this.legs = legs;
 		this.growingWait = growingWait;
 		this.states = states;
 		clicks.addListener(this::follow);
@@ -251,7 +259,22 @@ public class RunController
 			// Arrived somewhere: patches here may already be done (varbits don't "change" on arrival).
 			lastRegion = region;
 			checkPatchesHere();
+			if (heldForHouse != null && legs.hasLeft())
+			{
+				// On a fairy ring leg through your house: path afresh from wherever the ring set you down.
+				shortestPath.clear();
+			}
 			point();
+		}
+		else if (heldForHouse != null && legs.hasLeft() && shortestPath.lastTarget() == null)
+		{
+			// You've teleported home: Shortest Path takes over.
+			point();
+		}
+		RunProgress.Stop current = session.active().getProgress().currentStop();
+		if (heldForHouse != null && (current == null || !current.getLocationId().equals(heldForHouse)))
+		{
+			heldForHouse = null;
 		}
 	}
 
@@ -325,6 +348,16 @@ public class RunController
 		if (stop != null)
 		{
 			TeleportChoice teleport = run.getTeleports().get(stop.getLocationId());
+			if (fairyRings.viaHouse(teleport))
+			{
+				// Home to the house's fairy ring first (the overhead line says so); the path waits until you've gone.
+				heldForHouse = stop.getLocationId();
+				if (shortestPath.lastTarget() != null)
+				{
+					shortestPath.clear();
+				}
+				return;
+			}
 			shortestPath.target(targets(stop, run.getProgress()), config.pathCarriedOnly(),
 				teleport != null && teleport.getMethod().getType() == TeleportType.HOUSE);
 			return;

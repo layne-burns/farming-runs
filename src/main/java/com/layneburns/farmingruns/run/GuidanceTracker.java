@@ -123,9 +123,7 @@ public class GuidanceTracker
 			case ITEM:
 				return teleport.itemIds();
 			case HOUSE:
-				Set<Integer> house = new HashSet<>(data.getItems().group("construction_cape"));
-				house.addAll(data.getItems().group("house_tablet"));
-				return house;
+				return data.getItems().group("construction_cape");
 			default:
 				return Set.of();
 		}

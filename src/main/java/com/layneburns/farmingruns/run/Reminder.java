@@ -98,8 +98,15 @@ public final class Reminder
 	 */
 	public static String travel(String locationName, @Nullable TeleportChoice teleport)
 	{
+		return travel(locationName, teleport, false);
+	}
+
+	/** @param viaHouse a fairy ring reached through your house: "Next: Great Conch · Fairy ring CKQ via house teleport" */
+	public static String travel(String locationName, @Nullable TeleportChoice teleport, boolean viaHouse)
+	{
 		boolean walk = teleport == null || teleport.getMethod().getType() == TeleportType.WALK;
-		return "Next: " + locationName + " · " + (walk ? "walk" : teleport.displayName());
+		return "Next: " + locationName + " · " + (walk ? "walk" : teleport.displayName())
+			+ (viaHouse ? " via house teleport" : "");
 	}
 
 	/** "8 × Mushroom" for each item, for the payment wording. */

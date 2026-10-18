@@ -97,7 +97,6 @@ public final class TeleportPicker
 				return hasRunes(choice.getMethod(), ledger);
 			case HOUSE:
 				return ledger.countAny(data.getItems().group("construction_cape")) > 0
-					|| ledger.countAny(data.getItems().group("house_tablet")) > 0
 					|| (usableSpell(choice.getMethod(), facts) && hasRunes(choice.getMethod(), ledger));
 			case FAIRY_RING:
 				return waived(choice.getMethod(), facts) || ledger.countAny(choice.itemIds()) > 0;

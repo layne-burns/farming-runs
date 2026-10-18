@@ -8,8 +8,10 @@ package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.FarmingRunsConfig;
 import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.data.TeleportChoice;
 import com.layneburns.farmingruns.data.Location;
 import com.layneburns.farmingruns.run.GuidanceTracker;
+import com.layneburns.farmingruns.run.FairyRingRoute;
 import com.layneburns.farmingruns.run.LegTimer;
 import com.layneburns.farmingruns.run.LeprechaunNeeds;
 import com.layneburns.farmingruns.run.PlantingPlan;
@@ -50,14 +52,16 @@ public class ReminderOverlay extends Overlay
 	private final RunSession session;
 	private final GuidanceTracker guidance;
 	private final LegTimer legs;
+	private final FairyRingRoute fairyRings;
 	private final ItemStore items;
 	private final PlayerInfo player;
 	private final FarmingRunsConfig config;
 
 	@Inject
 	ReminderOverlay(Client client, GameData data, RunSession session, GuidanceTracker guidance, LegTimer legs,
-		ItemStore items, PlayerInfo player, FarmingRunsConfig config)
+		ItemStore items, PlayerInfo player, FarmingRunsConfig config, FairyRingRoute fairyRings)
 	{
+		this.fairyRings = fairyRings;
 		this.client = client;
 		this.data = data;
 		this.session = session;
@@ -89,8 +93,9 @@ public class ReminderOverlay extends Overlay
 			// Before setting off: where to and how. Once you've teleported, Shortest Path shows the rest.
 			if (!legs.hasLeft())
 			{
-				draw(graphics, me, Reminder.travel(data.location(stop.getLocationId()).getName(),
-					run.getTeleports().get(stop.getLocationId())));
+				TeleportChoice teleport = run.getTeleports().get(stop.getLocationId());
+				draw(graphics, me, Reminder.travel(data.location(stop.getLocationId()).getName(), teleport,
+					fairyRings.viaHouse(teleport)));
 			}
 			return null;
 		}

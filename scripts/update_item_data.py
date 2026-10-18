@@ -75,6 +75,7 @@ def main() -> None:
     parser.add_argument("--shortest-path", help="Shortest Path jar or teleportation_items.tsv (default: installed jar)")
     args = parser.parse_args()
     sp_table = sp_teleports.read_table(args.shortest_path)
+    ring_tiles = sp_teleports.fairy_ring_tiles(sp_teleports.read_table(args.shortest_path, sp_teleports.FAIRY_RINGS))
     teleports_in = json.loads((SCRIPTS / "teleports.in.json").read_text(encoding="utf-8"))["teleports"]
     items_in = json.loads((SCRIPTS / "items.in.json").read_text(encoding="utf-8"))
 
@@ -99,11 +100,15 @@ def main() -> None:
         where = f"teleport {t['id']}"
         out = {"id": t["id"], "name": t["name"], "group": t["group"], "type": t["type"]}
         destinations = t.get("destinations", [])
-        if destinations == FAIRY_RING_CODES:
+        is_rings = destinations == FAIRY_RING_CODES
+        if is_rings:
             destinations = fairy_ring_codes()
         resolved = []
         for d in destinations:
             entry = {"id": d["id"], "name": d["name"]}
+            if is_rings and d["id"] in ring_tiles:
+                # Where the ring stands (from Shortest Path), to tell when you're next to one.
+                entry["landing"] = ring_tiles[d["id"]]
             if "detail" in d:
                 entry["detail"] = d["detail"]
             if "items" in d:

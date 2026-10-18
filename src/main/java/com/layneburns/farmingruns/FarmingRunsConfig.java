@@ -111,6 +111,18 @@ public interface FarmingRunsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "houseFairyRing",
+		name = "Fairy rings from your house",
+		description = "Your house has a fairy ring: a fairy ring leg starts with a teleport home (the overhead line"
+			+ " says so) instead of Shortest Path's way to the nearest ring.",
+		position = 10
+	)
+	default boolean houseFairyRing()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "pathCarriedOnly",
 		name = "Paths use only what you carry",
 		description = "Shortest Path's route to each stop uses only the teleport items you carry and no trips to the"

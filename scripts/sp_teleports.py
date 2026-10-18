@@ -14,6 +14,7 @@ import zipfile
 from pathlib import Path
 
 TSV = "transports/teleportation_items.tsv"
+FAIRY_RINGS = "transports/fairy_rings.tsv"
 GROUP = "More items (from Shortest Path)"
 # Each use takes the item itself, not a charge.
 USED_UP = re.compile(r"(tablet|teleport|sphere|basalt|scroll)\b", re.IGNORECASE)
@@ -21,8 +22,8 @@ USED_UP = re.compile(r"(tablet|teleport|sphere|basalt|scroll)\b", re.IGNORECASE)
 GENERIC = {"teleport", ""}
 
 
-def read_table(path=None):
-    """The TSV's text: from a given .tsv or .jar, or the newest installed Shortest Path jar."""
+def read_table(path=None, entry=TSV):
+    """A table's text: from a given .tsv or .jar, or the newest installed Shortest Path jar."""
     if path is None:
         jars = sorted((Path.home() / ".runelite" / "plugins").glob("shortest-path_*.jar"),
                       key=lambda p: p.stat().st_mtime)
@@ -32,8 +33,20 @@ def read_table(path=None):
     path = Path(path)
     if path.suffix == ".jar":
         with zipfile.ZipFile(path) as jar:
-            return jar.read(TSV).decode("utf-8")
+            return jar.read(entry).decode("utf-8")
     return path.read_text(encoding="utf-8")
+
+
+def fairy_ring_tiles(table_text):
+    """Each fairy ring's code ("aiq") to where it stands, [x, y, plane]."""
+    tiles = {}
+    for row in csv.reader(io.StringIO(table_text), delimiter="	"):
+        if not row or row[0].startswith("#") or len(row) < 8:
+            continue
+        code = row[7].replace(" ", "").lower()
+        if len(code) == 3 and row[1].strip():
+            tiles[code] = [int(v) for v in row[1].split()]
+    return tiles
 
 
 def slug(text):

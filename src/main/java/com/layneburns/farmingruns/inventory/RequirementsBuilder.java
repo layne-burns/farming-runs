@@ -333,7 +333,7 @@ public final class RequirementsBuilder
 					}
 					break;
 				case HOUSE:
-					addHouseAccess(list, choice, data.getItems(), facts, ledger,
+					addHouseAccess(list, choice, data.getItems(), ledger,
 						choice.displayName() + " (" + location.getName() + ")");
 					break;
 				case FAIRY_RING:
@@ -355,26 +355,19 @@ public final class RequirementsBuilder
 	 * any, else the spell's runes on the standard spellbook, else tablets (missing).
 	 */
 	private static void addHouseAccess(RequirementList list, TeleportChoice choice, ItemCatalog items,
-		PlayerFacts facts, ItemLedger ledger, String use)
+		ItemLedger ledger, String use)
 	{
+		// House tablets are never taken on a run: the cape, else the spell.
 		Set<Integer> cape = items.group("construction_cape");
-		Set<Integer> tablets = items.group("house_tablet");
 		if (ledger.countAny(cape) > 0)
 		{
 			list.add("Construction cape", cape, 1, Importance.NEED, false, use, false);
+			return;
 		}
-		else if (ledger.countAny(tablets) == 0 && TeleportPicker.usableSpell(choice.getMethod(), facts)
-			&& TeleportPicker.hasRunes(choice.getMethod(), ledger))
+		for (ItemAmount rune : choice.getMethod().getRunes())
 		{
-			for (ItemAmount rune : choice.getMethod().getRunes())
-			{
-				list.add(rune.getName(), Set.of(rune.getItemId()), rune.getAmount(), Importance.NEED, false,
-					"Teleport to House: " + use, true);
-			}
-		}
-		else
-		{
-			list.add("Teleport to house tablet", tablets, 1, Importance.NEED, false, use, true);
+			list.add(rune.getName(), Set.of(rune.getItemId()), rune.getAmount(), Importance.NEED, false,
+				"Teleport to House: " + use, true);
 		}
 	}
 

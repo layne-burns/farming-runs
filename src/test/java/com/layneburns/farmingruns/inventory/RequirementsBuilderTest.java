@@ -181,25 +181,28 @@ public class RequirementsBuilderTest
 	}
 
 	@Test
-	public void aHousePortalNeedsACapeOrATabletPerUse()
+	public void aHousePortalNeedsACapeOrTheSpellNeverTablets()
 	{
 		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.HERB));
 		PlantingPlan weiss = plan(data.seedByItem(RANARR), "weiss.herb");
-		Map<String, List<String>> refs = Map.of("weiss", List.of("house_portal:weiss", "icy_basalt"));
+		Map<String, List<String>> refs = Map.of("weiss", List.of("house_portal:weiss"));
 		int tablet = data.getItems().group("house_tablet").iterator().next();
 		int cape = data.getItems().group("construction_cape").iterator().next();
 
+		// Tablets aren't for runs: without a cape it's the spell's runes, even with tablets in the bank.
 		ItemLedger tablets = TeleportPickerTest.ledger(ItemSource.BANK, Map.of(tablet, 10));
 		RunRequirements withTablets = RequirementsBuilder.build(setup, weiss, refs, data, NORMAL_BOOK, tablets,
 			p -> true, false);
-		assertEquals("house_portal:weiss", withTablets.getTeleports().get("weiss").getRef());
-		assertEquals(1, find(withTablets, tablet).getAmount());
+		assertNull(find(withTablets, tablet));
+		int law = data.teleport("house_portal").getRunes().get(0).getItemId();
+		assertNotNull(find(withTablets, law));
 
 		ItemLedger capeToo = tablets.with(ItemSource.EQUIPMENT, new StorageSnapshot(Map.of(cape, 1), 1));
 		RunRequirements withCape = RequirementsBuilder.build(setup, weiss, refs, data, NORMAL_BOOK, capeToo,
 			p -> true, false);
 		assertNotNull(find(withCape, cape));
 		assertNull(find(withCape, tablet));
+		assertNull(find(withCape, law));
 	}
 
 	@Test
