@@ -47,4 +47,13 @@ public class ReminderTest
 		assertNull(Reminder.next(stop, progress, CompostChoice.SUPERCOMPOST, Set.of("catherby.allotment_north"),
 			a -> true, List.of()));
 	}
+
+	@Test
+	public void onTheWaySaysWhereAndHow()
+	{
+		GameData data = new DataLoader(new Gson()).load();
+		assertEquals("Next: Weiss · House portal → Weiss",
+			Reminder.travel("Weiss", data.teleportChoice("house_portal:weiss")));
+		assertEquals("Next: Lumbridge hops · walk", Reminder.travel("Lumbridge hops", null));
+	}
 }

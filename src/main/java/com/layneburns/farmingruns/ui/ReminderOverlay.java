@@ -34,8 +34,8 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayUtil;
 
 /**
- * During a run, shows the next thing to do at the current stop above your head ({@link Reminder}), only while you're
- * there. Seen by you alone. Can be switched off, and its colour changed, in the settings.
+ * During a run, shows above your head the next thing to do at the current stop ({@link Reminder}) while you're
+ * there, and where you're going next and how while you're not. Seen by you alone. Can be switched off, and its colour changed, in the settings.
  */
 @Singleton
 public class ReminderOverlay extends Overlay
@@ -76,8 +76,15 @@ public class ReminderOverlay extends Overlay
 			return null;
 		}
 		RunProgress.Stop stop = run.getProgress().currentStop();
-		if (stop == null || !isAt(stop, me.getWorldLocation().getRegionID()))
+		if (stop == null)
 		{
+			return null;
+		}
+		if (!isAt(stop, me.getWorldLocation().getRegionID()))
+		{
+			// On the way: where to and how.
+			draw(graphics, me, Reminder.travel(data.location(stop.getLocationId()).getName(),
+				run.getTeleports().get(stop.getLocationId())));
 			return null;
 		}
 		Set<String> composted = stop.getPatches().stream().map(a -> a.getPatch().getId())
@@ -86,17 +93,21 @@ public class ReminderOverlay extends Overlay
 			(PlantingPlan.Assignment a) -> Protection.shouldPay(a, run.getSetup(), data, player.getFacts()),
 			LeprechaunNeeds.atStop(stop, run.getProgress(), run.getSetup().getCompost(), composted, data.getItems(),
 				items.ledger()));
-		if (text == null)
+		if (text != null)
 		{
-			return null;
+			draw(graphics, me, text);
 		}
+		return null;
+	}
+
+	private void draw(Graphics2D graphics, Player me, String text)
+	{
 		graphics.setFont(FontManager.getRunescapeBoldFont());
 		Point at = me.getCanvasTextLocation(graphics, text, me.getLogicalHeight() + HEIGHT_ABOVE);
 		if (at != null)
 		{
 			OverlayUtil.renderTextLocation(graphics, at, text, config.reminderColour());
 		}
-		return null;
 	}
 
 	private boolean isAt(RunProgress.Stop stop, int region)

@@ -8,6 +8,8 @@ package com.layneburns.farmingruns.run;
 
 import com.layneburns.farmingruns.data.ItemAmount;
 import com.layneburns.farmingruns.data.Seed;
+import com.layneburns.farmingruns.data.TeleportChoice;
+import com.layneburns.farmingruns.data.TeleportType;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -88,6 +90,16 @@ public final class Reminder
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Away from the current stop: where you're going and how, e.g. "Next: Weiss · House portal → Weiss" or
+	 * "Next: Lumbridge hops · walk".
+	 */
+	public static String travel(String locationName, @Nullable TeleportChoice teleport)
+	{
+		boolean walk = teleport == null || teleport.getMethod().getType() == TeleportType.WALK;
+		return "Next: " + locationName + " · " + (walk ? "walk" : teleport.displayName());
 	}
 
 	/** "8 × Mushroom" for each item, for the payment wording. */
