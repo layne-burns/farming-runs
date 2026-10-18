@@ -58,6 +58,10 @@ public final class Reminder
 			{
 				return "Harvest and clear the " + kind + " patch";
 			}
+			if (!worked && progress.hasHarvestFirst(id) && !progress.isHarvested(id))
+			{
+				return "Harvest the " + kind + " patch";
+			}
 			if (!worked)
 			{
 				boolean needsCompost = compost != CompostChoice.NONE && !composted.contains(id);

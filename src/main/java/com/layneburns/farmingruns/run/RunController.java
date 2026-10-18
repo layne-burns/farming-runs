@@ -13,8 +13,12 @@ import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.data.TeleportChoice;
 import com.layneburns.farmingruns.data.TeleportType;
 import com.layneburns.farmingruns.pathing.ShortestPathClient;
+import com.layneburns.farmingruns.state.PatchStates;
+import com.layneburns.farmingruns.state.PatchStatus;
 import com.layneburns.farmingruns.state.PlayerInfo;
+import com.layneburns.farmingruns.vendor.timetracking.PatchState;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -55,14 +59,18 @@ public class RunController
 	private final FarmingRunsConfig config;
 	private final PlayerInfo player;
 	private final GuidanceTracker guidance;
+	private final PatchStates states;
+	/** Each run patch's last reading in the region you're in, to tick patches on changes. Client thread. */
+	private final Map<String, PatchState> seen = new HashMap<>();
 	/** The region you were in last tick, to notice arriving somewhere. */
 	private int lastRegion = -1;
 
 	@Inject
 	RunController(Client client, ClientThread clientThread, GameData data, RunSession session,
 		ShortestPathClient shortestPath, FarmingRunsConfig config,
-		PlayerInfo player, GuidanceTracker guidance)
+		PlayerInfo player, GuidanceTracker guidance, PatchStates states)
 	{
+		this.states = states;
 		this.guidance = guidance;
 		this.client = client;
 		this.clientThread = clientThread;
@@ -89,7 +97,7 @@ public class RunController
 			order.forEach(id -> stops.add(new RunProgress.Stop(id, List.copyOf(byLocation.get(id)))));
 			log.debug("[farmrun] route from {}: {}", here, order);
 			session.start(new RunSession.ActiveRun(setup, plan, teleports, System.currentTimeMillis(),
-				RunProgress.start(stops, payFor(setup, plan), compostFor(setup, plan))));
+				RunProgress.start(stops, payFor(setup, plan), compostFor(setup, plan), harvestFirst(plan))));
 			checkPatchesHere();
 			point();
 		});
@@ -119,6 +127,12 @@ public class RunController
 	public void markWorked(String patchId)
 	{
 		clientThread.invoke(() -> session.update(p -> p.markWorked(patchId)));
+	}
+
+	/** You harvested a patch's crop (or chose not to). Any thread. */
+	public void markHarvested(String patchId)
+	{
+		clientThread.invoke(() -> session.update(p -> p.markHarvested(patchId)));
 	}
 
 	/** You composted a patch, or chose not to. Any thread. */
@@ -157,7 +171,7 @@ public class RunController
 			{
 				if (a.getPatch().getVarbitId() == event.getVarbitId())
 				{
-					check(a);
+					check(a, false);
 				}
 			}
 		}
@@ -193,30 +207,58 @@ public class RunController
 		}
 	}
 
-	/** Reads every run patch in the region you're in. */
+	/**
+	 * Arrived somewhere: notes how each run patch here looks now, as the starting point for changes. Nothing is ticked
+	 * from this first look, because nearby patches share varbits and the game may still be sending the last place's
+	 * value (Lumbridge hops read as planted from the Champions' Guild bush just planted).
+	 */
 	private void checkPatchesHere()
 	{
 		RunSession.ActiveRun run = session.active();
+		seen.clear();
 		if (run == null)
 		{
 			return;
 		}
-		run.getProgress().getStops().forEach(stop -> stop.getPatches().forEach(this::check));
+		run.getProgress().getStops().forEach(stop -> stop.getPatches().forEach(a -> check(a, true)));
 	}
 
-	/** Marks a patch done if you're in its region and its varbit says so. */
-	private void check(PlantingPlan.Assignment a)
+	/**
+	 * Reads a patch you're in the region of. A change from the last reading ticks it: harvested (it was grown and
+	 * isn't), and done (planted, picked bare or cleared) when it wasn't before.
+	 */
+	private void check(PlantingPlan.Assignment a, boolean firstLook)
 	{
 		Patch patch = a.getPatch();
 		if (!isHere(patch))
 		{
 			return;
 		}
-		int value = client.getVarbitValue(patch.getVarbitId());
-		if (PatchProgress.isDone(a, patch.getKind().forVarbitValue(value)))
+		PatchState now = patch.getKind().forVarbitValue(client.getVarbitValue(patch.getVarbitId()));
+		PatchState before = seen.put(patch.getId(), now);
+		if (firstLook || before == null)
+		{
+			return;
+		}
+		if (PatchProgress.harvested(before, now))
+		{
+			session.update(p -> p.markHarvested(patch.getId()));
+		}
+		if (!PatchProgress.isDone(a, before) && PatchProgress.isDone(a, now))
 		{
 			session.update(p -> p.markWorked(patch.getId()));
 		}
+	}
+
+	/** Patches with a grown crop to harvest before planting (Time Tracking says ready), not trees or kept plants. */
+	private Set<String> harvestFirst(PlantingPlan plan)
+	{
+		long now = System.currentTimeMillis() / 1000;
+		return plan.getAssignments().stream()
+			.filter(a -> a.getSeed() != null && !a.getSeed().isPlantedAsSapling() && !a.isKeptStanding())
+			.filter(a -> states.status(a.getPatch(), now).getReadiness() == PatchStatus.Readiness.READY)
+			.map(a -> a.getPatch().getId())
+			.collect(Collectors.toSet());
 	}
 
 	/** Points Shortest Path at the current stop, or clears it and says so when the run is finished. */

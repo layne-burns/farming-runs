@@ -11,15 +11,17 @@ import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import lombok.Value;
+import lombok.With;
 
 /**
  * Where a run is up to (SPEC §2.5–2.6): its stops in order, which patches are worked (planted, picked or cleared,
- * as their varbits show), which still wait for compost or the gardener's payment, which stops you skipped, and the
- * current stop. A patch is done when it's worked, composted and paid for (where it's to be). When every patch at the current stop
- * is done it moves on by itself to the next stop that isn't done or skipped. Immutable: each change returns a new
- * one. Pure: unit tested.
+ * as their varbits show), which still wait for compost or the gardener's payment, which had a grown crop to harvest
+ * first and whether it has been, which stops you skipped, and the current stop. A patch is done when it's worked,
+ * composted and paid for (where it's to be). When every patch at the current stop is done it moves on by itself to
+ * the next stop that isn't done or skipped. Immutable: each change returns a new one. Pure: unit tested.
  */
 @Value
+@With
 public class RunProgress
 {
 	/** A location to visit and its patches in this run. */
@@ -40,28 +42,32 @@ public class RunProgress
 	Set<String> awaitingPayment;
 	/** Patches to be composted that the game hasn't said were treated yet. */
 	Set<String> awaitingCompost;
+	/** Patches with a grown crop to harvest before replanting, when the run started. */
+	Set<String> harvestFirst;
+	/** Of those, the ones harvested so far. */
+	Set<String> harvested;
 	Set<String> skippedStops;
 	/** Index into {@link #stops}, or {@link #FINISHED}. */
 	int current;
 
-	/** A fresh run with nothing to pay for or compost. */
+	/** A fresh run with nothing to pay for, compost or harvest first. */
 	public static RunProgress start(List<Stop> stops)
 	{
-		return start(stops, Set.of(), Set.of());
+		return start(stops, Set.of(), Set.of(), Set.of());
 	}
 
 	/**
 	 * A fresh run at its first stop (moving past any stop that's already done).
 	 *
-	 * @param payFor     patch ids whose crop the gardener is to be paid to protect
-	 * @param compostFor patch ids to be treated with compost (none for Fertile Soil, which can't be seen)
+	 * @param payFor       patch ids whose crop the gardener is to be paid to protect
+	 * @param compostFor   patch ids to be treated with compost (none for Fertile Soil, which can't be seen)
+	 * @param harvestFirst patch ids with a grown crop to harvest before planting
 	 */
-	public static RunProgress start(List<Stop> stops, Set<String> payFor, Set<String> compostFor)
+	public static RunProgress start(List<Stop> stops, Set<String> payFor, Set<String> compostFor,
+		Set<String> harvestFirst)
 	{
-		RunProgress progress = new RunProgress(List.copyOf(stops), Set.of(), Set.copyOf(payFor), Set.copyOf(compostFor),
-			Set.of(),
-			stops.isEmpty() ? FINISHED : 0);
-		return settle(progress);
+		return settle(new RunProgress(List.copyOf(stops), Set.of(), Set.copyOf(payFor), Set.copyOf(compostFor),
+			Set.copyOf(harvestFirst), Set.of(), Set.of(), stops.isEmpty() ? FINISHED : 0));
 	}
 
 	@Nullable
@@ -92,22 +98,21 @@ public class RunProgress
 		return awaitingCompost.contains(patchId);
 	}
 
-	/** The game says a patch was treated with compost; moves on if that finishes the current stop. */
-	public RunProgress markComposted(String patchId)
-	{
-		if (!awaitingCompost.contains(patchId))
-		{
-			return this;
-		}
-		Set<String> awaiting = new HashSet<>(awaitingCompost);
-		awaiting.remove(patchId);
-		return settle(new RunProgress(stops, workedPatches, awaitingPayment, Set.copyOf(awaiting), skippedStops,
-			current));
-	}
-
 	public boolean isAwaitingPayment(String patchId)
 	{
 		return awaitingPayment.contains(patchId);
+	}
+
+	/** The patch had a grown crop when the run started. */
+	public boolean hasHarvestFirst(String patchId)
+	{
+		return harvestFirst.contains(patchId);
+	}
+
+	/** Its grown crop has been harvested (or it has been replanted, which means the same). */
+	public boolean isHarvested(String patchId)
+	{
+		return harvested.contains(patchId) || workedPatches.contains(patchId);
 	}
 
 	public boolean isSkipped(Stop stop)
@@ -124,33 +129,31 @@ public class RunProgress
 	/** A patch's varbit shows the work done; moves on if that finishes the current stop. */
 	public RunProgress markWorked(String patchId)
 	{
-		if (workedPatches.contains(patchId))
-		{
-			return this;
-		}
-		Set<String> worked = new HashSet<>(workedPatches);
-		worked.add(patchId);
-		return settle(new RunProgress(stops, Set.copyOf(worked), awaitingPayment, awaitingCompost, skippedStops, current));
+		return workedPatches.contains(patchId) ? this : settle(withWorkedPatches(plus(workedPatches, patchId)));
+	}
+
+	/** The game says a patch was treated with compost; moves on if that finishes the current stop. */
+	public RunProgress markComposted(String patchId)
+	{
+		return awaitingCompost.contains(patchId) ? settle(withAwaitingCompost(minus(awaitingCompost, patchId))) : this;
 	}
 
 	/** A patch's payment has been seen; moves on if that finishes the current stop. */
 	public RunProgress markPaid(String patchId)
 	{
-		if (!awaitingPayment.contains(patchId))
-		{
-			return this;
-		}
-		Set<String> awaiting = new HashSet<>(awaitingPayment);
-		awaiting.remove(patchId);
-		return settle(new RunProgress(stops, workedPatches, Set.copyOf(awaiting), awaitingCompost, skippedStops, current));
+		return awaitingPayment.contains(patchId) ? settle(withAwaitingPayment(minus(awaitingPayment, patchId))) : this;
+	}
+
+	/** A patch's grown crop has been harvested. */
+	public RunProgress markHarvested(String patchId)
+	{
+		return harvested.contains(patchId) ? this : withHarvested(plus(harvested, patchId));
 	}
 
 	/** Leaves a stop out; moves on if it was the current one. */
 	public RunProgress skip(String locationId)
 	{
-		Set<String> skipped = new HashSet<>(skippedStops);
-		skipped.add(locationId);
-		RunProgress next = new RunProgress(stops, workedPatches, awaitingPayment, awaitingCompost, Set.copyOf(skipped), current);
+		RunProgress next = withSkippedStops(plus(skippedStops, locationId));
 		Stop at = currentStop();
 		return at != null && at.getLocationId().equals(locationId) ? next.advanced() : next;
 	}
@@ -162,9 +165,7 @@ public class RunProgress
 		{
 			if (stops.get(i).getLocationId().equals(locationId))
 			{
-				Set<String> skipped = new HashSet<>(skippedStops);
-				skipped.remove(locationId);
-				return new RunProgress(stops, workedPatches, awaitingPayment, awaitingCompost, Set.copyOf(skipped), i);
+				return withSkippedStops(minus(skippedStops, locationId)).withCurrent(i);
 			}
 		}
 		return this;
@@ -187,9 +188,23 @@ public class RunProgress
 			Stop stop = stops.get(i);
 			if (!isDone(stop) && !isSkipped(stop))
 			{
-				return new RunProgress(stops, workedPatches, awaitingPayment, awaitingCompost, skippedStops, i);
+				return withCurrent(i);
 			}
 		}
-		return new RunProgress(stops, workedPatches, awaitingPayment, awaitingCompost, skippedStops, FINISHED);
+		return withCurrent(FINISHED);
+	}
+
+	private static Set<String> plus(Set<String> set, String id)
+	{
+		Set<String> copy = new HashSet<>(set);
+		copy.add(id);
+		return Set.copyOf(copy);
+	}
+
+	private static Set<String> minus(Set<String> set, String id)
+	{
+		Set<String> copy = new HashSet<>(set);
+		copy.remove(id);
+		return Set.copyOf(copy);
 	}
 }

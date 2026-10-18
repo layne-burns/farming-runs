@@ -201,6 +201,12 @@ public class LiveTab extends TabPanel
 					}
 
 					@Override
+					public void markHarvested(String patchId)
+					{
+						controller.markHarvested(patchId);
+					}
+
+					@Override
 					public void markPaid(String patchId)
 					{
 						controller.markPaid(patchId);

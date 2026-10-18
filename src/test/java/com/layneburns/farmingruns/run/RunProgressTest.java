@@ -80,7 +80,7 @@ public class RunProgressTest
 	public void aPaidPatchWaitsForItsPayment()
 	{
 		RunProgress progress = RunProgress.start(List.of(stop("catherby", "catherby.allotment_north"),
-			stop("falador", "falador.herb")), Set.of("catherby.allotment_north"), Set.of());
+			stop("falador", "falador.herb")), Set.of("catherby.allotment_north"), Set.of(), Set.of());
 		progress = progress.markWorked("catherby.allotment_north");
 		assertEquals("catherby", progress.currentStop().getLocationId());
 		assertTrue(progress.isAwaitingPayment("catherby.allotment_north"));
@@ -93,12 +93,12 @@ public class RunProgressTest
 	{
 		List<RunProgress.Stop> stops = List.of(stop("catherby", "catherby.herb"), stop("falador", "falador.herb"));
 		// Compost chosen: planted isn't enough until the game says it was treated.
-		RunProgress composting = RunProgress.start(stops, Set.of(), Set.of("catherby.herb"))
+		RunProgress composting = RunProgress.start(stops, Set.of(), Set.of("catherby.herb"), Set.of())
 			.markWorked("catherby.herb");
 		assertEquals("catherby", composting.currentStop().getLocationId());
 		assertEquals("falador", composting.markComposted("catherby.herb").currentStop().getLocationId());
 		// No compost: planting finishes it.
-		RunProgress none = RunProgress.start(stops, Set.of(), Set.of()).markWorked("catherby.herb");
+		RunProgress none = RunProgress.start(stops, Set.of(), Set.of(), Set.of()).markWorked("catherby.herb");
 		assertEquals("falador", none.currentStop().getLocationId());
 	}
 
@@ -109,7 +109,7 @@ public class RunProgressTest
 		PlantingPlan.Assignment north = new PlantingPlan.Assignment(data.patch("catherby.allotment_north"), watermelon,
 			false);
 		RunProgress.Stop catherby = new RunProgress.Stop("catherby", List.of(north));
-		RunProgress progress = RunProgress.start(List.of(catherby), Set.of("catherby.allotment_north"), Set.of());
+		RunProgress progress = RunProgress.start(List.of(catherby), Set.of("catherby.allotment_north"), Set.of(), Set.of());
 		Set<Integer> supercompost = data.getItems().group("supercompost");
 		int payment = watermelon.getPayment().get(0).getItemId();
 
@@ -131,6 +131,24 @@ public class RunProgressTest
 		progress = progress.markPaid("catherby.allotment_north");
 		assertEquals(RunGuidance.NONE, RunGuidance.at(progress.currentStop(), progress, CompostChoice.SUPERCOMPOST,
 			Set.of("catherby.allotment_north"), data.getItems()));
+	}
+
+	@Test
+	public void aGrownPatchIsHarvestedThenPlanted()
+	{
+		RunProgress progress = RunProgress.start(List.of(stop("catherby", "catherby.herb")), Set.of(), Set.of(),
+			Set.of("catherby.herb"));
+		assertTrue(progress.hasHarvestFirst("catherby.herb"));
+		assertFalse(progress.isHarvested("catherby.herb"));
+		assertTrue(progress.markHarvested("catherby.herb").isHarvested("catherby.herb"));
+		// Planting means it was harvested too.
+		assertTrue(progress.markWorked("catherby.herb").isHarvested("catherby.herb"));
+
+		// The state changing from grown to anything else is a harvest; staying grown isn't.
+		PatchState grown = new PatchState(Produce.RANARR, CropState.HARVESTABLE, 3);
+		assertTrue(PatchProgress.harvested(grown, new PatchState(Produce.WEEDS, CropState.GROWING, 3)));
+		assertFalse(PatchProgress.harvested(grown, new PatchState(Produce.RANARR, CropState.HARVESTABLE, 2)));
+		assertFalse(PatchProgress.harvested(null, grown));
 	}
 
 	@Test

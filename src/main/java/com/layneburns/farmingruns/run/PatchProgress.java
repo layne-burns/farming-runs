@@ -21,12 +21,20 @@ public final class PatchProgress
 	{
 	}
 
+	/** The patch was grown and now isn't: its crop has been harvested (or cleared). */
+	public static boolean harvested(@Nullable PatchState before, @Nullable PatchState after)
+	{
+		return before != null && after != null && before.getCropState() == CropState.HARVESTABLE
+			&& after.getCropState() != CropState.HARVESTABLE;
+	}
+
 	/**
 	 * <ul>
 	 * <li>A seed to plant: something is growing there, freshly planted (stage 0).</li>
 	 * <li>A tree kept standing: its crop has all been picked (harvestable, none left).</li>
 	 * <li>Nothing to plant: the patch has been cleared, or something was planted anyway.</li>
 	 * </ul>
+	 * The run only ticks a patch when its state changes to done while you're there, not from a first look.
 	 */
 	public static boolean isDone(PlantingPlan.Assignment assignment, @Nullable PatchState state)
 	{

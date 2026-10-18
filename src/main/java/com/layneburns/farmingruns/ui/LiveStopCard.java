@@ -44,6 +44,8 @@ final class LiveStopCard
 
 		void markComposted(String patchId);
 
+		void markHarvested(String patchId);
+
 		void markPaid(String patchId);
 	}
 
@@ -83,6 +85,10 @@ final class LiveStopCard
 			{
 				card.add(step("Harvest and clear (nothing to plant)", worked, () -> facts.markWorked(id)));
 				continue;
+			}
+			if (progress.hasHarvestFirst(id))
+			{
+				card.add(step("Harvest", progress.isHarvested(id), () -> facts.markHarvested(id)));
 			}
 			if (compost == CompostChoice.FERTILE_SOIL)
 			{
