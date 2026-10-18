@@ -57,6 +57,19 @@ public final class PresetCombiner
 	}
 
 	/**
+	 * A preset (or combination) applied over your current setup: it sets the run types, skips and compost, and the
+	 * plans for the patch kinds it covers; every other kind keeps the plan you had (a fruit tree routine and its keep
+	 * ticks survive switching to a herb preset and back).
+	 */
+	public static RunSetup applyOver(RunSetup current, RunSetup preset)
+	{
+		Map<PatchImplementation, KindPlan> kinds = new EnumMap<>(PatchImplementation.class);
+		kinds.putAll(current.getKinds());
+		kinds.putAll(preset.getKinds());
+		return preset.withKinds(Map.copyOf(kinds));
+	}
+
+	/**
 	 * One kind across presets: the presets that chose crops each get an equal share of the patches, split inside
 	 * that share by their own weights. Exact counts are kept as they are. Pay if any preset pays; harvest unless
 	 * every preset skips it; grow saplings from seed if any preset does; replace on a harvest run what any replaces. The tree routine, fill order and amulet choice come from the first preset that set this

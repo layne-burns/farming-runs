@@ -355,7 +355,7 @@ public class RunTab extends TabPanel
 			refresh();
 			return;
 		}
-		setups.setCurrent(PresetCombiner.combine(chosen));
+		setups.setCurrent(PresetCombiner.applyOver(setups.current(), PresetCombiner.combine(chosen)));
 	}
 
 	/** The setup for a ticked key: a goal turned into a setup, or a saved preset; null if it's gone. */

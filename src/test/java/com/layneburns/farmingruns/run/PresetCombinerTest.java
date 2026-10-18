@@ -76,4 +76,18 @@ public class PresetCombinerTest
 		assertTrue(combined.kindPlan(PatchImplementation.TREE).isAuto());
 		assertTrue(combined.kindPlan(PatchImplementation.TREE).isPay());
 	}
+
+	@Test
+	public void applyingAPresetKeepsYourPlansForKindsItDoesntCover()
+	{
+		KindPlan pickOnly = KindPlan.AUTO.withTreeRoutine(TreeRoutine.LEAVE_STANDING);
+		RunSetup current = RunSetup.EMPTY.withRunTypes(Set.of(RunType.FRUIT_TREE))
+			.withKindPlan(PatchImplementation.FRUIT_TREE, pickOnly);
+		RunSetup herbs = RunSetup.EMPTY.withRunTypes(Set.of(RunType.HERB))
+			.withKindPlan(PatchImplementation.HERB, KindPlan.AUTO.withPay(true));
+		RunSetup applied = PresetCombiner.applyOver(current, herbs);
+		assertEquals(Set.of(RunType.HERB), applied.getRunTypes());
+		assertEquals(pickOnly, applied.kindPlan(PatchImplementation.FRUIT_TREE));
+		assertEquals(KindPlan.AUTO.withPay(true), applied.kindPlan(PatchImplementation.HERB));
+	}
 }
