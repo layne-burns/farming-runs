@@ -26,7 +26,7 @@ public class ReminderTest
 		PlantingPlan.Assignment north = new PlantingPlan.Assignment(data.patch("catherby.allotment_north"), watermelon,
 			false);
 		RunProgress.Stop stop = new RunProgress.Stop("catherby", List.of(north));
-		RunProgress progress = RunProgress.start(List.of(stop), Set.of("catherby.allotment_north"));
+		RunProgress progress = RunProgress.start(List.of(stop), Set.of("catherby.allotment_north"), Set.of());
 		String payment = watermelon.getPayment().get(0).getAmount() + " × " + watermelon.getPayment().get(0).getName();
 
 		assertEquals("Take from the leprechaun: 9 × Supercompost", Reminder.next(stop, progress,
@@ -39,6 +39,11 @@ public class ReminderTest
 		assertEquals("Pay the gardener: " + payment, Reminder.next(stop, progress, CompostChoice.SUPERCOMPOST,
 			Set.of("catherby.allotment_north"), a -> true, List.of()));
 		progress = progress.markPaid("catherby.allotment_north");
+		// Planted and paid but the stop still waits for compost (when compost is chosen).
+		RunProgress waiting = RunProgress.start(List.of(stop), Set.of(), Set.of("catherby.allotment_north"))
+			.markWorked("catherby.allotment_north");
+		assertEquals("Compost the allotment patch", Reminder.next(stop, waiting, CompostChoice.SUPERCOMPOST, Set.of(),
+			a -> false, List.of()));
 		assertNull(Reminder.next(stop, progress, CompostChoice.SUPERCOMPOST, Set.of("catherby.allotment_north"),
 			a -> true, List.of()));
 	}

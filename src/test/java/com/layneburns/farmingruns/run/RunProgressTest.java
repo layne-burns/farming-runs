@@ -80,12 +80,26 @@ public class RunProgressTest
 	public void aPaidPatchWaitsForItsPayment()
 	{
 		RunProgress progress = RunProgress.start(List.of(stop("catherby", "catherby.allotment_north"),
-			stop("falador", "falador.herb")), Set.of("catherby.allotment_north"));
+			stop("falador", "falador.herb")), Set.of("catherby.allotment_north"), Set.of());
 		progress = progress.markWorked("catherby.allotment_north");
 		assertEquals("catherby", progress.currentStop().getLocationId());
 		assertTrue(progress.isAwaitingPayment("catherby.allotment_north"));
 		progress = progress.markPaid("catherby.allotment_north");
 		assertEquals("falador", progress.currentStop().getLocationId());
+	}
+
+	@Test
+	public void aStopWaitsForCompostOnlyWhenCompostIsChosen()
+	{
+		List<RunProgress.Stop> stops = List.of(stop("catherby", "catherby.herb"), stop("falador", "falador.herb"));
+		// Compost chosen: planted isn't enough until the game says it was treated.
+		RunProgress composting = RunProgress.start(stops, Set.of(), Set.of("catherby.herb"))
+			.markWorked("catherby.herb");
+		assertEquals("catherby", composting.currentStop().getLocationId());
+		assertEquals("falador", composting.markComposted("catherby.herb").currentStop().getLocationId());
+		// No compost: planting finishes it.
+		RunProgress none = RunProgress.start(stops, Set.of(), Set.of()).markWorked("catherby.herb");
+		assertEquals("falador", none.currentStop().getLocationId());
 	}
 
 	@Test
@@ -95,7 +109,7 @@ public class RunProgressTest
 		PlantingPlan.Assignment north = new PlantingPlan.Assignment(data.patch("catherby.allotment_north"), watermelon,
 			false);
 		RunProgress.Stop catherby = new RunProgress.Stop("catherby", List.of(north));
-		RunProgress progress = RunProgress.start(List.of(catherby), Set.of("catherby.allotment_north"));
+		RunProgress progress = RunProgress.start(List.of(catherby), Set.of("catherby.allotment_north"), Set.of());
 		Set<Integer> supercompost = data.getItems().group("supercompost");
 		int payment = watermelon.getPayment().get(0).getItemId();
 

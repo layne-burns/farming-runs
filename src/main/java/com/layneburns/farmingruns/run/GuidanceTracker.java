@@ -176,6 +176,7 @@ public class GuidanceTracker
 				{
 					composted.add(a.getPatch().getId());
 					log.debug("[farmrun] composted {}", a.getPatch().getId());
+					session.update(p -> p.markComposted(a.getPatch().getId()));
 					listeners.forEach(Runnable::run);
 				});
 			return;

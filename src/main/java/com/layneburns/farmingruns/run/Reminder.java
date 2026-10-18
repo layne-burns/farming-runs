@@ -73,6 +73,11 @@ public final class Reminder
 				}
 				return Character.toUpperCase(plant.charAt(0)) + plant.substring(1);
 			}
+			if (progress.isAwaitingCompost(id) && !composted.contains(id))
+			{
+				// Planted first: the stop still waits for the compost.
+				return "Compost the " + kind + " patch";
+			}
 			if (pays.test(a) && progress.isAwaitingPayment(id))
 			{
 				return "Pay the gardener: " + amounts(seed.getPayment());

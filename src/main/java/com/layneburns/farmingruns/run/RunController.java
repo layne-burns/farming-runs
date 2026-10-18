@@ -86,7 +86,7 @@ public class RunController
 			order.forEach(id -> stops.add(new RunProgress.Stop(id, List.copyOf(byLocation.get(id)))));
 			log.debug("[farmrun] route from {}: {}", here, order);
 			session.start(new RunSession.ActiveRun(setup, plan, teleports, System.currentTimeMillis(),
-				RunProgress.start(stops, payFor(setup, plan))));
+				RunProgress.start(stops, payFor(setup, plan), compostFor(setup, plan))));
 			checkPatchesHere();
 			point();
 		});
@@ -236,6 +236,21 @@ public class RunController
 			}
 		}
 		return tiles.isEmpty() ? Set.of(data.location(stop.getLocationId()).getTarget()) : tiles;
+	}
+
+	/**
+	 * Patches to be treated with compost before the stop counts as done: those being planted, when the compost is one
+	 * the game reports ("You treat the ... with supercompost"). Fertile Soil can't be seen, so it never holds a stop up.
+	 */
+	private static Set<String> compostFor(RunSetup setup, PlantingPlan plan)
+	{
+		CompostChoice compost = setup.getCompost();
+		if (compost == CompostChoice.NONE || compost == CompostChoice.FERTILE_SOIL)
+		{
+			return Set.of();
+		}
+		return plan.getAssignments().stream().filter(a -> a.getSeed() != null).map(a -> a.getPatch().getId())
+			.collect(Collectors.toSet());
 	}
 
 	/** Patches the gardener is to be paid to protect ({@link Protection}). */
