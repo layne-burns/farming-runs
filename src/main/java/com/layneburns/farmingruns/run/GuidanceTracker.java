@@ -161,6 +161,12 @@ public class GuidanceTracker
 		String message = Text.removeTags(event.getMessage()).toLowerCase(Locale.ROOT);
 		// With debug logging on, every game message during a run, to tune what's matched here and in RunTracker.
 		log.debug("[chat] {}", message);
+		Player player = client.getLocalPlayer();
+		if (player == null || !regions(stop.getLocationId()).contains(player.getWorldLocation().getRegionID()))
+		{
+			// Composting or paying somewhere else (a patch you're not running): not this stop's.
+			return;
+		}
 		Matcher treated = TREATED.matcher(message);
 		if (treated.find())
 		{
