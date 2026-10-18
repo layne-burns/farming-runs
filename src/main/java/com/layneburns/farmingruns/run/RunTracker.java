@@ -17,8 +17,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -40,31 +38,31 @@ import net.runelite.client.util.Text;
 
 /**
  * Keeps score during a run: Farming XP gained since Start, the produce you gather, and the herbs you pick from each
- * patch (counted from the game's "You pick ..." messages, so a herb sack doesn't hide them). When the run finishes, or is stopped part way, it makes a {@link RunSummary}, adds it to your saved
+ * patch. Nothing is said per herb, so they're counted from the Farming XP picking gives (a set amount per herb), between
+ * "You begin to harvest the herb patch" and "The herb patch is now empty"; a herb sack doesn't hide them. When the run finishes, or is stopped part way, it makes a {@link RunSummary}, adds it to your saved
  * {@link RunStats} and keeps it for the Live tab. Client thread.
  */
 @Slf4j
 @Singleton
 public class RunTracker
 {
-	/** Every crop's produce item (herbs come out grimy), so other items you pick up aren't counted. */
+	/** Every crop's produce item (herbs come out grimy); not compost bins' compost, nor weeds. */
 	private static final Set<Integer> PRODUCE = Arrays.stream(Produce.values())
-		.filter(p -> p != Produce.WEEDS && p != Produce.SCARECROW)
+		.filter(p -> p != Produce.WEEDS && p != Produce.SCARECROW && p.getPatchImplementation() != null
+			&& p.getPatchImplementation() != PatchImplementation.COMPOST
+			&& p.getPatchImplementation() != PatchImplementation.BIG_COMPOST)
 		.map(Produce::getItemID)
 		.collect(Collectors.toUnmodifiableSet());
 
-	/** "You pick a grimy ranarr weed.", "You harvest some ...": what was picked. */
-	private static final Pattern PICKED = Pattern.compile("you (?:pick|harvest) (?:an? |some )?(.+?)\\.?$");
-	/** Herb names as Time Tracking has them ("ranarr", "snapdragon"), to tell herbs from other crops. */
-	private static final List<String> HERBS = Arrays.stream(Produce.values())
-		.filter(p -> p.getPatchImplementation() == PatchImplementation.HERB)
-		.map(p -> p.getName().toLowerCase(Locale.ROOT))
-		.collect(Collectors.toUnmodifiableList());
+	/** The game's messages around picking a herb patch; nothing is said per herb. */
+	private static final String HARVEST_BEGINS = "you begin to harvest the herb patch";
+	private static final String HARVEST_ENDS = "the herb patch is now empty";
 
 	private final Client client;
 	private final ItemManager itemManager;
 	private final RunSession session;
 	private final StatsStore stats;
+	private final RunPlanService planner;
 	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
 	/** The run being tracked (its start time), 0 for none; and the last one finished, so it isn't counted twice. */
@@ -81,14 +79,19 @@ public class RunTracker
 	private int herbsHere;
 	private String herbHere = "";
 	private int mostHerbs;
+	/** While a herb patch is being picked: the Farming XP when it began (-1 when not), and XP per herb and its name. */
+	private int herbXpStart = -1;
+	private double herbXp;
+	private String herbName = "";
 	private String mostHerbsName = "";
 	private Map<Integer, Integer> lastInventory = Map.of();
 	@Nullable
 	private volatile RunSummary lastSummary;
 
 	@Inject
-	RunTracker(Client client, ItemManager itemManager, RunSession session, StatsStore stats)
+	RunTracker(Client client, ItemManager itemManager, RunSession session, StatsStore stats, RunPlanService planner)
 	{
+		this.planner = planner;
 		this.client = client;
 		this.itemManager = itemManager;
 		this.session = session;
@@ -181,6 +184,7 @@ public class RunTracker
 		harvested.clear();
 		herbsHere = 0;
 		herbHere = "";
+		herbXpStart = -1;
 		mostHerbs = 0;
 		mostHerbsName = "";
 		lastInventory = inventory();
@@ -208,21 +212,50 @@ public class RunTracker
 		{
 			return;
 		}
-		Matcher picked = PICKED.matcher(Text.removeTags(event.getMessage()).toLowerCase(Locale.ROOT));
-		if (!picked.find())
+		String message = Text.removeTags(event.getMessage()).toLowerCase(Locale.ROOT);
+		if (message.startsWith(HARVEST_BEGINS) && herbXpStart < 0)
+		{
+			startHerbs();
+		}
+		else if (message.startsWith(HARVEST_ENDS) && herbXpStart >= 0)
+		{
+			int herbs = herbsFromXp(client.getSkillExperience(Skill.FARMING) - herbXpStart, herbXp);
+			log.debug("[farmrun] picked {} {}", herbs, herbName);
+			herbsHere = Math.max(herbsHere, herbs);
+			herbHere = herbName;
+			herbXpStart = -1;
+		}
+	}
+
+	/** Herbs picked, from the Farming XP the picking gave and the XP for one herb. */
+	static int herbsFromXp(int xp, double perHerb)
+	{
+		return perHerb <= 0 ? 0 : (int) Math.round(xp / perHerb);
+	}
+
+	/**
+	 * Picking a herb patch has begun (the message repeats if picking is interrupted; only the first counts): note the
+	 * XP and which herb it is, from Time Tracking's record of the patch at the current stop.
+	 */
+	private void startHerbs()
+	{
+		RunSession.ActiveRun run = session.active();
+		RunProgress.Stop stop = run == null ? null : run.getProgress().currentStop();
+		if (stop == null)
 		{
 			return;
 		}
-		String what = picked.group(1);
-		String herb = HERBS.stream().filter(what::contains).findFirst().orElse(null);
-		if (herb != null || what.contains("grimy") || what.equals("herb"))
-		{
-			herbsHere++;
-			if (herb != null)
+		stop.getPatches().stream()
+			.filter(a -> a.getPatch().getKind() == PatchImplementation.HERB)
+			.map(a -> planner.standing(a.getPatch()))
+			.filter(Objects::nonNull)
+			.findFirst()
+			.ifPresent(seed ->
 			{
-				herbHere = Character.toUpperCase(herb.charAt(0)) + herb.substring(1);
-			}
-		}
+				herbXpStart = client.getSkillExperience(Skill.FARMING);
+				herbXp = seed.getXp().getHarvest();
+				herbName = seed.getName().replaceFirst(" seed$", "");
+			});
 	}
 
 	private void finish(boolean completed)
