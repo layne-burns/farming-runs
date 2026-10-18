@@ -114,6 +114,20 @@ public class RequirementsBuilderTest
 	}
 
 	@Test
+	public void underwaterPatchesNeedDivingGear()
+	{
+		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.SEAWEED));
+		Seed spore = data.seedsFor(PatchImplementation.SEAWEED).get(0);
+		RunRequirements needs = build(setup, plan(spore, "fossil_island_seaweed.seaweed_north"));
+		assertEquals(Requirement.Importance.NEED,
+			find(needs, data.getItems().group("diving_apparatus").iterator().next()).getImportance());
+		assertNotNull(find(needs, data.getItems().group("fishbowl_helmet").iterator().next()));
+		// Not on dry land.
+		assertNull(find(build(RunSetup.EMPTY.withRunTypes(Set.of(RunType.HERB)),
+			plan(data.seedByItem(RANARR), "catherby.herb")), data.getItems().group("diving_apparatus").iterator().next()));
+	}
+
+	@Test
 	public void fruitTreesNeedPaymentAndCoinsToClear()
 	{
 		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.FRUIT_TREE))

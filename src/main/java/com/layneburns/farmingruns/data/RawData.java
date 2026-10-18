@@ -70,6 +70,8 @@ final class RawData
 		String unlock;
 		/** A rule that, once met, makes the location's patches disease-free (no payment needed). */
 		String diseaseFree;
+		/** Where Shortest Path should take you first when the patches can't be walked to (underwater). */
+		Tile approach;
 		String note;
 		Map<String, String> patchUnlocks;
 	}

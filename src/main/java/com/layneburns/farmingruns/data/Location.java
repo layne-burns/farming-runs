@@ -34,6 +34,12 @@ public class Location
 	/** Once this rule is met the patches here can't catch disease, so paying the gardener is pointless; null if never. */
 	@Nullable
 	String diseaseFreeRuleId;
+	/**
+	 * Where to head before you're there, when Shortest Path can't reach the patches themselves (they're underwater):
+	 * e.g. where you dive. Null to head for the patches.
+	 */
+	@Nullable
+	WorldPoint approach;
 	/** The wiki's suggested teleports, best first, shown as hints in the panel. */
 	List<String> wikiTeleports;
 }

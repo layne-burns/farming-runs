@@ -94,6 +94,12 @@
 		"herb_sack": [
 			13226,
 			24478
+		],
+		"diving_apparatus": [
+			7535
+		],
+		"fishbowl_helmet": [
+			7534
 		]
 	},
 	"descriptions": {
@@ -120,7 +126,9 @@
 		"house_tablet": "Teleports you into your house, for its portals (used up).",
 		"construction_cape": "Unlimited teleports into your house, for its portals.",
 		"rune_pouch": "Holds runes in one inventory slot; they count as carried.",
-		"herb_sack": "Picked herbs go straight in when it's open, so they don't fill your inventory."
+		"herb_sack": "Picked herbs go straight in when it's open, so they don't fill your inventory.",
+		"diving_apparatus": "Worn with a fishbowl helmet to breathe underwater (seaweed and coral patches).",
+		"fishbowl_helmet": "Worn with a diving apparatus to breathe underwater (seaweed and coral patches)."
 	},
 	"runes": {
 		"Air rune": 556,

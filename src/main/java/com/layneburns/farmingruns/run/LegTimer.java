@@ -20,12 +20,14 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.MenuAction;
 import net.runelite.api.NPC;
 import net.runelite.api.ObjectComposition;
 import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.client.eventbus.Subscribe;
@@ -226,6 +228,25 @@ public class LegTimer
 		{
 			leaveAt = System.currentTimeMillis() - CAST_MILLIS;
 			left = true;
+		}
+	}
+
+	/**
+	 * With debug logging on, what you type in chat during a run is logged with where you're standing, so you can mark
+	 * a spot for fixing later (e.g. "pgch" where a stop's path should end).
+	 */
+	@Subscribe
+	public void onChatMessage(ChatMessage event)
+	{
+		Player player = client.getLocalPlayer();
+		if (run == 0 || player == null || player.getName() == null || event.getType() == ChatMessageType.GAMEMESSAGE
+			|| event.getType() == ChatMessageType.SPAM)
+		{
+			return;
+		}
+		if (player.getName().equals(Text.removeTags(event.getName())))
+		{
+			log.debug("[mark] \"{}\" at {}", event.getMessage(), player.getWorldLocation());
 		}
 	}
 

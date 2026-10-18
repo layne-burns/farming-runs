@@ -24,7 +24,9 @@
 		"house_tablet": [{"page": "Teleport to house (tablet)"}],
 		"construction_cape": [{"page": "Construction cape"}],
 		"rune_pouch": [{"page": "Rune pouch"}, {"page": "Divine rune pouch"}],
-		"herb_sack": [{"page": "Herb sack"}]
+		"herb_sack": [{"page": "Herb sack"}],
+		"diving_apparatus": [{"page": "Diving apparatus"}],
+		"fishbowl_helmet": [{"page": "Fishbowl helmet"}]
 	},
 	"descriptions": {
 		"spade": "Harvests crops, digs up tree roots and clears dead plants.",
@@ -50,7 +52,9 @@
 		"house_tablet": "Teleports you into your house, for its portals (used up).",
 		"construction_cape": "Unlimited teleports into your house, for its portals.",
 		"rune_pouch": "Holds runes in one inventory slot; they count as carried.",
-		"herb_sack": "Picked herbs go straight in when it's open, so they don't fill your inventory."
+		"herb_sack": "Picked herbs go straight in when it's open, so they don't fill your inventory.",
+		"diving_apparatus": "Worn with a fishbowl helmet to breathe underwater (seaweed and coral patches).",
+		"fishbowl_helmet": "Worn with a diving apparatus to breathe underwater (seaweed and coral patches)."
 	},
 	"spells": {"fertile_soil": "Fertile Soil"},
 	"runes": ["Air rune", "Water rune", "Earth rune", "Fire rune", "Law rune", "Astral rune", "Nature rune", "Soul rune"]

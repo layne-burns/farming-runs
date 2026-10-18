@@ -250,6 +250,15 @@ public class RunController
 	 */
 	private Set<WorldPoint> targets(RunProgress.Stop stop, RunProgress progress)
 	{
+		Location location = data.location(stop.getLocationId());
+		Player player = client.getLocalPlayer();
+		boolean there = player != null && (location.getRegionId() == player.getWorldLocation().getRegionID()
+			|| location.getExtraRegionIds().contains(player.getWorldLocation().getRegionID()));
+		if (location.getApproach() != null && !there)
+		{
+			// The patches can't be walked to (underwater): head for where you go in.
+			return Set.of(location.getApproach());
+		}
 		Set<WorldPoint> tiles = new HashSet<>();
 		for (PlantingPlan.Assignment a : stop.getPatches())
 		{

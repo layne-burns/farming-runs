@@ -115,7 +115,7 @@ public final class DataLoader
 			// Shortest Path is pointed at the target, so use the walkable tile beside it when there is one.
 			locations.put(raw.id, new Location(raw.id, raw.name, raw.regionId, List.copyOf(raw.extraRegionIds),
 				point(raw.targetStand != null ? raw.targetStand : raw.target), List.copyOf(patches), List.copyOf(set.teleports), set.unlock, set.note,
-				set.diseaseFree, List.copyOf(raw.wikiTeleports)));
+				set.diseaseFree, set.approach == null ? null : point(set.approach), List.copyOf(raw.wikiTeleports)));
 		}
 		for (String id : settings.keySet())
 		{
