@@ -138,6 +138,20 @@ public class RunController
 		});
 	}
 
+	/** Picks up a run saved earlier ({@link RunPersistence}) where it was. Any thread. */
+	public void resume(RunSession.ActiveRun run)
+	{
+		clientThread.invoke(() ->
+		{
+			earlyCheckedFor = null;
+			log.debug("[farmrun] resumed: {} of {} stops done", run.getProgress().doneCount(),
+				run.getProgress().getStops().size());
+			session.start(run);
+			checkPatchesHere();
+			point();
+		});
+	}
+
 	/** Leaves a stop out. Any thread. */
 	public void skip(String locationId)
 	{

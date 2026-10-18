@@ -30,6 +30,7 @@ import com.layneburns.farmingruns.run.PatchClicks;
 import com.layneburns.farmingruns.run.RunTracker;
 import com.layneburns.farmingruns.run.PineappleErrand;
 import com.layneburns.farmingruns.run.RouteLearner;
+import com.layneburns.farmingruns.run.RunPersistence;
 import com.layneburns.farmingruns.run.TeleportFallback;
 import com.layneburns.farmingruns.run.TeleportWatcher;
 import com.layneburns.farmingruns.ui.BankHighlightOverlay;
@@ -194,6 +195,9 @@ public class FarmingRunsPlugin extends Plugin
 	private RouteLearner routeLearner;
 
 	@Inject
+	private RunPersistence runPersistence;
+
+	@Inject
 	private PatchObjects patchObjects;
 
 	private NavigationButton navigationButton;
@@ -242,12 +246,14 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(teleportMenuOverlay);
 		eventBus.register(pineappleErrand);
 		eventBus.register(routeLearner);
+		eventBus.register(runPersistence);
 		bankRunTab.register();
 		itemStore.loadRemembered();
 		locationPrefs.load();
 		DebugLogging.apply(config.debugLogging());
 		setupStore.load();
 		statsStore.load();
+		runPersistence.load();
 		teleportLimits.load();
 		// If the plugin starts while logged in, read what the client already has.
 		clientThread.invokeLater(() ->
@@ -267,7 +273,10 @@ public class FarmingRunsPlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
+		// The run stops with the plugin, but stays saved to resume next time.
+		runPersistence.stopSaving();
 		runController.stop();
+		eventBus.unregister(runPersistence);
 		eventBus.unregister(routeLearner);
 		eventBus.unregister(pineappleErrand);
 		pineappleErrand.stop();

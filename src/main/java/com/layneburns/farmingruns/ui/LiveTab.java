@@ -12,6 +12,7 @@ import com.layneburns.farmingruns.run.LeprechaunNeeds;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.Protection;
 import com.layneburns.farmingruns.run.RunController;
+import com.layneburns.farmingruns.run.RunPersistence;
 import com.layneburns.farmingruns.run.RunProgress;
 import com.layneburns.farmingruns.run.RunSession;
 import com.layneburns.farmingruns.run.RunStats;
@@ -25,6 +26,10 @@ import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.StatsStore;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +41,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -61,6 +67,7 @@ public class LiveTab extends TabPanel
 	private final TeleportSuggestions suggestions;
 	private final LocationPrefs prefs;
 	private final DebugInfo debugInfo;
+	private final RunPersistence persistence;
 
 	private final FitWidthPanel content = new FitWidthPanel();
 	private final Map<String, Boolean> collapsed = new HashMap<>(Map.of("Done", true));
@@ -72,8 +79,10 @@ public class LiveTab extends TabPanel
 	@Inject
 	LiveTab(GameData data, RunSession session, RunController controller, RunTracker tracker, GuidanceTracker guidance,
 		ItemStore items, PlayerInfo player, StatsStore stats, TeleportSuggestions suggestions, LocationPrefs prefs,
-		DebugInfo debugInfo)
+		DebugInfo debugInfo, RunPersistence persistence)
 	{
+		this.persistence = persistence;
+		persistence.addListener(this::refresh);
 		this.data = data;
 		this.session = session;
 		this.controller = controller;
@@ -105,13 +114,40 @@ public class LiveTab extends TabPanel
 		}
 	}
 
+	/** "Unfinished run from 13:05: 6 of 15 stops done", with Resume and Discard. */
+	private SectionPanel resumeCard(RunSession.ActiveRun saved)
+	{
+		SectionPanel section = section("Unfinished run");
+		RunProgress progress = saved.getProgress();
+		String started = DateTimeFormatter.ofPattern("HH:mm").format(
+			Instant.ofEpochMilli(saved.getStartedAtMillis()).atZone(ZoneId.systemDefault()));
+		section.addRow(TabPanel.text("Started at " + started + ": " + progress.doneCount() + " of "
+			+ progress.getStops().size() + " stops done. Resume it where you left off?"));
+		JButton resume = button("Resume run", "Picks the run up where it was: route, ticks, payments and compost");
+		resume.addActionListener(e -> persistence.resume());
+		JButton discard = button("Discard", "Forget it; set up a new run in the Run tab");
+		discard.addActionListener(e -> persistence.discard());
+		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 4));
+		buttons.setOpaque(false);
+		buttons.add(resume);
+		buttons.add(Box.createHorizontalStrut(6));
+		buttons.add(discard);
+		section.addRow(buttons);
+		return section;
+	}
+
 	private void redraw()
 	{
 		redrawQueued.set(false);
 		content.removeAll();
 		status = null;
 		RunSession.ActiveRun run = session.active();
-		if (run == null)
+		RunSession.ActiveRun saved = persistence.offer();
+		if (run == null && saved != null)
+		{
+			content.add(resumeCard(saved));
+		}
+		else if (run == null)
 		{
 			content.add(TabPanel.text("No run in progress. Set one up in the Run tab and press Start."));
 		}
