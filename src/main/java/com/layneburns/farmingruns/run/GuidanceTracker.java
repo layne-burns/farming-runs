@@ -66,6 +66,16 @@ public class GuidanceTracker
 		listeners.add(listener);
 	}
 
+	/** A patch has been composted (the game said so, or you ticked it in the Live tab). Client thread. */
+	public void markComposted(String patchId)
+	{
+		currentRun();
+		composted.add(patchId);
+		log.debug("[farmrun] composted {}", patchId);
+		session.update(p -> p.markComposted(patchId));
+		listeners.forEach(Runnable::run);
+	}
+
 	/** True when the game said this patch was treated with compost during the run. */
 	public boolean isComposted(String patchId)
 	{
@@ -178,13 +188,7 @@ public class GuidanceTracker
 				.findFirst();
 			patch.or(() -> stop.getPatches().stream()
 				.filter(a -> a.getSeed() != null && !composted.contains(a.getPatch().getId())).findFirst())
-				.ifPresent(a ->
-				{
-					composted.add(a.getPatch().getId());
-					log.debug("[farmrun] composted {}", a.getPatch().getId());
-					session.update(p -> p.markComposted(a.getPatch().getId()));
-					listeners.forEach(Runnable::run);
-				});
+				.ifPresent(a -> markComposted(a.getPatch().getId()));
 			return;
 		}
 		if (PAID.matcher(message).find())

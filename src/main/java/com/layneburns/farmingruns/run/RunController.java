@@ -53,14 +53,16 @@ public class RunController
 	private final ShortestPathClient shortestPath;
 	private final FarmingRunsConfig config;
 	private final PlayerInfo player;
+	private final GuidanceTracker guidance;
 	/** The region you were in last tick, to notice arriving somewhere. */
 	private int lastRegion = -1;
 
 	@Inject
 	RunController(Client client, ClientThread clientThread, GameData data, RunSession session,
 		ShortestPathClient shortestPath, FarmingRunsConfig config,
-		PlayerInfo player)
+		PlayerInfo player, GuidanceTracker guidance)
 	{
+		this.guidance = guidance;
 		this.client = client;
 		this.clientThread = clientThread;
 		this.data = data;
@@ -110,6 +112,24 @@ public class RunController
 			session.update(p -> p.goTo(locationId));
 			point();
 		});
+	}
+
+	/** You planted (or picked, or cleared) a patch the plugin didn't see. Any thread. */
+	public void markWorked(String patchId)
+	{
+		clientThread.invoke(() -> session.update(p -> p.markWorked(patchId)));
+	}
+
+	/** You composted a patch, or chose not to. Any thread. */
+	public void markComposted(String patchId)
+	{
+		clientThread.invoke(() -> guidance.markComposted(patchId));
+	}
+
+	/** You paid for a patch (or chose not to). Any thread. */
+	public void markPaid(String patchId)
+	{
+		clientThread.invoke(() -> session.update(p -> p.markPaid(patchId)));
 	}
 
 	/** Ends the run and removes the path. Any thread. */

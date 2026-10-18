@@ -11,7 +11,10 @@ import com.layneburns.farmingruns.data.TeleportChoice;
 import com.layneburns.farmingruns.run.CompostChoice;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.RunProgress;
+import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -35,6 +38,13 @@ final class LiveStopCard
 
 		/** The gardener is to be paid for this patch (it may already have been). */
 		boolean pays(PlantingPlan.Assignment assignment);
+
+		/** You ticked a step the plugin didn't see (or chose to skip): planted / picked / cleared. */
+		void markWorked(String patchId);
+
+		void markComposted(String patchId);
+
+		void markPaid(String patchId);
 	}
 
 	private LiveStopCard()
@@ -66,27 +76,27 @@ final class LiveStopCard
 			boolean worked = progress.getWorkedPatches().contains(id);
 			if (a.isKeptStanding())
 			{
-				card.add(step("Pick the crop, leave it standing", worked));
+				card.add(step("Pick the crop, leave it standing", worked, () -> facts.markWorked(id)));
 				continue;
 			}
 			if (a.getSeed() == null)
 			{
-				card.add(step("Harvest and clear (nothing to plant)", worked));
+				card.add(step("Harvest and clear (nothing to plant)", worked, () -> facts.markWorked(id)));
 				continue;
 			}
 			if (compost == CompostChoice.FERTILE_SOIL)
 			{
-				card.add(step("Cast Fertile Soil", null));
+				card.add(step("Cast Fertile Soil", null, null));
 			}
 			else if (compost != CompostChoice.NONE)
 			{
-				card.add(step(compost.getTitle(), facts.composted(id)));
+				card.add(step(compost.getTitle(), facts.composted(id), () -> facts.markComposted(id)));
 			}
 			card.add(step("Plant " + (a.getSeed().isPlantedAsSapling() ? a.getSeed().getSaplingName()
-				: a.getSeed().getName()), worked));
+				: a.getSeed().getName()), worked, () -> facts.markWorked(id)));
 			if (facts.pays(a))
 			{
-				card.add(step("Pay " + payment(a), worked && !progress.isAwaitingPayment(id)));
+				card.add(step("Pay " + payment(a), worked && !progress.isAwaitingPayment(id), () -> facts.markPaid(id)));
 			}
 		}
 		card.setMaximumSize(new Dimension(Integer.MAX_VALUE, card.getPreferredSize().height));
@@ -109,13 +119,29 @@ final class LiveStopCard
 		return card;
 	}
 
-	/** "✓ Plant Ranarr seed" in green when done, "☐ ..." when not; "• ..." when it can't be told. */
-	private static JLabel step(String text, @Nullable Boolean done)
+	/**
+	 * "✓ Plant Ranarr seed" in green when done, "☐ ..." when not; "• ..." when it can't be told. A step not done yet
+	 * can be clicked to mark it done, for something the plugin didn't see or you chose to skip.
+	 */
+	private static JLabel step(String text, @Nullable Boolean done, @Nullable Runnable markDone)
 	{
 		String mark = done == null ? "•" : done ? "✓" : "☐";
 		JLabel label = new JLabel("   " + mark + " " + text);
 		label.setForeground(done != null && done ? Palette.FULL : Palette.TEXT);
 		label.setMinimumSize(new Dimension(0, 0));
+		if (done != null && !done && markDone != null)
+		{
+			label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+			label.setToolTipText("Click to tick it off (if the plugin missed it, or you're skipping it)");
+			label.addMouseListener(new MouseAdapter()
+			{
+				@Override
+				public void mouseClicked(MouseEvent e)
+				{
+					markDone.run();
+				}
+			});
+		}
 		return label;
 	}
 

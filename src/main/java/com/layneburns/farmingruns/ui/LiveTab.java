@@ -187,6 +187,24 @@ public class LiveTab extends TabPanel
 					{
 						return pays.test(assignment);
 					}
+
+					@Override
+					public void markWorked(String patchId)
+					{
+						controller.markWorked(patchId);
+					}
+
+					@Override
+					public void markComposted(String patchId)
+					{
+						controller.markComposted(patchId);
+					}
+
+					@Override
+					public void markPaid(String patchId)
+					{
+						controller.markPaid(patchId);
+					}
 				},
 				LeprechaunNeeds.atStop(now, progress, run.getSetup().getCompost(), composted(now), data.getItems(),
 					items.ledger())));
