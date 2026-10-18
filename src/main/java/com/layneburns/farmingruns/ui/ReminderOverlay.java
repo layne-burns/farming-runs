@@ -10,6 +10,7 @@ import com.layneburns.farmingruns.FarmingRunsConfig;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.Location;
 import com.layneburns.farmingruns.run.GuidanceTracker;
+import com.layneburns.farmingruns.run.LegTimer;
 import com.layneburns.farmingruns.run.LeprechaunNeeds;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.Protection;
@@ -35,7 +36,8 @@ import net.runelite.client.ui.overlay.OverlayUtil;
 
 /**
  * During a run, shows above your head the next thing to do at the current stop ({@link Reminder}) while you're
- * there, and where you're going next and how while you're not. Seen by you alone. Can be switched off, and its colour changed, in the settings.
+ * there, and where you're going next and how until you set off. Seen by you alone. Can be switched off, and its
+ * colour changed, in the settings.
  */
 @Singleton
 public class ReminderOverlay extends Overlay
@@ -47,18 +49,20 @@ public class ReminderOverlay extends Overlay
 	private final GameData data;
 	private final RunSession session;
 	private final GuidanceTracker guidance;
+	private final LegTimer legs;
 	private final ItemStore items;
 	private final PlayerInfo player;
 	private final FarmingRunsConfig config;
 
 	@Inject
-	ReminderOverlay(Client client, GameData data, RunSession session, GuidanceTracker guidance, ItemStore items,
-		PlayerInfo player, FarmingRunsConfig config)
+	ReminderOverlay(Client client, GameData data, RunSession session, GuidanceTracker guidance, LegTimer legs,
+		ItemStore items, PlayerInfo player, FarmingRunsConfig config)
 	{
 		this.client = client;
 		this.data = data;
 		this.session = session;
 		this.guidance = guidance;
+		this.legs = legs;
 		this.items = items;
 		this.player = player;
 		this.config = config;
@@ -82,9 +86,12 @@ public class ReminderOverlay extends Overlay
 		}
 		if (!isAt(stop, me.getWorldLocation().getRegionID()))
 		{
-			// On the way: where to and how.
-			draw(graphics, me, Reminder.travel(data.location(stop.getLocationId()).getName(),
-				run.getTeleports().get(stop.getLocationId())));
+			// Before setting off: where to and how. Once you've teleported, Shortest Path shows the rest.
+			if (!legs.hasLeft())
+			{
+				draw(graphics, me, Reminder.travel(data.location(stop.getLocationId()).getName(),
+					run.getTeleports().get(stop.getLocationId())));
+			}
 			return null;
 		}
 		Set<String> composted = stop.getPatches().stream().map(a -> a.getPatch().getId())

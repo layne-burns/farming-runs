@@ -105,6 +105,12 @@ public class LegTimer
 		session.addListener(this::sessionChanged);
 	}
 
+	/** You've set off for the current stop (teleported or jumped far), so you no longer need telling how. */
+	public boolean hasLeft()
+	{
+		return left;
+	}
+
 	/** The legs of the current run so far, or of the last one when none is going. */
 	public List<Leg> legs()
 	{
