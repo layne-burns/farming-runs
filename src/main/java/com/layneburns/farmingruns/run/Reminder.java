@@ -34,7 +34,7 @@ public final class Reminder
 	 * @return the reminder, or null when there's nothing left to do here
 	 */
 	@Nullable
-	public static String next(RunProgress.Stop stop, RunProgress progress, CompostChoice compost, Set<String> composted,
+	public static String next(RunProgress.Stop stop, RunProgress progress, CompostPlan plan, Set<String> composted,
 		Predicate<PlantingPlan.Assignment> pays, List<String> fromLeprechaun)
 	{
 		if (!fromLeprechaun.isEmpty())
@@ -50,6 +50,7 @@ public final class Reminder
 			}
 			String kind = a.getPatch().getKind().name().toLowerCase(Locale.ROOT).replace('_', ' ');
 			boolean worked = progress.getWorkedPatches().contains(id);
+			CompostChoice compost = plan.forKind(a.getPatch().getKind());
 			if (a.getPatch().isCompostBin())
 			{
 				return progress.hasHarvestFirst(id) && !progress.isHarvested(id)

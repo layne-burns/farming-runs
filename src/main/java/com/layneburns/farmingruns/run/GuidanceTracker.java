@@ -100,7 +100,7 @@ public class GuidanceTracker
 			return RunGuidance.NONE;
 		}
 		RunProgress.Stop stop = run.getProgress().currentStop();
-		RunGuidance.Highlights here = RunGuidance.at(stop, run.getProgress(), run.getSetup().getCompost(),
+		RunGuidance.Highlights here = RunGuidance.at(stop, run.getProgress(), run.getSetup()::compostFor,
 			Set.copyOf(composted), data.getItems());
 		if (stop == null || !leavingFrom(stop))
 		{

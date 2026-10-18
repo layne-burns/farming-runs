@@ -113,7 +113,7 @@ public class RunProgressTest
 		Set<Integer> supercompost = data.getItems().group("supercompost");
 		int payment = watermelon.getPayment().get(0).getItemId();
 
-		RunGuidance.Highlights before = RunGuidance.at(catherby, progress, CompostChoice.SUPERCOMPOST, Set.of(),
+		RunGuidance.Highlights before = RunGuidance.at(catherby, progress, CompostPlan.all(CompostChoice.SUPERCOMPOST), Set.of(),
 			data.getItems());
 		assertTrue(before.getItems().contains(watermelon.plantItemId()));
 		assertTrue(before.getItems().containsAll(supercompost));
@@ -122,14 +122,14 @@ public class RunProgressTest
 
 		// Composted and planted: now the payment and the gardener.
 		progress = progress.markWorked("catherby.allotment_north");
-		RunGuidance.Highlights planted = RunGuidance.at(catherby, progress, CompostChoice.SUPERCOMPOST,
+		RunGuidance.Highlights planted = RunGuidance.at(catherby, progress, CompostPlan.all(CompostChoice.SUPERCOMPOST),
 			Set.of("catherby.allotment_north"), data.getItems());
 		assertEquals(Set.of(payment), planted.getItems());
 		assertEquals(Set.of(north.getPatch().getGardenerNpcId()), planted.getNpcs());
 
 		// Paid: nothing left to point out.
 		progress = progress.markPaid("catherby.allotment_north");
-		assertEquals(RunGuidance.NONE, RunGuidance.at(progress.currentStop(), progress, CompostChoice.SUPERCOMPOST,
+		assertEquals(RunGuidance.NONE, RunGuidance.at(progress.currentStop(), progress, CompostPlan.all(CompostChoice.SUPERCOMPOST),
 			Set.of("catherby.allotment_north"), data.getItems()));
 	}
 

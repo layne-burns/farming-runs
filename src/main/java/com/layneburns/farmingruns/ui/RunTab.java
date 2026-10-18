@@ -220,7 +220,7 @@ public class RunTab extends TabPanel
 				TreeRoutine.hasHarvest(kind), TreeRoutine.regrows(kind), kindNotes(setup, plan, kind, planned),
 				kind == PatchImplementation.ALLOTMENT ? BountyAmulet.wanted(setup.kindPlan(kind), planned, data) : null,
 				collapsed, seedInfo, kp -> update(s -> s.withKindPlan(kind, kp)),
-				() -> update(s -> s.withLeftOut(kind, true))));
+				() -> update(s -> s.withLeftOut(kind, true)), setup.getCompost()));
 		}
 
 		SectionPanel compost = section("Compost");

@@ -27,6 +27,7 @@ import com.layneburns.farmingruns.state.ItemSource;
 import com.layneburns.farmingruns.state.PlayerFacts;
 import com.layneburns.farmingruns.state.StorageSnapshot;
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -227,5 +228,22 @@ public class RequirementsBuilderTest
 		assertEquals(6, find(needs, ASTRAL_RUNE).getAmount());
 		assertTrue(needs.getNotes().stream().anyMatch(n -> n.contains("Lunar")));
 		assertFalse(needs.getRequirements().stream().anyMatch(r -> r.getLabel().equals("Supercompost")));
+	}
+
+	@Test
+	public void eachKindCanHaveItsOwnCompost()
+	{
+		// Herbs get the run's supercompost; allotments are set to none.
+		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.HERB, RunType.ALLOTMENT))
+			.withKindPlan(PatchImplementation.ALLOTMENT, KindPlan.AUTO.withCompost(CompostChoice.NONE));
+		List<PlantingPlan.Assignment> both = new ArrayList<>(plan(data.seedByItem(RANARR), "catherby.herb")
+			.getAssignments());
+		both.addAll(plan(data.seedByItem(5321), "catherby.allotment_north", "catherby.allotment_south")
+			.getAssignments());
+		RunRequirements needs = build(setup, new PlantingPlan(both, List.of()));
+		int supercompost = data.getItems().group("supercompost").iterator().next();
+		assertEquals(1, find(needs, supercompost).getAmount());
+		assertEquals(CompostChoice.NONE, setup.compostFor(PatchImplementation.ALLOTMENT));
+		assertEquals(CompostChoice.SUPERCOMPOST, setup.compostFor(PatchImplementation.HERB));
 	}
 }

@@ -7,6 +7,7 @@
 package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.data.Seed;
+import com.layneburns.farmingruns.run.CompostChoice;
 import com.layneburns.farmingruns.run.CropShare;
 import com.layneburns.farmingruns.run.FillOrder;
 import com.layneburns.farmingruns.run.KindPlan;
@@ -68,11 +69,12 @@ class KindCard extends JPanel
 	 * @param collapsed which collapsible parts are closed, by key; kept by the Run tab across redraws
 	 * @param seedInfo  a seed's tooltip: XP, protection and the goals that use it
 	 * @param onLeaveOut leaves this kind out of the run (the × by its heading)
+	 * @param runCompost the run's compost, which this kind uses unless it has its own
 	 */
 	KindCard(String title, KindPlan plan, List<Seed> seeds, List<PlantingPlan.Assignment> planned, int patches,
 		@Nullable String payTooltip, boolean isTree, boolean harvests, boolean regrows, List<String> notes, @Nullable Boolean amulet,
 		Map<String, Boolean> collapsed, Function<Seed, String> seedInfo, Consumer<KindPlan> onChange,
-		Runnable onLeaveOut)
+		Runnable onLeaveOut, CompostChoice runCompost)
 	{
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(Palette.SURFACE);
@@ -143,6 +145,8 @@ class KindCard extends JPanel
 			}
 			// Some types are replaced: the seed choice below is for those patches.
 		}
+
+		add(left(compostChoice(plan, runCompost, onChange)));
 
 		JCheckBox auto = check("Auto: best seeds you can spare", plan.isAuto());
 		auto.setToolTipText("Untick to choose the seeds yourself");
@@ -418,6 +422,30 @@ class KindCard extends JPanel
 	}
 
 	/** Wraps a component so it sits left-aligned in the card's vertical stack. */
+	/** "Compost:" and a choice: the run's (the default), or this kind's own, e.g. none for allotments. */
+	private static JPanel compostChoice(KindPlan plan, CompostChoice runCompost, Consumer<KindPlan> onChange)
+	{
+		List<String> titles = new ArrayList<>();
+		titles.add("Run's (" + runCompost.getTitle() + ")");
+		for (CompostChoice choice : CompostChoice.values())
+		{
+			titles.add(choice.getTitle());
+		}
+		JComboBox<String> box = new JComboBox<>(titles.toArray(new String[0]));
+		box.setSelectedIndex(plan.getCompost() == null ? 0 : plan.getCompost().ordinal() + 1);
+		box.setFocusable(false);
+		box.setToolTipText("Compost for this kind's patches; the run's choice unless you pick another");
+		box.addActionListener(e -> onChange.accept(plan.withCompost(box.getSelectedIndex() == 0 ? null
+			: CompostChoice.values()[box.getSelectedIndex() - 1])));
+		JLabel label = new JLabel("Compost: ");
+		label.setForeground(Palette.SECONDARY_TEXT);
+		JPanel row = new JPanel(new BorderLayout());
+		row.setOpaque(false);
+		row.add(label, BorderLayout.WEST);
+		row.add(box, BorderLayout.CENTER);
+		return row;
+	}
+
 	private static JPanel left(Component component)
 	{
 		JPanel wrapper = new JPanel(new BorderLayout());

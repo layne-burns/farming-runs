@@ -50,7 +50,7 @@ public final class GoalSetups
 		}
 		Map<PatchImplementation, KindPlan> plans = new EnumMap<>(PatchImplementation.class);
 		crops.forEach((kind, shares) -> plans.put(kind, new KindPlan(false, List.copyOf(shares), false,
-			TreeRoutine.PAY_TO_REMOVE, false, FillOrder.SHARES, null, false, Set.of(), false, false)));
+			TreeRoutine.PAY_TO_REMOVE, false, FillOrder.SHARES, null, false, Set.of(), false, false, null)));
 		return new RunSetup(Set.copyOf(types), Map.copyOf(plans), Set.of(), CompostChoice.SUPERCOMPOST, Set.of());
 	}
 

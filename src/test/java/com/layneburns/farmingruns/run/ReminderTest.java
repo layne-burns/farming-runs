@@ -31,21 +31,21 @@ public class ReminderTest
 		String payment = watermelon.getPayment().get(0).getAmount() + " × " + watermelon.getPayment().get(0).getName();
 
 		assertEquals("Take from the leprechaun: 9 × Supercompost", Reminder.next(stop, progress,
-			CompostChoice.SUPERCOMPOST, Set.of(), a -> true, List.of("9 × Supercompost")));
+			CompostPlan.all(CompostChoice.SUPERCOMPOST), Set.of(), a -> true, List.of("9 × Supercompost")));
 		assertEquals("Compost the allotment patch, then plant Watermelon seed", Reminder.next(stop, progress,
-			CompostChoice.SUPERCOMPOST, Set.of(), a -> true, List.of()));
-		assertEquals("Plant Watermelon seed", Reminder.next(stop, progress, CompostChoice.SUPERCOMPOST,
+			CompostPlan.all(CompostChoice.SUPERCOMPOST), Set.of(), a -> true, List.of()));
+		assertEquals("Plant Watermelon seed", Reminder.next(stop, progress, CompostPlan.all(CompostChoice.SUPERCOMPOST),
 			Set.of("catherby.allotment_north"), a -> true, List.of()));
 		progress = progress.markWorked("catherby.allotment_north");
-		assertEquals("Pay the gardener: " + payment, Reminder.next(stop, progress, CompostChoice.SUPERCOMPOST,
+		assertEquals("Pay the gardener: " + payment, Reminder.next(stop, progress, CompostPlan.all(CompostChoice.SUPERCOMPOST),
 			Set.of("catherby.allotment_north"), a -> true, List.of()));
 		progress = progress.markPaid("catherby.allotment_north");
 		// Planted and paid but the stop still waits for compost (when compost is chosen).
 		RunProgress waiting = RunProgress.start(List.of(stop), Set.of(), Set.of("catherby.allotment_north"), Set.of())
 			.markWorked("catherby.allotment_north");
-		assertEquals("Compost the allotment patch", Reminder.next(stop, waiting, CompostChoice.SUPERCOMPOST, Set.of(),
+		assertEquals("Compost the allotment patch", Reminder.next(stop, waiting, CompostPlan.all(CompostChoice.SUPERCOMPOST), Set.of(),
 			a -> false, List.of()));
-		assertNull(Reminder.next(stop, progress, CompostChoice.SUPERCOMPOST, Set.of("catherby.allotment_north"),
+		assertNull(Reminder.next(stop, progress, CompostPlan.all(CompostChoice.SUPERCOMPOST), Set.of("catherby.allotment_north"),
 			a -> true, List.of()));
 	}
 

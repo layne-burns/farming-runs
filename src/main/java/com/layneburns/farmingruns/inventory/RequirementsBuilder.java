@@ -95,7 +95,11 @@ public final class RequirementsBuilder
 
 		addSeeds(list, assignments, plan.getSaplingsToGrow());
 		addGrowing(list, plan.getSaplingsToGrow(), items);
-		addCompost(list, notes, setup.getCompost(), (int) plan.plantedCount(), items, facts);
+		// Each kind's own compost (or the run's), counted over the patches planted with it.
+		Map<CompostChoice, Integer> byCompost = new LinkedHashMap<>();
+		assignments.stream().filter(a -> a.getSeed() != null)
+			.forEach(a -> byCompost.merge(setup.compostFor(a.getPatch().getKind()), 1, Integer::sum));
+		byCompost.forEach((compost, planted) -> addCompost(list, notes, compost, planted, items, facts));
 		addPayments(list, setup, assignments, data, facts);
 		addTreeClearing(list, setup, assignments, data, items, treeGrown);
 

@@ -173,7 +173,7 @@ public class LiveTab extends TabPanel
 		if (now != null)
 		{
 			content.add(LiveStopCard.now(data.location(now.getLocationId()).getName(),
-				run.getTeleports().get(now.getLocationId()), now, progress, run.getSetup().getCompost(),
+				run.getTeleports().get(now.getLocationId()), now, progress, run.getSetup()::compostFor,
 				new LiveStopCard.PatchFacts()
 				{
 					@Override
@@ -212,7 +212,7 @@ public class LiveTab extends TabPanel
 						controller.markPaid(patchId);
 					}
 				},
-				LeprechaunNeeds.atStop(now, progress, run.getSetup().getCompost(), composted(now), data.getItems(),
+				LeprechaunNeeds.atStop(now, progress, run.getSetup()::compostFor, composted(now), data.getItems(),
 					items.ledger())));
 			RunProgress.Stop next = nextAfter(progress, now);
 			if (next != null)

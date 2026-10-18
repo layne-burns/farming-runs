@@ -9,6 +9,7 @@ package com.layneburns.farmingruns.ui;
 import com.layneburns.farmingruns.data.ItemAmount;
 import com.layneburns.farmingruns.data.TeleportChoice;
 import com.layneburns.farmingruns.run.CompostChoice;
+import com.layneburns.farmingruns.run.CompostPlan;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.RunProgress;
 import java.awt.Cursor;
@@ -55,7 +56,7 @@ final class LiveStopCard
 
 	/** The current stop: heading, teleport, and a checklist per patch. */
 	static JPanel now(String locationName, @Nullable TeleportChoice teleport, RunProgress.Stop stop,
-		RunProgress progress, CompostChoice compost, PatchFacts facts, List<String> fromLeprechaun)
+		RunProgress progress, CompostPlan plan, PatchFacts facts, List<String> fromLeprechaun)
 	{
 		JPanel card = card();
 		JLabel heading = new JLabel("▶ Now: " + locationName);
@@ -99,6 +100,7 @@ final class LiveStopCard
 			{
 				card.add(step("Harvest", progress.isHarvested(id), () -> facts.markHarvested(id)));
 			}
+			CompostChoice compost = plan.forKind(a.getPatch().getKind());
 			if (compost == CompostChoice.FERTILE_SOIL)
 			{
 				card.add(step("Cast Fertile Soil", null, null));

@@ -125,9 +125,9 @@ public class ReminderOverlay extends Overlay
 		}
 		Set<String> composted = stop.getPatches().stream().map(a -> a.getPatch().getId())
 			.filter(guidance::isComposted).collect(Collectors.toSet());
-		String text = Reminder.next(stop, run.getProgress(), run.getSetup().getCompost(), composted,
+		String text = Reminder.next(stop, run.getProgress(), run.getSetup()::compostFor, composted,
 			(PlantingPlan.Assignment a) -> Protection.shouldPay(a, run.getSetup(), data, player.getFacts()),
-			LeprechaunNeeds.atStop(stop, run.getProgress(), run.getSetup().getCompost(), composted, data.getItems(),
+			LeprechaunNeeds.atStop(stop, run.getProgress(), run.getSetup()::compostFor, composted, data.getItems(),
 				items.ledger()));
 		if (text != null)
 		{

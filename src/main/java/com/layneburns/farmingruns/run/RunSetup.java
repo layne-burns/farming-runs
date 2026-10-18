@@ -61,6 +61,13 @@ public class RunSetup
 		return withSkippedPatches(Set.copyOf(copy));
 	}
 
+	/** The compost this kind gets: its own choice if it has one, else the run's. */
+	public CompostChoice compostFor(PatchImplementation kind)
+	{
+		CompostChoice own = kindPlan(kind).getCompost();
+		return own != null ? own : compost;
+	}
+
 	/** True when a run type you chose covers this kind, and you haven't left it out. */
 	public boolean includes(PatchImplementation kind)
 	{

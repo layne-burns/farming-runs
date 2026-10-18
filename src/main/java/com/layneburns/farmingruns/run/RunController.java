@@ -391,13 +391,10 @@ public class RunController
 	 */
 	private static Set<String> compostFor(RunSetup setup, PlantingPlan plan)
 	{
-		CompostChoice compost = setup.getCompost();
-		if (compost == CompostChoice.NONE || compost == CompostChoice.FERTILE_SOIL)
-		{
-			return Set.of();
-		}
-		return plan.getAssignments().stream().filter(a -> a.getSeed() != null).map(a -> a.getPatch().getId())
-			.collect(Collectors.toSet());
+		// Each kind's own compost, or the run's; none and the Fertile Soil spell aren't waited for.
+		return plan.getAssignments().stream()
+			.filter(a -> a.getSeed() != null && CompostPlan.usesItems(setup.compostFor(a.getPatch().getKind())))
+			.map(a -> a.getPatch().getId()).collect(Collectors.toSet());
 	}
 
 	/** Patches the gardener is to be paid to protect ({@link Protection}). */

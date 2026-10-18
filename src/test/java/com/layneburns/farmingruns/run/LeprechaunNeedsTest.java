@@ -36,12 +36,12 @@ public class LeprechaunNeedsTest
 		// Two patches to compost, one supercompost carried, no spade: take one more, and the spade.
 		ItemLedger oneCarried = stored.with(ItemSource.INVENTORY, new StorageSnapshot(Map.of(supercompost, 1), 1));
 		assertEquals(List.of("1 × Supercompost", "a spade"), LeprechaunNeeds.atStop(catherby, progress,
-			CompostChoice.SUPERCOMPOST, Set.of(), data.getItems(), oneCarried));
+			CompostPlan.all(CompostChoice.SUPERCOMPOST), Set.of(), data.getItems(), oneCarried));
 
 		// One patch already composted and a spade carried: nothing to take.
 		ItemLedger enough = stored.with(ItemSource.INVENTORY,
 			new StorageSnapshot(Map.of(supercompost, 1, spade, 1), 1));
-		assertEquals(List.of(), LeprechaunNeeds.atStop(catherby, progress, CompostChoice.SUPERCOMPOST,
+		assertEquals(List.of(), LeprechaunNeeds.atStop(catherby, progress, CompostPlan.all(CompostChoice.SUPERCOMPOST),
 			Set.of("catherby.allotment_north"), data.getItems(), enough));
 	}
 }

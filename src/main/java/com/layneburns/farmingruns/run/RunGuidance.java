@@ -39,7 +39,7 @@ public final class RunGuidance
 	/**
 	 * @param composted patch ids treated with compost this run
 	 */
-	public static Highlights at(@Nullable RunProgress.Stop stop, RunProgress progress, CompostChoice compost,
+	public static Highlights at(@Nullable RunProgress.Stop stop, RunProgress progress, CompostPlan compost,
 		Set<String> composted, ItemCatalog catalog)
 	{
 		if (stop == null)
@@ -62,7 +62,7 @@ public final class RunGuidance
 			}
 			if (!composted.contains(id))
 			{
-				items.addAll(compostItems(compost, catalog));
+				items.addAll(compostItems(compost.forKind(a.getPatch().getKind()), catalog));
 			}
 			if (planted && progress.isAwaitingPayment(id))
 			{
