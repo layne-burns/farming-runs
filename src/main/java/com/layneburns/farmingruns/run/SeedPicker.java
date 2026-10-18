@@ -137,17 +137,13 @@ public final class SeedPicker
 					{
 						return false;
 					}
-					// Not enough payment for it: the same crop still goes in, unprotected, rather than another.
+					// Not enough payment for it: just pick it and leave it standing, rather than plant another crop.
 					stock.setPaymentLimited(false);
 					boolean spare = stock.capacity(same) > 0;
-					if (spare)
-					{
-						stock.take(same, same.getPerPatch());
-					}
 					stock.setPaymentLimited(true);
 					if (spare)
 					{
-						assignments.add(new PlantingPlan.Assignment(p, same, false, false, same, true));
+						assignments.add(PlantingPlan.Assignment.kept(p, same));
 					}
 					return spare;
 				});

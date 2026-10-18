@@ -61,7 +61,8 @@ public class KindPlan
 	boolean payableOnly;
 	/**
 	 * Fruit trees, cacti, bushes and other trees: pick the grown crop, clear it and plant the same seed that was
-	 * growing (when you have one to spare; otherwise the usual choice). Off by default (and in older saves).
+	 * growing (when you have one to spare; otherwise the usual choice). With {@link #payableOnly}, one you can't pay
+	 * for is picked and left standing. Off by default (and in older saves).
 	 */
 	boolean replantSame;
 

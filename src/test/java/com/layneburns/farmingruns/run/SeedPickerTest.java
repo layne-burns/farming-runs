@@ -7,6 +7,7 @@
 package com.layneburns.farmingruns.run;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import com.google.gson.Gson;
@@ -235,7 +236,7 @@ public class SeedPickerTest
 	}
 
 	@Test
-	public void replantTheSameEvenWithoutThePaymentForIt()
+	public void replantTheSameButPickOnlyWithoutThePaymentForIt()
 	{
 		List<Patch> fruitTrees = data.patches().stream().filter(p -> p.getKind() == PatchImplementation.FRUIT_TREE)
 			.sorted((a, b) -> a.getId().compareTo(b.getId())).limit(2).collect(Collectors.toList());
@@ -250,8 +251,9 @@ public class SeedPickerTest
 		PlantingPlan plan = SeedPicker.plan(setup, fruitTrees, held, BUFFERS, 99, data, null, growing::get);
 		PlantingPlan.Assignment palmPatch = plan.getAssignments().stream()
 			.filter(a -> a.getPatch().equals(fruitTrees.get(0))).findFirst().orElseThrow();
-		assertEquals(palm, palmPatch.getSeed());
-		assertTrue(palmPatch.isUnprotected());
+		// No papaya fruit to pay for the palm: it's picked and left standing, not replaced with a papaya.
+		assertNull(palmPatch.getSeed());
+		assertTrue(palmPatch.isKeptStanding());
 	}
 
 	private static RunSetup herbRun()

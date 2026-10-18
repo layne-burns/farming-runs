@@ -112,8 +112,9 @@ class KindCard extends JPanel
 		{
 			JCheckBox same = check("Replant the same crop", plan.isReplantSame());
 			same.setToolTipText("<html>Pick the grown crop, clear it and plant the seed that was growing there again"
-				+ "<br>(when you have one to spare; otherwise the seed choice below). Clearing it before it's picked"
-				+ "<br>is blocked (shift-click to do it anyway).</html>");
+				+ "<br>(when you have one to spare; otherwise the seed choice below). With \"only plant what I can"
+				+ "<br>pay for\", one you can't pay for is just picked and left standing. Clearing it before it's"
+				+ "<br>picked is blocked (shift-click to do it anyway).</html>");
 			same.addActionListener(e -> onChange.accept(plan.withReplantSame(same.isSelected())));
 			add(left(same));
 		}
