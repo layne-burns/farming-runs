@@ -11,6 +11,7 @@ import com.layneburns.farmingruns.FarmingRunsConfig;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.inventory.RunCheckService;
 import com.layneburns.farmingruns.pathing.ShortestPathClient;
+import com.layneburns.farmingruns.run.LegTimer;
 import com.layneburns.farmingruns.run.RunProgress;
 import com.layneburns.farmingruns.run.RunSession;
 import com.layneburns.farmingruns.run.RunTracker;
@@ -41,13 +42,14 @@ public class DebugInfo
 	private final PlayerInfo player;
 	private final RunTracker tracker;
 	private final StatsStore stats;
+	private final LegTimer legs;
 	private final FarmingRunsConfig config;
 	private final Gson gson;
 
 	@Inject
 	DebugInfo(GameData data, SetupStore setups, RunSession session, RunCheckService checks,
 		ShortestPathClient shortestPath, PlayerInfo player, RunTracker tracker, StatsStore stats,
-		FarmingRunsConfig config, Gson gson)
+		FarmingRunsConfig config, Gson gson, LegTimer legs)
 	{
 		this.data = data;
 		this.setups = setups;
@@ -59,6 +61,7 @@ public class DebugInfo
 		this.stats = stats;
 		this.config = config;
 		this.gson = gson;
+		this.legs = legs;
 	}
 
 	/** Puts the snapshot on the clipboard. Swing thread. */
@@ -109,6 +112,14 @@ public class DebugInfo
 		out.append("Check: ").append(checks.neededItems().size()).append(" item ids used, ")
 			.append(checks.bankItems().size()).append(" to take from the bank, from leprechaun ")
 			.append(checks.fromLeprechaun()).append('\n');
+		out.append("Legs (travel = first patch click - teleport click; work = stop done - first click):\n");
+		for (LegTimer.Leg leg : legs.legs())
+		{
+			out.append("  ").append(leg.getLocationId()).append(": travel ")
+				.append(leg.getTravelMillis() < 0 ? "?" : leg.getTravelMillis() / 1000 + "s").append(", work ")
+				.append(leg.getWorkMillis() / 1000).append('s')
+				.append(leg.getTeleport() == null ? "" : " via " + leg.getTeleport()).append('\n');
+		}
 		out.append("Last run: ").append(tracker.lastSummary()).append('\n');
 		out.append("Stats: ").append(stats.stats()).append('\n');
 		return out.toString();
