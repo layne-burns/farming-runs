@@ -89,7 +89,7 @@ public interface FarmingRunsConfig extends Config
 		keyName = SAPLING_MODE,
 		name = "Sapling making",
 		description = "The bank button, bank tab, highlights and seed vault filter show what pots every tree seed you"
-			+ " have (the seeds, filled plant pots, trowel, watering can) instead of the run's items. Set in the"
+			+ " have (the seeds, a filled plant pot for each, trowel, watering cans) instead of the run's items. Set in the"
 			+ " Saplings tab.",
 		position = 9,
 		hidden = true

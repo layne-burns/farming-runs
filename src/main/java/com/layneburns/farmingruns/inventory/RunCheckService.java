@@ -92,7 +92,6 @@ public class RunCheckService
 	/** What the last check said to take from the tool leprechaun, e.g. "9 × Supercompost". */
 	private volatile List<String> fromLeprechaun = List.of();
 	private volatile List<String> saplingKit = List.of();
-	private static final int INVENTORY_SLOTS = 28;
 	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
 	@Inject
@@ -208,8 +207,8 @@ public class RunCheckService
 	}
 
 	/**
-	 * Sapling making: every seed you have that's planted as a sapling (bank, vault, inventory, seed box), with filled
-	 * plant pots for as many as one inventory holds, a trowel and a watering can. Runs grow what they need on their
+	 * Sapling making: every seed you have that's planted as a sapling (bank, vault, inventory, seed box), with a filled
+	 * plant pot for each, a trowel and watering cans. Runs grow what they need on their
 	 * own; this is for potting the lot now.
 	 */
 	private List<Requirement> buildSaplingKit()
@@ -217,9 +216,7 @@ public class RunCheckService
 		Set<String> skipped = saplingSkipped();
 		Map<Seed, Integer> seeds = new LinkedHashMap<>(saplingSeedsHeld());
 		seeds.keySet().removeIf(seed -> skipped.contains(String.valueOf(seed.getItemId())));
-		// The trowel, the watering cans and a slot per kind of seed; the rest of the inventory is pots.
-		int pots = Math.max(0, INVENTORY_SLOTS - 1 - RequirementsBuilder.SAPLING_WATERING_CANS - seeds.size());
-		return RequirementsBuilder.saplingKit(seeds, pots, data.getItems());
+		return RequirementsBuilder.saplingKit(seeds, data.getItems());
 	}
 
 	/** Every seed you have that's planted as a sapling, with how many (bank, vault, inventory, seed box). */

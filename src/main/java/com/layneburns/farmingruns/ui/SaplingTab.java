@@ -28,7 +28,7 @@ import net.runelite.client.config.ConfigManager;
 /**
  * Saplings tab: sapling making, apart from a run (runs grow the saplings they need by themselves). With it on, the
  * bank's "Sapling Items" button, the bank tab, the highlights and the seed vault filter show what pots every tree seed
- * you have: the seeds, filled plant pots (an inventory's worth), a trowel and a watering can. The kit is worked out with the run check
+ * you have: the seeds, a filled plant pot for each, a trowel and 3 watering cans. The kit is worked out with the run check
  * ({@link RunCheckService#saplingKit()}). Swing thread.
  */
 @Singleton
@@ -103,7 +103,7 @@ public class SaplingTab extends TabPanel
 		});
 		section.addRow(on);
 		section.addRow(text("Pot every tree seed you have. While it's on, the bank's search button reads \"Sapling"
-			+ " Items\" and brings up the seeds, filled plant pots (an inventory's worth), a trowel and 3 watering"
+			+ " Items\" and brings up the seeds, a filled plant pot for each, a trowel and 3 watering"
 			+ " cans; the seed vault shows just those seeds, and the run's own items step aside."));
 		content.add(section);
 

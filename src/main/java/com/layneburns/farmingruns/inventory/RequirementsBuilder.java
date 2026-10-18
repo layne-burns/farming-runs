@@ -153,10 +153,10 @@ public final class RequirementsBuilder
 	 * to pot them and a watering can to grow them.
 	 */
 	/**
-	 * Sapling making: these seeds, filled plant pots (as many as there are seeds, up to {@code maxPots}), a trowel
-	 * and {@link #SAPLING_WATERING_CANS} watering cans.
+	 * Sapling making: these seeds, a filled plant pot for each, a trowel and {@link #SAPLING_WATERING_CANS} watering
+	 * cans.
 	 */
-	public static List<Requirement> saplingKit(Map<Seed, Integer> seeds, int maxPots, ItemCatalog items)
+	public static List<Requirement> saplingKit(Map<Seed, Integer> seeds, ItemCatalog items)
 	{
 		RequirementList list = new RequirementList();
 		if (seeds.isEmpty())
@@ -166,7 +166,7 @@ public final class RequirementsBuilder
 		seeds.forEach((seed, count) -> list.add(seed.getName(), Set.of(seed.getItemId()), count, Importance.NEED, false,
 			"potting into " + seed.getSaplingName() + "s", true));
 		int total = seeds.values().stream().mapToInt(Integer::intValue).sum();
-		list.add("Filled plant pot", items.group("filled_plant_pot"), Math.min(total, maxPots), Importance.NEED, false,
+		list.add("Filled plant pot", items.group("filled_plant_pot"), total, Importance.NEED, false,
 			"potting tree seeds", true);
 		list.add("Gardening trowel", items.group("gardening_trowel"), 1, Importance.NEED, true, "potting tree seeds",
 			false);
