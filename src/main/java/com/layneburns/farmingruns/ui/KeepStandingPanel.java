@@ -25,8 +25,8 @@ import javax.swing.JPanel;
 import net.runelite.client.ui.FontManager;
 
 /**
- * On a harvest run's card: which tree types to leave standing, a tick per type, all ticked by default. A patch
- * growing an unticked type (as Time Tracking last saw it) is cleared by the gardener and replanted. Collapsed to a
+ * On a harvest run's card: which types to leave standing (fruit trees, bushes, cacti), a tick per type, all ticked by
+ * default. A patch growing an unticked type (as Time Tracking last saw it) is cleared and replanted. Collapsed to a
  * one-line summary until clicked; whether it's open is remembered in {@code collapsed} under {@code key}.
  */
 class KeepStandingPanel extends JPanel
@@ -43,7 +43,7 @@ class KeepStandingPanel extends JPanel
 		heading.setFont(FontManager.getRunescapeSmallFont());
 		heading.setForeground(Palette.SECONDARY_TEXT);
 		heading.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		heading.setToolTipText("Untick a tree type to clear and replant it instead of leaving it standing");
+		heading.setToolTipText("Untick a type to clear and replant it instead of leaving it standing");
 		heading.setAlignmentX(LEFT_ALIGNMENT);
 		add(heading);
 
@@ -86,8 +86,8 @@ class KeepStandingPanel extends JPanel
 		box.setForeground(Palette.TEXT);
 		box.setOpaque(false);
 		box.setFocusable(false);
-		box.setToolTipText("Ticked: " + treeName(seed).toLowerCase() + " trees are picked and left. Unticked: cleared"
-			+ " (200 coins to the gardener) and replanted.");
+		box.setToolTipText("Ticked: " + treeName(seed).toLowerCase() + " is picked and left standing. Unticked:"
+			+ " cleared and replanted.");
 		box.addActionListener(e ->
 		{
 			Set<Integer> replace = new HashSet<>(plan.getReplaceStanding());
@@ -107,6 +107,6 @@ class KeepStandingPanel extends JPanel
 	/** "Papaya tree seed" → "Papaya", "Pineapple seed" → "Pineapple". */
 	static String treeName(Seed seed)
 	{
-		return seed.getName().replaceFirst("( tree)? seed$", "");
+		return seed.getName().replaceFirst("( tree| bush)? seed$", "");
 	}
 }

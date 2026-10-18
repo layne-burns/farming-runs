@@ -67,6 +67,6 @@ public class KindPlan
 	/** True for a harvest run on this kind: pick the crop, leave the tree, plant nothing. */
 	public boolean harvestOnly(PatchImplementation kind)
 	{
-		return treeRoutine == TreeRoutine.LEAVE_STANDING && TreeRoutine.hasHarvest(kind);
+		return treeRoutine == TreeRoutine.LEAVE_STANDING && TreeRoutine.regrows(kind);
 	}
 }

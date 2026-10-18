@@ -179,7 +179,7 @@ public class RunTab extends TabPanel
 			content.add(new KindCard(BankViewBuilder.kindName(kind), setup.kindPlan(kind), seeds, planned,
 				planned.size(), canPay ? PaymentTooltip.build(planned, items.ledger(),
 					p -> Protection.isDiseaseFree(p, data, player.getFacts())) : null, isTree,
-				TreeRoutine.hasHarvest(kind), kindNotes(setup, plan, kind, planned),
+				TreeRoutine.hasHarvest(kind), TreeRoutine.regrows(kind), kindNotes(setup, plan, kind, planned),
 				kind == PatchImplementation.ALLOTMENT ? BountyAmulet.wanted(setup.kindPlan(kind), planned, data) : null,
 				collapsed, seedInfo, kp -> update(s -> s.withKindPlan(kind, kp))));
 		}

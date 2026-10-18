@@ -7,11 +7,17 @@
 package com.layneburns.farmingruns.run;
 
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
+import com.layneburns.farmingruns.vendor.timetracking.Produce;
+import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-/** What to do with a grown tree before replanting (SPEC §2.3), set per tree kind. */
+/**
+ * What to do with a grown plant before replanting (SPEC §2.3), set per kind. Clearing is for trees; "pick, leave it
+ * standing" is for every plant whose crop grows back (fruit trees, bushes, cacti).
+ */
 @Getter
 @RequiredArgsConstructor
 public enum TreeRoutine
@@ -20,12 +26,18 @@ public enum TreeRoutine
 	PAY_TO_REMOVE("Check health, pay to remove"),
 	/** Check health, chop it down and dig up the roots (needs an axe). */
 	CHOP_AND_DIG("Check health, chop and dig"),
-	/** Trees with a crop only: pick it and leave the tree to grow more, planting nothing (harvest runs). */
-	LEAVE_STANDING("Pick, leave the tree");
+	/** Plants whose crop grows back only: pick it and leave the plant to grow more, planting nothing (harvest runs). */
+	LEAVE_STANDING("Pick, leave it standing");
 
 	/** Trees with a crop to pick before clearing: fruit, calquat fruit, celastrus bark. */
 	private static final Set<PatchImplementation> HARVESTED = Set.of(
 		PatchImplementation.FRUIT_TREE, PatchImplementation.CALQUAT, PatchImplementation.CELASTRUS);
+
+	/** Kinds whose crop grows back after picking, from RuneLite's crop data (a regrow time): bushes, fruit trees, cacti. */
+	private static final Set<PatchImplementation> REGROWING = Arrays.stream(Produce.values())
+		.filter(p -> p.getRegrowTickrate() > 0 && p.getPatchImplementation() != null)
+		.map(Produce::getPatchImplementation)
+		.collect(Collectors.toUnmodifiableSet());
 
 	private final String title;
 
@@ -33,6 +45,12 @@ public enum TreeRoutine
 	public static boolean hasHarvest(PatchImplementation kind)
 	{
 		return HARVESTED.contains(kind);
+	}
+
+	/** True for kinds whose crop grows back, so they can be picked and left standing. */
+	public static boolean regrows(PatchImplementation kind)
+	{
+		return REGROWING.contains(kind);
 	}
 
 	@Override

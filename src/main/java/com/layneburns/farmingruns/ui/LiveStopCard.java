@@ -66,7 +66,7 @@ final class LiveStopCard
 			boolean worked = progress.getWorkedPatches().contains(id);
 			if (a.isKeptStanding())
 			{
-				card.add(step("Pick the crop, leave the tree", worked));
+				card.add(step("Pick the crop, leave it standing", worked));
 				continue;
 			}
 			if (a.getSeed() == null)

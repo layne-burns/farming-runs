@@ -48,6 +48,9 @@ import net.runelite.client.ui.FontManager;
  */
 class KindCard extends JPanel
 {
+	/** The other choice for bushes and cacti: dig up the old plant and plant again. */
+	private static final String CLEAR_AND_REPLANT = "Clear and replant";
+
 	/**
 	 * @param seeds    the seeds of this kind, best first
 	 * @param planned  this kind's assignments in the current planting plan
@@ -56,6 +59,8 @@ class KindCard extends JPanel
 	 *                   protected (then there's no "pay" box)
 	 * @param isTree   whether a tree routine applies
 	 * @param harvests whether the grown tree has a crop to pick before clearing (fruit trees, calquat, celastrus)
+	 * @param regrows  whether the crop grows back, so the plant can be picked and left standing (fruit trees, bushes,
+	 *                 cacti)
 	 * @param notes    things to know, shown in yellow, e.g. "Grow first: 2 × Magic sapling (from Magic seed)"
 	 * @param amulet   allotments: whether the amulet of bounty will be worn (your choice or the default); null for
 	 *                 other kinds
@@ -63,7 +68,7 @@ class KindCard extends JPanel
 	 * @param seedInfo  a seed's tooltip: XP, protection and the goals that use it
 	 */
 	KindCard(String title, KindPlan plan, List<Seed> seeds, List<PlantingPlan.Assignment> planned, int patches,
-		@Nullable String payTooltip, boolean isTree, boolean harvests, List<String> notes, @Nullable Boolean amulet,
+		@Nullable String payTooltip, boolean isTree, boolean harvests, boolean regrows, List<String> notes, @Nullable Boolean amulet,
 		Map<String, Boolean> collapsed, Function<Seed, String> seedInfo, Consumer<KindPlan> onChange)
 	{
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -80,17 +85,30 @@ class KindCard extends JPanel
 		if (isTree)
 		{
 			// First for trees, since it decides the rest: a harvest run plants nothing.
-			TreeRoutine[] choices = (harvests ? List.of(TreeRoutine.values())
+			TreeRoutine[] choices = (regrows ? List.of(TreeRoutine.values())
 				: List.of(TreeRoutine.PAY_TO_REMOVE, TreeRoutine.CHOP_AND_DIG)).toArray(new TreeRoutine[0]);
 			JComboBox<TreeRoutine> routine = new JComboBox<>(choices);
 			routine.setSelectedItem(plan.getTreeRoutine());
 			routine.setFocusable(false);
-			routine.setToolTipText("What to do with a grown tree before replanting. \"Pick, leave the tree\" is a harvest"
-				+ " run: the crop is picked and the tree left (choose which types below).");
+			routine.setToolTipText("What to do with a grown tree before replanting. \"Pick, leave it standing\" is a"
+				+ " harvest run: the crop is picked and the tree left (choose which types below).");
 			routine.addActionListener(e -> onChange.accept(plan.withTreeRoutine((TreeRoutine) routine.getSelectedItem())));
 			add(left(routine));
 		}
-		if (harvests && plan.getTreeRoutine() == TreeRoutine.LEAVE_STANDING)
+		else if (regrows)
+		{
+			// Bushes and cacti: dug up to replant, or picked and left to grow more.
+			JComboBox<String> routine = new JComboBox<>(new String[]{CLEAR_AND_REPLANT,
+				TreeRoutine.LEAVE_STANDING.getTitle()});
+			routine.setSelectedIndex(plan.getTreeRoutine() == TreeRoutine.LEAVE_STANDING ? 1 : 0);
+			routine.setFocusable(false);
+			routine.setToolTipText("\"Pick, leave it standing\" is a harvest run: the crop is picked and the plant left"
+				+ " to grow more (choose which types below).");
+			routine.addActionListener(e -> onChange.accept(plan.withTreeRoutine(routine.getSelectedIndex() == 1
+				? TreeRoutine.LEAVE_STANDING : TreeRoutine.PAY_TO_REMOVE)));
+			add(left(routine));
+		}
+		if (regrows && plan.getTreeRoutine() == TreeRoutine.LEAVE_STANDING)
 		{
 			if (seeds.size() > 1)
 			{
@@ -98,8 +116,8 @@ class KindCard extends JPanel
 			}
 			if (plan.getReplaceStanding().isEmpty())
 			{
-				add(left(TabPanel.text("Harvest run: pick the crop and leave the tree. Nothing is planted, paid or"
-					+ " cleared.")));
+				add(left(TabPanel.text("Harvest run: pick the crop and leave it standing. Nothing is planted, paid"
+					+ " or cleared.")));
 				setMaximumSize(new Dimension(Integer.MAX_VALUE, getPreferredSize().height));
 				return;
 			}
