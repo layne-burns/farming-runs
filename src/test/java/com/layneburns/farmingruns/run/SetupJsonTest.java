@@ -7,7 +7,9 @@
 package com.layneburns.farmingruns.run;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import com.google.gson.Gson;
 import com.layneburns.farmingruns.data.RunType;
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
@@ -32,7 +34,8 @@ public class SetupJsonTest
 			.withKindPlan(PatchImplementation.TREE, KindPlan.AUTO.withPay(true).withTreeRoutine(TreeRoutine.CHOP_AND_DIG))
 			.withKindPlan(PatchImplementation.FRUIT_TREE, KindPlan.AUTO.withSkipHarvest(true))
 			.withSkipped("weiss.herb", true)
-			.withCompost(CompostChoice.ULTRACOMPOST);
+			.withCompost(CompostChoice.ULTRACOMPOST)
+			.withLeftOut(PatchImplementation.SPIRIT_TREE, true);
 		assertEquals(setup, SetupJson.fromJson(gson, SetupJson.toJson(gson, setup)));
 	}
 
@@ -43,6 +46,17 @@ public class SetupJsonTest
 		assertEquals(Set.of(RunType.HERB), setup.getRunTypes());
 		assertEquals(CompostChoice.SUPERCOMPOST, setup.getCompost());
 		assertEquals(KindPlan.AUTO, setup.kindPlan(PatchImplementation.HERB));
+		assertEquals(Set.of(), setup.getLeftOutKinds());
+	}
+
+	@Test
+	public void aKindLeftOutIsntInTheRunButTheRestOfItsTypeIs()
+	{
+		RunSetup special = RunSetup.EMPTY.withRunTypes(Set.of(RunType.SPECIAL_TREES))
+			.withLeftOut(PatchImplementation.SPIRIT_TREE, true);
+		assertFalse(special.includes(PatchImplementation.SPIRIT_TREE));
+		assertTrue(special.includes(PatchImplementation.CALQUAT));
+		assertTrue(special.withLeftOut(PatchImplementation.SPIRIT_TREE, false).includes(PatchImplementation.SPIRIT_TREE));
 	}
 
 	@Test

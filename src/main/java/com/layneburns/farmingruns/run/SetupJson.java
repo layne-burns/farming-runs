@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -78,6 +79,8 @@ public final class SetupJson
 		}
 		Set<String> skipped = raw.getSkippedPatches() == null ? Set.of() : Set.copyOf(raw.getSkippedPatches());
 		CompostChoice compost = raw.getCompost() == null ? CompostChoice.SUPERCOMPOST : raw.getCompost();
-		return new RunSetup(Set.copyOf(types), Map.copyOf(kinds), skipped, compost);
+		Set<PatchImplementation> leftOut = raw.getLeftOutKinds() == null ? Set.of()
+			: raw.getLeftOutKinds().stream().filter(k -> k != null).collect(Collectors.toUnmodifiableSet());
+		return new RunSetup(Set.copyOf(types), Map.copyOf(kinds), skipped, compost, leftOut);
 	}
 }

@@ -38,6 +38,7 @@ import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -193,6 +194,11 @@ public class RunTab extends TabPanel
 
 		SectionPanel types = section("Run types");
 		types.addRow(runTypes(setup));
+		JPanel leftOut = leftOut(setup);
+		if (leftOut != null)
+		{
+			types.addRow(leftOut);
+		}
 		content.add(types);
 
 		Map<Seed, List<String>> goalsBySeed = new HashMap<>();
@@ -213,7 +219,8 @@ public class RunTab extends TabPanel
 					p -> Protection.isDiseaseFree(p, data, player.getFacts())) : null, isTree,
 				TreeRoutine.hasHarvest(kind), TreeRoutine.regrows(kind), kindNotes(setup, plan, kind, planned),
 				kind == PatchImplementation.ALLOTMENT ? BountyAmulet.wanted(setup.kindPlan(kind), planned, data) : null,
-				collapsed, seedInfo, kp -> update(s -> s.withKindPlan(kind, kp))));
+				collapsed, seedInfo, kp -> update(s -> s.withKindPlan(kind, kp)),
+				() -> update(s -> s.withLeftOut(kind, true))));
 		}
 
 		SectionPanel compost = section("Compost");
@@ -280,7 +287,34 @@ public class RunTab extends TabPanel
 		return grid;
 	}
 
-	/** Kinds the chosen run types cover that have usable patches, in run-type order. */
+	/** "Left out: Spirit tree" with a button per kind to put it back; null when nothing chosen is left out. */
+	private JPanel leftOut(RunSetup setup)
+	{
+		List<PatchImplementation> kinds = setup.getLeftOutKinds().stream()
+			.filter(k -> setup.getRunTypes().stream().anyMatch(t -> t.covers(k)))
+			.sorted().collect(Collectors.toList());
+		if (kinds.isEmpty())
+		{
+			return null;
+		}
+		JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
+		row.setBackground(Palette.BACKGROUND);
+		row.setAlignmentX(LEFT_ALIGNMENT);
+		JLabel label = new JLabel("Left out:");
+		label.setForeground(Palette.SECONDARY_TEXT);
+		row.add(label);
+		for (PatchImplementation kind : kinds)
+		{
+			JButton back = button("+ " + BankViewBuilder.kindName(kind), "Put " + BankViewBuilder.kindName(kind)
+				+ " back in the run");
+			back.addActionListener(e -> update(s -> s.withLeftOut(kind, false)));
+			row.add(back);
+		}
+		row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
+		return row;
+	}
+
+	/** Kinds the chosen run types cover that have usable patches, in run-type order (less the ones left out). */
 	private List<PatchImplementation> kindsIn(RunSetup setup)
 	{
 		List<PatchImplementation> kinds = new ArrayList<>();
@@ -291,7 +325,7 @@ public class RunTab extends TabPanel
 				continue;
 			}
 			type.getKinds().stream()
-				.filter(k -> !planner.usablePatches(k).isEmpty() && !kinds.contains(k))
+				.filter(k -> !planner.usablePatches(k).isEmpty() && !kinds.contains(k) && !setup.getLeftOutKinds().contains(k))
 				.sorted()
 				.forEach(kinds::add);
 		}

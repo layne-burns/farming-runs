@@ -34,6 +34,7 @@ import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
+import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
@@ -43,7 +44,7 @@ import net.runelite.client.ui.overlay.OverlayUtil;
 /**
  * During a run, shows above your head the next thing to do at the current stop ({@link Reminder}) while you're
  * there, and where you're going next and how until you set off. Seen by you alone. Can be switched off, and its
- * colour changed, in the settings.
+ * colour changed, in the settings. Shares the space with other plugins' overhead text through {@link OverheadStack}.
  */
 @Singleton
 public class ReminderOverlay extends Overlay
@@ -62,12 +63,14 @@ public class ReminderOverlay extends Overlay
 	private final ItemStore items;
 	private final PlayerInfo player;
 	private final FarmingRunsConfig config;
+	private final EventBus eventBus;
 
 	@Inject
 	ReminderOverlay(Client client, GameData data, RunSession session, GuidanceTracker guidance, LegTimer legs,
 		ItemStore items, PlayerInfo player, FarmingRunsConfig config, FairyRingRoute fairyRings,
-		PineappleErrand pineapples, LocationPrefs prefs)
+		PineappleErrand pineapples, LocationPrefs prefs, EventBus eventBus)
 	{
+		this.eventBus = eventBus;
 		this.prefs = prefs;
 		this.pineapples = pineapples;
 		this.fairyRings = fairyRings;
@@ -139,7 +142,9 @@ public class ReminderOverlay extends Overlay
 		Point at = me.getCanvasTextLocation(graphics, text, me.getLogicalHeight() + HEIGHT_ABOVE);
 		if (at != null)
 		{
-			OverlayUtil.renderTextLocation(graphics, at, text, config.reminderColour());
+			int raise = OverheadStack.raise(eventBus, graphics.getFontMetrics().getHeight());
+			OverlayUtil.renderTextLocation(graphics, new Point(at.getX(), at.getY() - raise), text,
+				config.reminderColour());
 		}
 	}
 

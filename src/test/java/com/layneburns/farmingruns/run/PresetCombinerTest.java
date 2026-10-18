@@ -90,4 +90,18 @@ public class PresetCombinerTest
 		assertEquals(pickOnly, applied.kindPlan(PatchImplementation.FRUIT_TREE));
 		assertEquals(KindPlan.AUTO.withPay(true), applied.kindPlan(PatchImplementation.HERB));
 	}
+
+	@Test
+	public void aKindStaysLeftOutOnlyWhenEveryPresetCoveringItLeavesItOut()
+	{
+		RunSetup noSpirit = RunSetup.EMPTY.withRunTypes(Set.of(RunType.SPECIAL_TREES))
+			.withLeftOut(PatchImplementation.SPIRIT_TREE, true);
+		RunSetup herbs = RunSetup.EMPTY.withRunTypes(Set.of(RunType.HERB));
+		RunSetup special = RunSetup.EMPTY.withRunTypes(Set.of(RunType.SPECIAL_TREES));
+		// Herbs don't cover spirit trees, so they don't bring them back.
+		assertEquals(Set.of(PatchImplementation.SPIRIT_TREE),
+			PresetCombiner.combine(List.of(noSpirit, herbs)).getLeftOutKinds());
+		// Another special trees preset that keeps them does.
+		assertEquals(Set.of(), PresetCombiner.combine(List.of(noSpirit, special)).getLeftOutKinds());
+	}
 }

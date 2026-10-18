@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -66,10 +67,12 @@ class KindCard extends JPanel
 	 *                 other kinds
 	 * @param collapsed which collapsible parts are closed, by key; kept by the Run tab across redraws
 	 * @param seedInfo  a seed's tooltip: XP, protection and the goals that use it
+	 * @param onLeaveOut leaves this kind out of the run (the × by its heading)
 	 */
 	KindCard(String title, KindPlan plan, List<Seed> seeds, List<PlantingPlan.Assignment> planned, int patches,
 		@Nullable String payTooltip, boolean isTree, boolean harvests, boolean regrows, List<String> notes, @Nullable Boolean amulet,
-		Map<String, Boolean> collapsed, Function<Seed, String> seedInfo, Consumer<KindPlan> onChange)
+		Map<String, Boolean> collapsed, Function<Seed, String> seedInfo, Consumer<KindPlan> onChange,
+		Runnable onLeaveOut)
 	{
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(Palette.SURFACE);
@@ -80,7 +83,14 @@ class KindCard extends JPanel
 
 		JLabel heading = new JLabel(title + " · " + patches + " patch" + (patches == 1 ? "" : "es"));
 		heading.setForeground(Palette.TEXT);
-		add(left(heading));
+		JButton leaveOut = TabPanel.button("×", "Leave " + title.toLowerCase() + " out of this run (the rest of its"
+			+ " run type stays). Put it back under Run types.");
+		leaveOut.addActionListener(e -> onLeaveOut.run());
+		JPanel top = new JPanel(new BorderLayout());
+		top.setOpaque(false);
+		top.add(heading, BorderLayout.CENTER);
+		top.add(leaveOut, BorderLayout.EAST);
+		add(left(top));
 
 		if (isTree)
 		{

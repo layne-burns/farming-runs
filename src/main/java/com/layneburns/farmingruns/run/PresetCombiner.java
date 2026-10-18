@@ -53,7 +53,27 @@ public final class PresetCombiner
 		{
 			plans.put(kind, combineKind(presets, kind));
 		}
-		return new RunSetup(Set.copyOf(types), Map.copyOf(plans), Set.copyOf(skipped), presets.get(0).getCompost());
+		// A kind stays left out only when every preset that covers it leaves it out.
+		Set<PatchImplementation> leftOut = new HashSet<>();
+		for (PatchImplementation kind : PatchImplementation.values())
+		{
+			boolean covered = false;
+			boolean kept = false;
+			for (RunSetup preset : presets)
+			{
+				if (preset.getRunTypes().stream().anyMatch(t -> t.covers(kind)))
+				{
+					covered = true;
+					kept |= !preset.getLeftOutKinds().contains(kind);
+				}
+			}
+			if (covered && !kept)
+			{
+				leftOut.add(kind);
+			}
+		}
+		return new RunSetup(Set.copyOf(types), Map.copyOf(plans), Set.copyOf(skipped), presets.get(0).getCompost(),
+			Set.copyOf(leftOut));
 	}
 
 	/**

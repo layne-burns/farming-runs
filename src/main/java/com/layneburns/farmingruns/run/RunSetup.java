@@ -23,7 +23,7 @@ import lombok.With;
 @With
 public class RunSetup
 {
-	public static final RunSetup EMPTY = new RunSetup(Set.of(), Map.of(), Set.of(), CompostChoice.SUPERCOMPOST);
+	public static final RunSetup EMPTY = new RunSetup(Set.of(), Map.of(), Set.of(), CompostChoice.SUPERCOMPOST, Set.of());
 
 	Set<RunType> runTypes;
 	/** Plans for the kinds you've changed; any other kind is {@link KindPlan#AUTO}. */
@@ -31,6 +31,8 @@ public class RunSetup
 	/** Patch ids to leave out of the run. */
 	Set<String> skippedPatches;
 	CompostChoice compost;
+	/** Kinds left out of the run though a chosen run type covers them (spirit trees on a special trees run). */
+	Set<PatchImplementation> leftOutKinds;
 
 	public KindPlan kindPlan(PatchImplementation kind)
 	{
@@ -59,9 +61,24 @@ public class RunSetup
 		return withSkippedPatches(Set.copyOf(copy));
 	}
 
-	/** True when a run type you chose covers this kind. */
+	/** True when a run type you chose covers this kind, and you haven't left it out. */
 	public boolean includes(PatchImplementation kind)
 	{
-		return runTypes.stream().anyMatch(t -> t.covers(kind));
+		return !leftOutKinds.contains(kind) && runTypes.stream().anyMatch(t -> t.covers(kind));
+	}
+
+	/** Leaves a kind out of the run, or puts it back. */
+	public RunSetup withLeftOut(PatchImplementation kind, boolean leftOut)
+	{
+		Set<PatchImplementation> copy = new HashSet<>(leftOutKinds);
+		if (leftOut)
+		{
+			copy.add(kind);
+		}
+		else
+		{
+			copy.remove(kind);
+		}
+		return withLeftOutKinds(Set.copyOf(copy));
 	}
 }
