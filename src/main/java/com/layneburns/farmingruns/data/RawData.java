@@ -136,6 +136,8 @@ final class RawData
 		String name;
 		String detail;
 		List<Integer> itemIds;
+		/** x, y, plane. */
+		List<Integer> landing;
 	}
 
 	static class Rune

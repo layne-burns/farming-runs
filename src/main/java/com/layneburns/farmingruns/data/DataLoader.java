@@ -226,7 +226,8 @@ public final class DataLoader
 			int waived = raw.waivedByVarbit == null ? Teleport.NOT_WAIVED : GameIds.varbit(raw.waivedByVarbit, where);
 			List<TeleportDestination> destinations = raw.destinations == null ? List.of() : raw.destinations.stream()
 				.map(d -> new TeleportDestination(d.id, d.name, d.detail,
-					d.itemIds == null ? Set.of() : Set.copyOf(d.itemIds)))
+					d.itemIds == null ? Set.of() : Set.copyOf(d.itemIds),
+					d.landing == null ? null : new WorldPoint(d.landing.get(0), d.landing.get(1), d.landing.get(2))))
 				.collect(Collectors.toUnmodifiableList());
 			teleports.put(raw.id, new Teleport(raw.id, raw.name, raw.group, type, itemIds, raw.spellbook, runes, waived,
 				raw.usedUp, destinations));

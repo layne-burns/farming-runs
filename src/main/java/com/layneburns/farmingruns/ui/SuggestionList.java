@@ -49,8 +49,10 @@ final class SuggestionList
 				BorderFactory.createMatteBorder(0, 0, 4, 0, Palette.BACKGROUND),
 				BorderFactory.createEmptyBorder(4, 6, 4, 6)));
 			row.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+			String fare = suggestion.getCoins() > 0 ? String.format(" (and %,d coins on the way)", suggestion.getCoins())
+				: "";
 			JLabel text = TabPanel.text("You reached <b>" + location.getName() + "</b> with " + choice.displayName()
-				+ ". Use it first from now on?");
+				+ fare + ". Use it first from now on?");
 			text.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 			row.add(text);
 
@@ -62,6 +64,7 @@ final class SuggestionList
 				order.remove(suggestion.getRef());
 				order.add(0, suggestion.getRef());
 				prefs.setTeleports(location.getId(), order);
+				prefs.setFare(location.getId(), suggestion.getRef(), suggestion.getCoins());
 				suggestions.accepted(suggestion);
 			});
 			JButton dismiss = TabPanel.button("Dismiss", "Keep the list as it is");

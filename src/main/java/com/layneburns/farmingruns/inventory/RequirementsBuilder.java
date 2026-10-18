@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.ToIntBiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -70,6 +71,16 @@ public final class RequirementsBuilder
 	 */
 	public static RunRequirements build(RunSetup setup, PlantingPlan plan, Map<String, List<String>> teleportRefs,
 		GameData data, PlayerFacts facts, ItemLedger ledger, Predicate<Patch> treeGrown, boolean autoweed)
+	{
+		return build(setup, plan, teleportRefs, (location, ref) -> 0, data, facts, ledger, treeGrown, autoweed);
+	}
+
+	/**
+	 * @param fares coins the way to a location from a teleport ref costs (boat fares), added to the coins needed
+	 */
+	public static RunRequirements build(RunSetup setup, PlantingPlan plan, Map<String, List<String>> teleportRefs,
+		ToIntBiFunction<String, String> fares, GameData data, PlayerFacts facts, ItemLedger ledger,
+		Predicate<Patch> treeGrown, boolean autoweed)
 	{
 		List<PlantingPlan.Assignment> assignments = plan.getAssignments();
 		if (assignments.isEmpty())
@@ -115,7 +126,7 @@ public final class RequirementsBuilder
 		}
 		OUTFIT.forEach((group, name) -> addIfOwned(list, ledger, name, items.group(group), false, "Farming XP"));
 
-		Map<String, TeleportChoice> teleports = addTeleports(list, notes, assignments, teleportRefs, data, facts,
+		Map<String, TeleportChoice> teleports = addTeleports(list, notes, assignments, teleportRefs, fares, data, facts,
 			ledger);
 		return new RunRequirements(list.toList(), Map.copyOf(teleports), List.copyOf(notes));
 	}
@@ -259,7 +270,8 @@ public final class RequirementsBuilder
 
 	/** Picks each visited location's teleport and adds what it takes. Returns the picks by location id. */
 	private static Map<String, TeleportChoice> addTeleports(RequirementList list, List<String> notes,
-		List<PlantingPlan.Assignment> assignments, Map<String, List<String>> teleportRefs, GameData data,
+		List<PlantingPlan.Assignment> assignments, Map<String, List<String>> teleportRefs,
+		ToIntBiFunction<String, String> fares, GameData data,
 		PlayerFacts facts, ItemLedger ledger)
 	{
 		Set<String> visited = new LinkedHashSet<>();
@@ -276,6 +288,12 @@ public final class RequirementsBuilder
 				continue;
 			}
 			picks.put(locationId, choice);
+			int fare = fares.applyAsInt(locationId, choice.getRef());
+			if (fare > 0)
+			{
+				list.add("Coins", data.getItems().group("coins"), fare, Importance.NEED, false,
+					"boats to " + location.getName(), true);
+			}
 			switch (choice.getMethod().getType())
 			{
 				case ITEM:

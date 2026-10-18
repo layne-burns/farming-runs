@@ -12,6 +12,7 @@ import com.layneburns.farmingruns.data.TeleportChoice;
 import com.layneburns.farmingruns.data.TeleportDestination;
 import com.layneburns.farmingruns.data.TeleportType;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -19,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import net.runelite.api.coords.WorldPoint;
 
 /**
  * Recognises a teleport from what you clicked: an item's teleport option, a spell cast, a fairy ring's last
@@ -33,6 +35,8 @@ public final class TeleportRecognizer
 	private static final Pattern LAST_DESTINATION = Pattern.compile("last-destination \\(([a-z]{3})\\)");
 	/** Words that don't tell destinations apart. */
 	private static final Set<String> FILLER = Set.of("teleport", "to", "the", "of");
+	/** A landing this close to a destination's tile was that destination. */
+	static final int LANDING_TILES = 15;
 
 	private TeleportRecognizer()
 	{
@@ -84,11 +88,32 @@ public final class TeleportRecognizer
 	@Nullable
 	public static String resolve(String recognised, List<String> locationRefs, GameData data)
 	{
+		return resolve(recognised, locationRefs, data, null);
+	}
+
+	/**
+	 * As {@link #resolve(String, List, GameData)}, and when the location's list doesn't use the method, the
+	 * destination that lands nearest where you landed (within {@link #LANDING_TILES}).
+	 */
+	@Nullable
+	public static String resolve(String recognised, List<String> locationRefs, GameData data,
+		@Nullable WorldPoint landedAt)
+	{
 		if (recognised.contains(":") || data.teleportChoice(recognised) != null)
 		{
 			return recognised;
 		}
-		return locationRefs.stream().filter(r -> r.startsWith(recognised + ":")).findFirst().orElse(null);
+		String listed = locationRefs.stream().filter(r -> r.startsWith(recognised + ":")).findFirst().orElse(null);
+		Teleport method = data.teleport(recognised);
+		if (listed != null || landedAt == null || method == null)
+		{
+			return listed;
+		}
+		return method.getDestinations().stream()
+			.filter(d -> d.getLanding() != null && d.getLanding().getPlane() == landedAt.getPlane()
+				&& d.getLanding().distanceTo2D(landedAt) <= LANDING_TILES)
+			.min(Comparator.comparingInt(d -> d.getLanding().distanceTo2D(landedAt)))
+			.map(d -> TeleportChoice.ref(method.getId(), d.getId())).orElse(null);
 	}
 
 	/** The item's teleport method, with the destination when the option names one ("Farming Guild"). */

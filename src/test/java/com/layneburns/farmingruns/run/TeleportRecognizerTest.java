@@ -12,6 +12,7 @@ import com.google.gson.Gson;
 import com.layneburns.farmingruns.data.DataLoader;
 import com.layneburns.farmingruns.data.GameData;
 import java.util.List;
+import net.runelite.api.coords.WorldPoint;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -47,6 +48,16 @@ public class TeleportRecognizerTest
 		assertEquals("xerics_talisman:glade", TeleportRecognizer.resolve(rubbed,
 			List.of("book_of_the_dead:hosidius", "xerics_talisman:glade"), data));
 		assertNull(TeleportRecognizer.resolve(rubbed, List.of("kourend_castle_teleport"), data));
+	}
+
+	@Test
+	public void shortestPathItemsAreKnownAndResolvedByWhereYouLanded()
+	{
+		String rubbed = TeleportRecognizer.recognise("Rub", "Sailors' amulet", anyItem("sailors_amulet"), data);
+		assertEquals("sailors_amulet", rubbed);
+		assertEquals("sailors_amulet:deepfin_point", TeleportRecognizer.resolve(rubbed, List.of("explorers_ring"), data,
+			new WorldPoint(1945, 2759, 0)));
+		assertNull(TeleportRecognizer.resolve(rubbed, List.of("explorers_ring"), data, new WorldPoint(3200, 3200, 0)));
 	}
 
 	@Test

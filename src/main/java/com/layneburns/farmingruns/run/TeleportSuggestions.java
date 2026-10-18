@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.inject.Singleton;
+import lombok.EqualsAndHashCode;
 import lombok.Value;
 
 /**
@@ -26,6 +27,9 @@ public class TeleportSuggestions
 		String locationId;
 		/** The teleport you used, as "method" or "method:destination". */
 		String ref;
+		/** Coins you spent on the way after it (boat fares); 0 if none. */
+		@EqualsAndHashCode.Exclude
+		int coins;
 	}
 
 	private final List<Suggestion> suggestions = new CopyOnWriteArrayList<>();

@@ -7,12 +7,17 @@ ids typed by hand.
 The outputs are generated: edit the .in files, not the outputs, then re-run. The script stops if a page is
 missing or has no ids, so a typo can't slip through.
 
-Usage: python scripts/update_item_data.py
+Teleport items Shortest Path knows that teleports.in.json doesn't are added after them (sp_teleports.py), read from
+the installed Shortest Path jar.
+
+Usage: python scripts/update_item_data.py [--shortest-path <jar or teleportation_items.tsv>]
 """
+import argparse
 import json
 import re
 from pathlib import Path
 
+import sp_teleports
 from wiki import clean_wikitext, infobox_ids, page_texts, raw_page
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -66,6 +71,10 @@ def spell_cost(text, spell, rune_ids):
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--shortest-path", help="Shortest Path jar or teleportation_items.tsv (default: installed jar)")
+    args = parser.parse_args()
+    sp_table = sp_teleports.read_table(args.shortest_path)
     teleports_in = json.loads((SCRIPTS / "teleports.in.json").read_text(encoding="utf-8"))["teleports"]
     items_in = json.loads((SCRIPTS / "items.in.json").read_text(encoding="utf-8"))
 
@@ -115,6 +124,11 @@ def main() -> None:
             out["destinations"] = resolved
         teleports.append(out)
 
+    known_item_ids = {i for t in teleports for i in t.get("itemIds", [])}
+    known_item_ids |= {i for t in teleports for d in t.get("destinations", []) for i in d.get("itemIds", [])}
+    from_sp = sp_teleports.teleports(sp_table, known_item_ids, {t["id"] for t in teleports})
+    teleports += from_sp
+
     groups = {name: resolve_items(entries, texts, f"item group {name}")
               for name, entries in items_in["groups"].items()}
 
@@ -135,7 +149,7 @@ def main() -> None:
         {"_comment": generated.format("items.in.json"), "groups": groups, "descriptions": descriptions,
          "runes": rune_ids, "spells": spells}, indent="\t", ensure_ascii=False) + "\n",
         encoding="utf-8", newline="\n")
-    print(f"wrote teleports.json ({len(teleports)} teleports) and items.json ({len(groups)} groups, "
+    print(f"wrote teleports.json ({len(teleports)} teleports, {len(from_sp)} from Shortest Path) and items.json ({len(groups)} groups, "
           f"{len(rune_ids)} runes)")
 
 

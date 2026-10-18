@@ -38,12 +38,16 @@ public class LocationPrefs
 {
 	private static final String OVERRIDES_KEY = "unlockOverrides";
 	private static final String TELEPORTS_KEY = "teleportOrders";
+	private static final String FARES_KEY = "teleportFares";
 	/** Before ranked lists, a single teleport per location was saved here; it's moved to the front on load. */
 	private static final String OLD_TELEPORT_KEY = "teleportChoices";
 	private static final Type BOOLEAN_MAP = new TypeToken<Map<String, Boolean>>()
 	{
 	}.getType();
 	private static final Type LIST_MAP = new TypeToken<Map<String, List<String>>>()
+	{
+	}.getType();
+	private static final Type INT_MAP = new TypeToken<Map<String, Integer>>()
 	{
 	}.getType();
 	private static final Type STRING_MAP = new TypeToken<Map<String, String>>()
@@ -56,6 +60,8 @@ public class LocationPrefs
 	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 	private volatile Map<String, Boolean> overrides = Map.of();
 	private volatile Map<String, List<String>> teleports = Map.of();
+	/** Coins spent on the way (boat fares) after a stop's teleport, by "location/teleport ref". */
+	private volatile Map<String, Integer> fares = Map.of();
 	/** The account these were loaded for, or null before login; see {@link #ensureLoaded()}. */
 	private volatile String loadedFor;
 	private volatile boolean everLoaded;
@@ -140,6 +146,35 @@ public class LocationPrefs
 		save(TELEPORTS_KEY, teleports);
 	}
 
+	/** Coins the way to this location from this teleport costs (boat fares), as last seen; 0 if none. */
+	public int fare(String locationId, String ref)
+	{
+		ensureLoaded();
+		return fares.getOrDefault(locationId + "/" + ref, 0);
+	}
+
+	/** Remembers the coins spent on the way to a location from a teleport; 0 forgets it. */
+	public void setFare(String locationId, String ref, int coins)
+	{
+		ensureLoaded();
+		String key = locationId + "/" + ref;
+		if (fares.getOrDefault(key, 0) == coins)
+		{
+			return;
+		}
+		Map<String, Integer> copy = new HashMap<>(fares);
+		if (coins > 0)
+		{
+			copy.put(key, coins);
+		}
+		else
+		{
+			copy.remove(key);
+		}
+		fares = Map.copyOf(copy);
+		save(FARES_KEY, fares);
+	}
+
 	/** Loads the saved choices for the current profile. */
 	public void load()
 	{
@@ -147,6 +182,7 @@ public class LocationPrefs
 		everLoaded = true;
 		overrides = read(OVERRIDES_KEY, BOOLEAN_MAP);
 		teleports = read(TELEPORTS_KEY, LIST_MAP);
+		fares = read(FARES_KEY, INT_MAP);
 		migrateSingleChoices();
 		upgradeSavedNames();
 		listeners.forEach(Runnable::run);
