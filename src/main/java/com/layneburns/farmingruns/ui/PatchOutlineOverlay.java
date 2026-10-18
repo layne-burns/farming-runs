@@ -25,8 +25,8 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
 /**
- * During a run, outlines the patches still to do at the current stop (SPEC §2.6), in the same colour as the items to
- * use on them. Each outline goes once its patch is done.
+ * During a run, outlines the patches still to do at the current stop (SPEC §2.6), each in its kind's colour
+ * ({@link PatchColours}), the same as the seeds for it in your inventory. Each outline goes once its patch is done.
  */
 @Singleton
 public class PatchOutlineOverlay extends Overlay
@@ -70,7 +70,7 @@ public class PatchOutlineOverlay extends Overlay
 			}
 			for (TileObject object : patches.objects(a.getPatch(), regions))
 			{
-				outlines.drawOutline(object, OUTLINE_WIDTH, RunItemOverlay.OUTLINE, OUTLINE_FEATHER);
+				outlines.drawOutline(object, OUTLINE_WIDTH, PatchColours.of(a.getPatch().getKind()), OUTLINE_FEATHER);
 			}
 		}
 		return null;

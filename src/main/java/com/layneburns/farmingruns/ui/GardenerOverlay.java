@@ -55,7 +55,7 @@ public class GardenerOverlay extends Overlay
 		{
 			if (gardeners.contains(npc.getId()))
 			{
-				outlines.drawOutline(npc, OUTLINE_WIDTH, RunItemOverlay.OUTLINE, OUTLINE_FEATHER);
+				outlines.drawOutline(npc, OUTLINE_WIDTH, PatchColours.DEFAULT, OUTLINE_FEATHER);
 			}
 		}
 		return null;

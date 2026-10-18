@@ -18,19 +18,20 @@ import net.runelite.client.ui.overlay.WidgetItemOverlay;
 
 /**
  * During a run, outlines in your inventory what to use at the current stop (SPEC §2.6): the seeds to plant, the
- * compost, then the gardener's payment. Each stops being outlined once it's done.
+ * compost, then the gardener's payment. Seeds are outlined in their patch kind's colour ({@link PatchColours}), the
+ * same as the patch; everything else in the usual one. Each stops being outlined once it's done.
  */
 @Singleton
 public class RunItemOverlay extends WidgetItemOverlay
 {
-	static final Color OUTLINE = new Color(0, 220, 255);
-
 	private final GuidanceTracker guidance;
 	private final ItemManager itemManager;
+	private final PatchColours colours;
 
 	@Inject
-	RunItemOverlay(GuidanceTracker guidance, ItemManager itemManager)
+	RunItemOverlay(GuidanceTracker guidance, ItemManager itemManager, PatchColours colours)
 	{
+		this.colours = colours;
 		this.guidance = guidance;
 		this.itemManager = itemManager;
 		showOnInventory();
@@ -40,12 +41,15 @@ public class RunItemOverlay extends WidgetItemOverlay
 	public void renderItemOverlay(Graphics2D graphics, int itemId, WidgetItem widgetItem)
 	{
 		// Noted payment counts as the produce itself.
-		if (!guidance.highlights().getItems().contains(itemManager.canonicalize(itemId)))
+		int canonical = itemManager.canonicalize(itemId);
+		if (!guidance.highlights().getItems().contains(canonical))
 		{
 			return;
 		}
+		// Seeds take their patch kind's colour, as the patch outline does; everything else the usual one.
+		Color colour = colours.ofItem(canonical);
 		Rectangle bounds = widgetItem.getCanvasBounds();
-		graphics.drawImage(itemManager.getItemOutline(itemId, widgetItem.getQuantity(), OUTLINE), (int) bounds.getX(),
+		graphics.drawImage(itemManager.getItemOutline(itemId, widgetItem.getQuantity(), colour), (int) bounds.getX(),
 			(int) bounds.getY(), null);
 	}
 }
