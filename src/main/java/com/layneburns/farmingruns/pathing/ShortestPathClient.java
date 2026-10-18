@@ -6,6 +6,7 @@
  */
 package com.layneburns.farmingruns.pathing;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -42,7 +43,7 @@ public class ShortestPathClient
 	/** What was last sent: a target, or null for "clear". Starts as "clear" so we never wipe a path you set yourself. */
 	@Nullable
 	private Set<WorldPoint> sent;
-	private boolean sentCarriedOnly;
+	private Map<String, Object> sentConfig = Map.of();
 	private boolean sentAnything;
 
 	@Inject
@@ -55,21 +56,37 @@ public class ShortestPathClient
 	/**
 	 * Draws the path to the nearest of {@code targets}, unless that's already the path.
 	 *
-	 * @param carriedOnly use only the teleport items you carry and no bank trips, instead of your own settings
+	 * @param carriedOnly  use only the teleport items you carry and no bank trips, instead of your own settings
+	 * @param housePortals let it use your house's portals (the stop is reached by one)
 	 */
-	public void target(Set<WorldPoint> targets, boolean carriedOnly)
+	public void target(Set<WorldPoint> targets, boolean carriedOnly, boolean housePortals)
 	{
-		if (targets.isEmpty() || (targets.equals(sent) && carriedOnly == sentCarriedOnly && sentAnything))
+		Map<String, Object> config = new HashMap<>();
+		if (carriedOnly)
+		{
+			config.putAll(CARRIED_ONLY);
+		}
+		if (housePortals)
+		{
+			// Off by default in Shortest Path, so a stop reached by your house portal would be unreachable.
+			config.put("useTeleportationPortalsPoh", true);
+		}
+		if (targets.isEmpty() || (targets.equals(sent) && config.equals(sentConfig) && sentAnything))
 		{
 			return;
 		}
+		if (config.isEmpty() && !sentConfig.isEmpty())
+		{
+			// Shortest Path keeps the last settings override until a "clear".
+			eventBus.post(new PluginMessage(NAMESPACE, "clear"));
+		}
 		// One point as itself; several as a set, where Shortest Path goes to the nearest.
 		Object target = targets.size() == 1 ? targets.iterator().next() : Set.copyOf(targets);
-		eventBus.post(new PluginMessage(NAMESPACE, "path", carriedOnly
-			? Map.of("target", target, "config", CARRIED_ONLY) : Map.of("target", target)));
-		log.debug("[sp] path to {}{}", targets, carriedOnly ? " (carried items only)" : "");
+		eventBus.post(new PluginMessage(NAMESPACE, "path", config.isEmpty() ? Map.of("target", target)
+			: Map.of("target", target, "config", Map.copyOf(config))));
+		log.debug("[sp] path to {} {}", targets, config);
 		sent = Set.copyOf(targets);
-		sentCarriedOnly = carriedOnly;
+		sentConfig = Map.copyOf(config);
 		sentAnything = true;
 	}
 

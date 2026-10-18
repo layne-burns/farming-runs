@@ -11,6 +11,7 @@ import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.Location;
 import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.data.TeleportChoice;
+import com.layneburns.farmingruns.data.TeleportType;
 import com.layneburns.farmingruns.pathing.ShortestPathClient;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import java.util.ArrayList;
@@ -229,7 +230,9 @@ public class RunController
 		RunProgress.Stop stop = run.getProgress().currentStop();
 		if (stop != null)
 		{
-			shortestPath.target(targets(stop, run.getProgress()), config.pathCarriedOnly());
+			TeleportChoice teleport = run.getTeleports().get(stop.getLocationId());
+			shortestPath.target(targets(stop, run.getProgress()), config.pathCarriedOnly(),
+				teleport != null && teleport.getMethod().getType() == TeleportType.HOUSE);
 			return;
 		}
 		if (shortestPath.lastTarget() != null)
