@@ -55,8 +55,8 @@ public final class SeedsLeft
 		List<Line> lines = new ArrayList<>();
 		needed.forEach((seed, count) ->
 		{
-			int id = seed.plantItemId();
-			int carried = ledger.count(id, ItemSource.INVENTORY) + (boxCarried ? ledger.count(id, ItemSource.SEED_BOX) : 0);
+			int carried = seed.plantItemIds().stream().mapToInt(id -> ledger.count(id, ItemSource.INVENTORY)
+				+ (boxCarried ? ledger.count(id, ItemSource.SEED_BOX) : 0)).sum();
 			lines.add(new Line(seed.isPlantedAsSapling() ? seed.getSaplingName() : seed.getName(), count, carried));
 		});
 		return lines;

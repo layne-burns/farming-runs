@@ -99,6 +99,8 @@ final class RawData
 	{
 		String name;
 		Integer itemId;
+		/** Saplings only: the watered seedling that grows into it. */
+		Integer wateredSeedlingId;
 	}
 
 	static class Payment

@@ -130,7 +130,7 @@ public final class RequirementsBuilder
 		{
 			String use = count + " " + kindName(seed.getKind()) + " patch" + (count == 1 ? "" : "es")
 				+ (toGrow.containsKey(seed) ? " (grow " + toGrow.get(seed) + " from seed first)" : "");
-			list.add(plantName(seed), Set.of(seed.plantItemId()), seed.getPerPatch() * count, Importance.NEED, false,
+			list.add(plantName(seed), seed.plantItemIds(), seed.getPerPatch() * count, Importance.NEED, false,
 				use, true);
 		});
 	}

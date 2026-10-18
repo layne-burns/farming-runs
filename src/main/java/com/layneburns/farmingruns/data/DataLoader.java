@@ -174,7 +174,9 @@ public final class DataLoader
 			int sapling = raw.sapling == null ? Seed.NO_SAPLING : requireId(raw.sapling.itemId, where + " sapling");
 			seeds.add(new Seed(raw.name, requireId(raw.itemId, where), kind(raw.kind, where), raw.level,
 				raw.perPatch, sapling, raw.sapling == null ? null : raw.sapling.name, List.copyOf(payment),
-				SeedXp.from(raw.xp), raw.growth));
+				SeedXp.from(raw.xp), raw.growth,
+				raw.sapling == null || raw.sapling.wateredSeedlingId == null ? Seed.NO_SAPLING
+					: raw.sapling.wateredSeedlingId));
 		}
 		return seeds;
 	}

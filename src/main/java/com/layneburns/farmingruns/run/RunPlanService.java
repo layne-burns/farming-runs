@@ -122,6 +122,16 @@ public class RunPlanService
 					held.put(id, count);
 				}
 			}
+			// Watered seedlings grow into saplings by themselves: count them as saplings, so none is grown again.
+			if (seed.plantItemIds().size() > 1)
+			{
+				int seedlings = seed.plantItemIds().stream().filter(id -> id != seed.plantItemId())
+					.mapToInt(id -> SEED_SOURCES.stream().mapToInt(s -> ledger.count(id, s)).sum()).sum();
+				if (seedlings > 0)
+				{
+					held.merge(seed.plantItemId(), seedlings, Integer::sum);
+				}
+			}
 		}
 		return held;
 	}

@@ -12,7 +12,7 @@ import json
 import re
 from pathlib import Path
 
-from wiki import infobox_id, page_texts, raw_page
+from wiki import infobox_id, infobox_ids, page_texts, raw_page
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "src/main/resources/com/layneburns/farmingruns/seeds.json"
@@ -48,6 +48,19 @@ def item_ids(names):
 def sapling_name(seed: str) -> str:
     base = {"Acorn": "Oak", "Crystal acorn": "Crystal"}.get(seed) or re.sub(r"( tree)? seed$", "", seed)
     return f"{base} sapling"
+
+
+def watered_seedling_ids(seeds):
+    """Sapling name to the id of its watered seedling (the "Watered" version on the "<tree> seedling" page)."""
+    names = {sapling_name(s["name"]): sapling_name(s["name"]).replace(" sapling", " seedling") for s in seeds
+             if s["kind"] in SAPLING_KINDS}
+    texts = page_texts(list(names.values()))
+    watered = {}
+    for sapling, seedling in names.items():
+        found = infobox_ids(texts.get(seedling, ""), ("Unwatered",))
+        if found:
+            watered[sapling] = found[0]
+    return watered
 
 
 def payment_item_name(text: str):
@@ -195,6 +208,7 @@ def main() -> None:
     wanted += [sapling_name(s["name"]) for s in seeds if s["kind"] in SAPLING_KINDS]
     wanted += [p["item"] for s in seeds for p in s["payment"]]
     ids = item_ids(wanted)
+    watered = watered_seedling_ids(seeds)
 
     out = []
     for s in seeds:
@@ -202,6 +216,9 @@ def main() -> None:
                  "perPatch": SEEDS_PER_PATCH.get(s["kind"], 1)}
         if s["kind"] in SAPLING_KINDS:
             entry["sapling"] = {"name": sapling_name(s["name"]), "itemId": ids.get(sapling_name(s["name"]))}
+            if sapling_name(s["name"]) in watered:
+                # A watered seedling grows into the sapling by itself, so it counts as one.
+                entry["sapling"]["wateredSeedlingId"] = watered[sapling_name(s["name"])]
         entry["payment"] = [{**p, "itemId": ids.get(p["item"])} for p in s["payment"]]
         entry["xp"] = s["xp"]
         entry["growth"] = s["growth"]

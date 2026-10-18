@@ -8,6 +8,7 @@ package com.layneburns.farmingruns.data;
 
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 import lombok.Value;
 
@@ -35,6 +36,8 @@ public class Seed
 	/** How long it takes to grow, e.g. "1 h 20 min"; null if unknown. */
 	@Nullable
 	String growth;
+	/** For trees: the watered seedling that grows into the sapling, else {@link #NO_SAPLING}. */
+	int wateredSeedlingId;
 
 	public boolean isPlantedAsSapling()
 	{
@@ -45,6 +48,15 @@ public class Seed
 	public int plantItemId()
 	{
 		return isPlantedAsSapling() ? saplingItemId : itemId;
+	}
+
+	/**
+	 * What counts as the thing to plant: the seed, or for trees the sapling and its watered seedling (which grows
+	 * into the sapling by itself).
+	 */
+	public Set<Integer> plantItemIds()
+	{
+		return wateredSeedlingId == NO_SAPLING ? Set.of(plantItemId()) : Set.of(plantItemId(), wateredSeedlingId);
 	}
 
 	public boolean canBeProtected()

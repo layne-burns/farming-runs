@@ -92,4 +92,14 @@ public class InventoryCheckerTest
 		assertEquals(Status.MISSING, line.getStatus());
 		assertFalse(line.blocksStart());
 	}
+
+	@Test
+	public void aWateredSeedlingCountsAsItsSapling()
+	{
+		// Yew sapling 5373, watered yew seedling 5367: a requirement for the sapling accepts either.
+		Requirement saplings = new Requirement("Yew sapling", Set.of(5373, 5367), 2, Importance.NEED, false,
+			List.of("2 tree patches"));
+		ItemLedger ledger = ledger(ItemSource.INVENTORY, Map.of(5373, 1, 5367, 1));
+		assertEquals(Status.OK, only(saplings, ledger).getStatus());
+	}
 }

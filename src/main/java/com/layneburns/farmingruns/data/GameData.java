@@ -230,10 +230,8 @@ public final class GameData
 		for (Seed seed : seeds)
 		{
 			ids.add(seed.getItemId());
-			if (seed.isPlantedAsSapling())
-			{
-				ids.add(seed.getSaplingItemId());
-			}
+			// The sapling and its watered seedling, for trees.
+			ids.addAll(seed.plantItemIds());
 			seed.getPayment().forEach(p -> ids.add(p.getItemId()));
 		}
 		for (Teleport teleport : teleports.values())
