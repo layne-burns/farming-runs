@@ -68,9 +68,10 @@ public class RunController
 	@Inject
 	RunController(Client client, ClientThread clientThread, GameData data, RunSession session,
 		ShortestPathClient shortestPath, FarmingRunsConfig config,
-		PlayerInfo player, GuidanceTracker guidance, PatchStates states)
+		PlayerInfo player, GuidanceTracker guidance, PatchStates states, PatchClicks clicks)
 	{
 		this.states = states;
+		clicks.addListener(this::follow);
 		this.guidance = guidance;
 		this.client = client;
 		this.clientThread = clientThread;
@@ -145,6 +146,35 @@ public class RunController
 	public void markPaid(String patchId)
 	{
 		clientThread.invoke(() -> session.update(p -> p.markPaid(patchId)));
+	}
+
+	/**
+	 * You started on a stop out of order (your first click on its patch, gardener or leprechaun): it becomes the
+	 * current stop, and the stops still to do are re-ordered from there. Client thread.
+	 */
+	private void follow(PatchClicks.Click click)
+	{
+		RunSession.ActiveRun run = session.active();
+		if (run == null)
+		{
+			return;
+		}
+		RunProgress progress = run.getProgress();
+		RunProgress.Stop current = progress.currentStop();
+		RunProgress.Stop clicked = progress.getStops().stream()
+			.filter(s -> s.getLocationId().equals(click.getLocationId())).findFirst().orElse(null);
+		if (clicked == null || clicked == current || progress.isDone(clicked))
+		{
+			return;
+		}
+		List<String> rest = progress.getStops().stream()
+			.filter(s -> !progress.isDone(s) && !progress.isSkipped(s) && s != clicked)
+			.map(RunProgress.Stop::getLocationId).collect(Collectors.toList());
+		rest.add(0, clicked.getLocationId());
+		List<String> order = RoutePlanner.order(clicked.getLocationId(), rest, data.getCosts()::cost);
+		log.debug("[farmrun] you went to {} first; route now {}", clicked.getLocationId(), order);
+		session.update(p -> p.reroute(order));
+		point();
 	}
 
 	/** Ends the run and removes the path. Any thread. */

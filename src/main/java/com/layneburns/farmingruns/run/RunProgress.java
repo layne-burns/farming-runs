@@ -6,6 +6,7 @@
  */
 package com.layneburns.farmingruns.run;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -169,6 +170,31 @@ public class RunProgress
 			}
 		}
 		return this;
+	}
+
+	/**
+	 * You went somewhere else first: the stops still to do take this order (the first becomes current), after the
+	 * stops already done or skipped, which keep their places.
+	 *
+	 * @param order location ids of the stops still to do, the one to make current first
+	 */
+	public RunProgress reroute(List<String> order)
+	{
+		List<Stop> ordered = new ArrayList<>();
+		for (Stop stop : stops)
+		{
+			if (!order.contains(stop.getLocationId()))
+			{
+				ordered.add(stop);
+			}
+		}
+		int at = ordered.size();
+		for (String id : order)
+		{
+			stops.stream().filter(s -> s.getLocationId().equals(id)).findFirst().ifPresent(ordered::add);
+		}
+		return withStops(List.copyOf(ordered)).withSkippedStops(minus(skippedStops, order.isEmpty() ? "" : order.get(0)))
+			.withCurrent(at < ordered.size() ? at : current);
 	}
 
 	/** Moves on when the current stop has just been finished. */

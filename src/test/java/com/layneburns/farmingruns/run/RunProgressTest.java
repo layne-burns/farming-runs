@@ -152,6 +152,19 @@ public class RunProgressTest
 	}
 
 	@Test
+	public void reroutingPutsTheStopYouWentToFirst()
+	{
+		// Catherby done; you went to Ardougne instead of Falador: Ardougne becomes current, then Falador.
+		RunProgress progress = run().markWorked("catherby.herb").markWorked("catherby.allotment_north");
+		assertEquals("falador", progress.currentStop().getLocationId());
+		RunProgress rerouted = progress.reroute(List.of("ardougne", "falador"));
+		assertEquals("ardougne", rerouted.currentStop().getLocationId());
+		assertEquals(List.of("catherby", "ardougne", "falador"), rerouted.getStops().stream()
+			.map(RunProgress.Stop::getLocationId).collect(Collectors.toList()));
+		assertEquals("falador", rerouted.markWorked("ardougne.herb").currentStop().getLocationId());
+	}
+
+	@Test
 	public void patchIsDoneWhenPlantedPickedOrCleared()
 	{
 		PlantingPlan.Assignment plant = new PlantingPlan.Assignment(data.patch("catherby.herb"), data.seedByItem(5295),

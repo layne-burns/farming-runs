@@ -9,6 +9,7 @@ package com.layneburns.farmingruns.run;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.Location;
 import com.layneburns.farmingruns.data.TeleportChoice;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -42,8 +43,12 @@ public class GuidanceTracker
 	private static final Pattern TREATED = Pattern.compile("you treat the (.+) with (?:ultra|super)?compost");
 	private static final Pattern PAID = Pattern.compile("you pay the gardener .+ to protect");
 
+	/** A click counts for compost or payment for this many ticks (talking to the gardener takes a while). */
+	private static final int CLICK_TICKS = 50;
+
 	private final Client client;
 	private final GameData data;
+	private final PatchClicks clicks;
 	private final RunSession session;
 	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 	/** Patches composted in the current run, and which run that is (by its start time). */
@@ -54,8 +59,9 @@ public class GuidanceTracker
 	private Set<Integer> leaving = Set.of();
 
 	@Inject
-	GuidanceTracker(Client client, GameData data, RunSession session)
+	GuidanceTracker(Client client, GameData data, RunSession session, PatchClicks clicks)
 	{
+		this.clicks = clicks;
 		this.client = client;
 		this.data = data;
 		this.session = session;
@@ -171,40 +177,79 @@ public class GuidanceTracker
 		String message = Text.removeTags(event.getMessage()).toLowerCase(Locale.ROOT);
 		// With debug logging on, every game message during a run, to tune what's matched here and in RunTracker.
 		log.debug("[chat] {}", message);
-		Player player = client.getLocalPlayer();
-		if (player == null || !regions(stop.getLocationId()).contains(player.getWorldLocation().getRegionID()))
-		{
-			// Composting or paying somewhere else (a patch you're not running): not this stop's.
-			return;
-		}
 		Matcher treated = TREATED.matcher(message);
 		if (treated.find())
 		{
-			String what = treated.group(1);
-			// The patch of the kind named ("bush patch", "allotment"), else the first one waiting for compost.
-			Optional<PlantingPlan.Assignment> patch = stop.getPatches().stream()
-				.filter(a -> a.getSeed() != null && !composted.contains(a.getPatch().getId()))
-				.filter(a -> what.contains(kindName(a)))
-				.findFirst();
-			patch.or(() -> stop.getPatches().stream()
-				.filter(a -> a.getSeed() != null && !composted.contains(a.getPatch().getId())).findFirst())
-				.ifPresent(a -> markComposted(a.getPatch().getId()));
+			compost(stop, treated.group(1));
 			return;
 		}
 		if (PAID.matcher(message).find())
 		{
-			// The first planted patch here still waiting to be paid for.
-			RunProgress progress = run.getProgress();
-			stop.getPatches().stream()
-				.map(a -> a.getPatch().getId())
-				.filter(id -> progress.getWorkedPatches().contains(id) && progress.isAwaitingPayment(id))
-				.findFirst()
-				.ifPresent(id ->
-				{
-					log.debug("[farmrun] paid for {}", id);
-					session.update(p -> p.markPaid(id));
-				});
+			paid(run, stop);
 		}
+	}
+
+	/**
+	 * Compost went on the patch you used it on (any stop in the run); failing that, at the current stop, the patch of
+	 * the kind the message names ("bush patch", "allotment"), else the first one waiting for compost.
+	 */
+	private void compost(RunProgress.Stop stop, String what)
+	{
+		PatchClicks.Click click = clicks.recent(CLICK_TICKS);
+		if (click != null && click.getPatchId() != null && !composted.contains(click.getPatchId()))
+		{
+			markComposted(click.getPatchId());
+			return;
+		}
+		if (!isAt(stop))
+		{
+			return;
+		}
+		Optional<PlantingPlan.Assignment> patch = stop.getPatches().stream()
+			.filter(a -> a.getSeed() != null && !composted.contains(a.getPatch().getId()))
+			.filter(a -> what.contains(kindName(a)))
+			.findFirst();
+		patch.or(() -> stop.getPatches().stream()
+			.filter(a -> a.getSeed() != null && !composted.contains(a.getPatch().getId())).findFirst())
+			.ifPresent(a -> markComposted(a.getPatch().getId()));
+	}
+
+	/**
+	 * Paid the gardener you clicked: his planted patch still waiting for payment, at whichever stop it is; failing
+	 * that, the first such patch at the current stop.
+	 */
+	private void paid(RunSession.ActiveRun run, RunProgress.Stop stop)
+	{
+		RunProgress progress = run.getProgress();
+		PatchClicks.Click click = clicks.recent(CLICK_TICKS);
+		List<PlantingPlan.Assignment> candidates = new ArrayList<>();
+		if (click != null && click.getGardenerNpcId() != -1)
+		{
+			progress.getStops().stream().filter(s -> s.getLocationId().equals(click.getLocationId()))
+				.flatMap(s -> s.getPatches().stream())
+				.filter(a -> a.getPatch().getGardenerNpcId() == click.getGardenerNpcId())
+				.forEach(candidates::add);
+		}
+		else if (isAt(stop))
+		{
+			candidates.addAll(stop.getPatches());
+		}
+		candidates.stream()
+			.map(a -> a.getPatch().getId())
+			.filter(id -> progress.getWorkedPatches().contains(id) && progress.isAwaitingPayment(id))
+			.findFirst()
+			.ifPresent(id ->
+			{
+				log.debug("[farmrun] paid for {}", id);
+				session.update(p -> p.markPaid(id));
+			});
+	}
+
+	/** True when you're in the stop's area. */
+	private boolean isAt(RunProgress.Stop stop)
+	{
+		Player player = client.getLocalPlayer();
+		return player != null && regions(stop.getLocationId()).contains(player.getWorldLocation().getRegionID());
 	}
 
 	/** The active run, forgetting what was composted when a new one has started. */

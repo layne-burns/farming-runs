@@ -7,14 +7,9 @@
 package com.layneburns.farmingruns.run;
 
 import com.layneburns.farmingruns.data.GameData;
-import com.layneburns.farmingruns.data.Location;
-import com.layneburns.farmingruns.data.Patch;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -22,9 +17,6 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
-import net.runelite.api.MenuAction;
-import net.runelite.api.NPC;
-import net.runelite.api.ObjectComposition;
 import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.ChatMessage;
@@ -76,13 +68,6 @@ public class LegTimer
 		}
 	}
 
-	private static final Set<MenuAction> OBJECT_ACTIONS = EnumSet.of(MenuAction.GAME_OBJECT_FIRST_OPTION,
-		MenuAction.GAME_OBJECT_SECOND_OPTION, MenuAction.GAME_OBJECT_THIRD_OPTION, MenuAction.GAME_OBJECT_FOURTH_OPTION,
-		MenuAction.GAME_OBJECT_FIFTH_OPTION, MenuAction.WIDGET_TARGET_ON_GAME_OBJECT);
-	private static final Set<MenuAction> NPC_ACTIONS = EnumSet.of(MenuAction.NPC_FIRST_OPTION,
-		MenuAction.NPC_SECOND_OPTION, MenuAction.NPC_THIRD_OPTION, MenuAction.NPC_FOURTH_OPTION,
-		MenuAction.NPC_FIFTH_OPTION, MenuAction.WIDGET_TARGET_ON_NPC);
-
 	/** Further than running goes in a tick: a teleport. */
 	private static final int TELEPORT_TILES = 30;
 	/** About how long a teleport takes from the click to the jump (three ticks). */
@@ -91,8 +76,7 @@ public class LegTimer
 	private final Client client;
 	private final GameData data;
 	private final RunSession session;
-	private final Set<Integer> patchVarbits;
-	private final Set<Integer> gardeners;
+	private final PatchClicks clicks;
 
 	private long run;
 	@Nullable
@@ -112,14 +96,12 @@ public class LegTimer
 	private volatile List<Leg> lastRun = List.of();
 
 	@Inject
-	LegTimer(Client client, GameData data, RunSession session)
+	LegTimer(Client client, GameData data, RunSession session, PatchClicks clicks)
 	{
 		this.client = client;
 		this.data = data;
 		this.session = session;
-		this.patchVarbits = data.patches().stream().map(Patch::getVarbitId).collect(Collectors.toUnmodifiableSet());
-		this.gardeners = data.patches().stream().map(Patch::getGardenerNpcId).filter(id -> id != Patch.NO_GARDENER)
-			.collect(Collectors.toUnmodifiableSet());
+		this.clicks = clicks;
 		session.addListener(this::sessionChanged);
 	}
 
@@ -150,7 +132,8 @@ public class LegTimer
 			teleport = recognised;
 			return;
 		}
-		if (isHere() && isPatchWork(event))
+		PatchClicks.Click click = clicks.classify(event);
+		if (click != null && click.getLocationId().equals(stopId))
 		{
 			arriveAt = now;
 		}
@@ -250,33 +233,4 @@ public class LegTimer
 		}
 	}
 
-	/** True when you're in the current stop's area. */
-	private boolean isHere()
-	{
-		Player player = client.getLocalPlayer();
-		if (player == null)
-		{
-			return false;
-		}
-		Location location = data.location(stopId);
-		int region = player.getWorldLocation().getRegionID();
-		return location.getRegionId() == region || location.getExtraRegionIds().contains(region);
-	}
-
-	/** A click on a farming patch (or using an item on one), a gardener, or the tool leprechaun. */
-	private boolean isPatchWork(MenuOptionClicked event)
-	{
-		if (OBJECT_ACTIONS.contains(event.getMenuAction()))
-		{
-			ObjectComposition object = client.getObjectDefinition(event.getId());
-			return object != null && patchVarbits.contains(object.getVarbitId());
-		}
-		if (NPC_ACTIONS.contains(event.getMenuAction()))
-		{
-			NPC npc = event.getMenuEntry().getNpc();
-			return npc != null && (gardeners.contains(npc.getId())
-				|| (npc.getName() != null && npc.getName().toLowerCase().contains("leprechaun")));
-		}
-		return false;
-	}
 }
