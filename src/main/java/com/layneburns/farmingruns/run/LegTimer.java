@@ -215,14 +215,14 @@ public class LegTimer
 	}
 
 	/**
-	 * With debug logging on, what you type in chat during a run is logged with where you're standing, so you can mark
-	 * a spot for fixing later (e.g. "pgch" where a stop's path should end).
+	 * With debug logging on, everything you type in chat (in or out of a run) is logged with where you're standing, so
+	 * you can leave notes and mark spots for fixing later (e.g. "pgch" where a stop's path should end).
 	 */
 	@Subscribe
 	public void onChatMessage(ChatMessage event)
 	{
 		Player player = client.getLocalPlayer();
-		if (run == 0 || player == null || player.getName() == null || event.getType() == ChatMessageType.GAMEMESSAGE
+		if (player == null || player.getName() == null || event.getType() == ChatMessageType.GAMEMESSAGE
 			|| event.getType() == ChatMessageType.SPAM)
 		{
 			return;

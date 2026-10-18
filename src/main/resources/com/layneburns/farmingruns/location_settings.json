@@ -24,7 +24,7 @@
 		"fossil_island": {"teleports": ["digsite_pendant:fossil_island"], "unlock": "bone_voyage"},
 		"fossil_island_seaweed": {"teleports": ["digsite_pendant:fossil_island"], "unlock": "bone_voyage", "note": "Underwater: needs a fishbowl helmet and diving apparatus"},
 		"gnome_stronghold": {"teleports": ["spirit_tree:gnome_stronghold"]},
-		"great_conch": {"teleports": ["fairy_ring:cjq", "walk"], "unlock": "troubled_tortugans"},
+		"great_conch": {"teleports": ["fairy_ring:cjq", "walk"], "unlock": "troubled_tortugans", "approach": {"x": 3271, "y": 2464, "plane": 0}},
 		"harmony_island": {"teleports": ["harmony_tablet", "harmony_island_spell"], "unlock": "great_brain_robbery", "patchUnlocks": {"harmony_island.herb": "morytania_elite"}},
 		"hosidius": {"teleports": ["book_of_the_dead:hosidius", "xerics_talisman:glade", "kourend_castle_teleport", "spirit_tree:hosidius"], "diseaseFree": "kourend_easy"},
 		"hosidius_vinery": {"teleports": ["xerics_talisman:glade", "kourend_castle_teleport", "fairy_ring:akr"]},
