@@ -67,6 +67,13 @@ public final class LocationsViewBuilder
 	 */
 	public static LocationsView build(GameData data, LocationsContext context, String query, Set<RunType> runTypes)
 	{
+		return build(data, context, query, runTypes, LocationSort.NAME);
+	}
+
+	/** @param sort the row order, and whether there's a section per run type */
+	public static LocationsView build(GameData data, LocationsContext context, String query, Set<RunType> runTypes,
+		LocationSort sort)
+	{
 		Function<Location, LocationStatus> statusOf = context.getStatusOf();
 		Function<Patch, LocationStatus> patchRuleOf = context.getPatchRuleOf();
 		List<Location> locations = data.locations().stream()
@@ -85,24 +92,40 @@ public final class LocationsViewBuilder
 
 		List<LocationsView.Section> sections = new ArrayList<>();
 		List<LocationsView.Entry> locked = new ArrayList<>();
-		for (RunType type : RunType.values())
+		// One section per run type, or a single one covering them all.
+		List<Predicate<PatchImplementation>> groups = new ArrayList<>();
+		List<String[]> names = new ArrayList<>();
+		if (sort.isBySection())
 		{
-			if (!runTypes.contains(type))
+			for (RunType type : RunType.values())
 			{
-				continue;
+				if (runTypes.contains(type))
+				{
+					groups.add(type::covers);
+					names.add(new String[]{type.getTitle(), type.name()});
+				}
 			}
+		}
+		else if (!runTypes.isEmpty())
+		{
+			groups.add(kind -> runTypes.stream().anyMatch(t -> t.covers(kind)));
+			names.add(new String[]{"All", "ALL"});
+		}
+		for (int g = 0; g < groups.size(); g++)
+		{
+			Predicate<PatchImplementation> type = groups.get(g);
 			List<LocationsView.Entry> entries = new ArrayList<>();
 			for (Location location : locations)
 			{
 				LocationStatus status = statuses.get(location.getId());
 				// Listed under a run type if it has a patch of that type whose own rule (a guild tier) allows it.
 				boolean hasType = location.getPatches().stream()
-					.anyMatch(p -> type.covers(p.getKind()) && patchRuleOf.apply(p).isUsable());
+					.anyMatch(p -> type.test(p.getKind()) && patchRuleOf.apply(p).isUsable());
 				if (!hasType || status.getAccess() == LocationStatus.Access.LOCKED)
 				{
 					continue;
 				}
-				LocationsView.Entry entry = entry(data, location, status, context, type::covers);
+				LocationsView.Entry entry = entry(data, location, status, context, type);
 				if (matches(entry, query))
 				{
 					entries.add(entry);
@@ -110,7 +133,9 @@ public final class LocationsViewBuilder
 			}
 			if (!entries.isEmpty())
 			{
-				sections.add(new LocationsView.Section(type.getTitle() + " (" + entries.size() + ")", type.name(), entries));
+				entries.sort(sort.comparator());
+				sections.add(new LocationsView.Section(names.get(g)[0] + " (" + entries.size() + ")", names.get(g)[1],
+					entries));
 			}
 		}
 		for (Location location : locations)
@@ -129,6 +154,7 @@ public final class LocationsViewBuilder
 		}
 		if (!locked.isEmpty())
 		{
+			locked.sort(sort.comparator());
 			sections.add(new LocationsView.Section("Locked (" + locked.size() + ")", "LOCKED", locked));
 		}
 		String summary = known ? usable + " of " + locations.size() + " locations unlocked"
@@ -167,8 +193,11 @@ public final class LocationsViewBuilder
 		List<PatchStatus> states = location.getPatches().stream().filter(p -> focus.test(p.getKind()))
 			.map(context.getPatchStateOf()).collect(Collectors.toList());
 		PatchStatus.Readiness summaryReadiness = summaryReadiness(focused);
+		long soonest = states.stream().filter(s -> s.getReadiness() == PatchStatus.Readiness.GROWING)
+			.mapToLong(PatchStatus::getReadyAtSeconds).min().orElse(0);
 		return new LocationsView.Entry(location.getId(), location.getName(), kinds(location), status,
-			readySummary(focused, states, context.getNowSeconds()), summaryReadiness, statusText(status), teleports, addMenu(data, order), context.getCustomTeleports().test(location), patches,
+			readySummary(focused, states, context.getNowSeconds()), summaryReadiness,
+			count(focused, PatchStatus.Readiness.READY), soonest, statusText(status), teleports, addMenu(data, order), context.getCustomTeleports().test(location), patches,
 			location.getNote(), location.getWikiTeleports());
 	}
 

@@ -6,6 +6,7 @@
  */
 package com.layneburns.farmingruns.ui;
 
+import com.layneburns.farmingruns.FarmingRunsConfig;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.RunType;
 import com.layneburns.farmingruns.state.LocationPrefs;
@@ -26,17 +27,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.ui.components.IconTextField;
 
 /**
@@ -57,6 +61,9 @@ public class LocationsTab extends TabPanel
 
 	private final IconTextField search = new IconTextField();
 	private final JButton typesButton = button("Types", "Choose which run types to list");
+	private final JButton sortButton = button("Sort", "Order by name or by what's ready first");
+	private final ConfigManager configManager;
+	private LocationSort sort;
 	private final List<JCheckBoxMenuItem> typeItems = new ArrayList<>();
 	private final Set<RunType> runTypes = EnumSet.allOf(RunType.class);
 	private final JLabel summary = new JLabel();
@@ -65,11 +72,15 @@ public class LocationsTab extends TabPanel
 	private final Set<String> expanded = new HashSet<>();
 	private final Map<String, Boolean> collapsed = new HashMap<>();
 	private final AtomicBoolean redrawQueued = new AtomicBoolean();
+	/** Where the chosen {@link LocationSort} is saved. */
+	private static final String SORT_KEY = "locationsSort";
 
 	@Inject
 	LocationsTab(GameData data, UnlockService unlocks, LocationPrefs prefs, PlayerInfo player, ClientThread clientThread,
-		PatchStates patchStates)
+		PatchStates patchStates, ConfigManager configManager)
 	{
+		this.configManager = configManager;
+		this.sort = savedSort(configManager);
 		this.data = data;
 		this.unlocks = unlocks;
 		this.prefs = prefs;
@@ -127,10 +138,17 @@ public class LocationsTab extends TabPanel
 		JPopupMenu menu = typesMenu();
 		typesButton.addActionListener(e -> menu.show(typesButton, 0, typesButton.getHeight()));
 
+		JPopupMenu sortMenu = sortMenu();
+		sortButton.addActionListener(e -> sortMenu.show(sortButton, 0, sortButton.getHeight()));
+		JPanel buttons = new JPanel(new BorderLayout(4, 0));
+		buttons.setBackground(Palette.BACKGROUND);
+		buttons.add(typesButton, BorderLayout.WEST);
+		buttons.add(sortButton, BorderLayout.EAST);
+
 		JPanel searchRow = new JPanel(new BorderLayout(4, 0));
 		searchRow.setBackground(Palette.BACKGROUND);
 		searchRow.add(search, BorderLayout.CENTER);
-		searchRow.add(typesButton, BorderLayout.EAST);
+		searchRow.add(buttons, BorderLayout.EAST);
 
 		JButton recheck = button("Recheck", "Read your quests, diaries and levels again (done automatically at login)");
 		recheck.addActionListener(e -> clientThread.invoke(player::refresh));
@@ -182,6 +200,39 @@ public class LocationsTab extends TabPanel
 		return menu;
 	}
 
+	/** One choice per {@link LocationSort}; the choice is saved. */
+	private JPopupMenu sortMenu()
+	{
+		JPopupMenu menu = new JPopupMenu();
+		ButtonGroup group = new ButtonGroup();
+		for (LocationSort choice : LocationSort.values())
+		{
+			JRadioButtonMenuItem item = new JRadioButtonMenuItem(choice.getTitle(), choice == sort);
+			item.addActionListener(e ->
+			{
+				sort = choice;
+				configManager.setConfiguration(FarmingRunsConfig.GROUP, SORT_KEY, choice.name());
+				refresh();
+			});
+			group.add(item);
+			menu.add(item);
+		}
+		return menu;
+	}
+
+	private static LocationSort savedSort(ConfigManager configManager)
+	{
+		String saved = configManager.getConfiguration(FarmingRunsConfig.GROUP, SORT_KEY);
+		try
+		{
+			return saved == null ? LocationSort.NAME : LocationSort.valueOf(saved);
+		}
+		catch (IllegalArgumentException e)
+		{
+			return LocationSort.NAME;
+		}
+	}
+
 	private void setAllTypes(boolean on)
 	{
 		if (on)
@@ -218,7 +269,7 @@ public class LocationsTab extends TabPanel
 			.nowSeconds(now)
 			.timeTrackingOn(patchStates.isTimeTrackingOn())
 			.build();
-		LocationsView view = LocationsViewBuilder.build(data, context, query, Set.copyOf(runTypes));
+		LocationsView view = LocationsViewBuilder.build(data, context, query, Set.copyOf(runTypes), sort);
 
 		summary.setText(view.isTimeTrackingOff()
 			? "<html>" + view.getSummary() + "<br>Turn on RuneLite's Time Tracking plugin to see patch states.</html>"

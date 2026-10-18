@@ -48,6 +48,11 @@ public class LocationsViewBuilderTest
 	/** Everything unlocked except Prifddinas (Song of the Elves) and the guild's advanced tier (Farming 80). */
 	private static LocationsView build(String query, Set<RunType> types)
 	{
+		return build(query, types, LocationSort.NAME);
+	}
+
+	private static LocationsView build(String query, Set<RunType> types, LocationSort sort)
+	{
 		LocationsContext context = LocationsContext.builder()
 			.statusOf(l -> l.getId().equals("prifddinas")
 				? LocationStatus.of(true, List.of("Quest: Song of the Elves"), null) : OPEN)
@@ -60,7 +65,7 @@ public class LocationsViewBuilderTest
 			.nowSeconds(NOW)
 			.timeTrackingOn(true)
 			.build();
-		return LocationsViewBuilder.build(data, context, query, types);
+		return LocationsViewBuilder.build(data, context, query, types, sort);
 	}
 
 	private static LocationsView buildAll(String query)
@@ -220,5 +225,15 @@ public class LocationsViewBuilderTest
 		// Empty isn't "ready".
 		assertEquals("2 empty", LocationsViewBuilder.readySummary(List.of(empty, empty), List.of(), now));
 		assertEquals("1 ready", LocationsViewBuilder.readySummary(List.of(ready, empty), List.of(), now));
+	}
+
+	@Test
+	public void readyFirstPutsReadyLocationsOnTopWithOrWithoutSections()
+	{
+		LocationsView bySection = build("", EnumSet.of(RunType.HERB), LocationSort.READY);
+		assertEquals("catherby", bySection.getSections().get(0).getEntries().get(0).getId());
+		LocationsView all = build("", EnumSet.of(RunType.HERB, RunType.ALLOTMENT), LocationSort.READY_ALL);
+		assertEquals("ALL", all.getSections().get(0).getKey());
+		assertEquals("catherby", all.getSections().get(0).getEntries().get(0).getId());
 	}
 }

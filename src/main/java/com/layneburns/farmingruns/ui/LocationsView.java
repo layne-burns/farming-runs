@@ -20,7 +20,10 @@ public class LocationsView
 {
 	/** E.g. "41 of 43 locations unlocked", or a prompt to log in. */
 	String summary;
-	/** One section per chosen run type, then "Locked" last; empty sections are left out. */
+	/**
+	 * One section per chosen run type (or one for all, by {@link LocationSort}), then "Locked" last; empty sections
+	 * are left out.
+	 */
 	List<Section> sections;
 	/** True when RuneLite's Time Tracking plugin is off, so patch states aren't being updated. */
 	boolean timeTrackingOff;
@@ -46,6 +49,9 @@ public class LocationsView
 		/** The patches at a glance, e.g. "3 ready" or "in 1 h 20 min"; and how to colour it. */
 		String readySummary;
 		PatchStatus.Readiness summaryReadiness;
+		/** For sorting: how many of those patches are ready, and when the soonest growing one will be (0 if none). */
+		long readyCount;
+		long soonestReadyAt;
 		/** E.g. "Unlocked", "Locked: Quest: Song of the Elves", "Unlocked (your override)". */
 		String statusText;
 		/** Teleports in order of preference: the first one you can use is used. */
