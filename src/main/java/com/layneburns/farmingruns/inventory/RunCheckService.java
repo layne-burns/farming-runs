@@ -9,6 +9,7 @@ package com.layneburns.farmingruns.inventory;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.Location;
 import com.layneburns.farmingruns.data.Patch;
+import com.layneburns.farmingruns.data.TeleportChoice;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.RunPlanService;
 import com.layneburns.farmingruns.run.RunSetup;
@@ -18,8 +19,11 @@ import com.layneburns.farmingruns.state.LocationPrefs;
 import com.layneburns.farmingruns.state.PatchStates;
 import com.layneburns.farmingruns.state.PatchStatus;
 import com.layneburns.farmingruns.state.PlayerInfo;
+import com.layneburns.farmingruns.state.TeleportLimits;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,6 +69,7 @@ public class RunCheckService
 	private final PlayerInfo player;
 	private final ItemStore items;
 	private final PatchStates states;
+	private final TeleportLimits limits;
 	/**
 	 * Items the last check said you could take from the bank, with how many: what you'd otherwise withdraw, plus tools
 	 * and compost the leprechaun also has (you may grab them from either). Read on the client thread by the bank.
@@ -81,8 +86,9 @@ public class RunCheckService
 
 	@Inject
 	RunCheckService(GameData data, RunPlanService planner, LocationPrefs prefs, PlayerInfo player, ItemStore items,
-		PatchStates states)
+		PatchStates states, TeleportLimits limits)
 	{
+		this.limits = limits;
 		this.data = data;
 		this.planner = planner;
 		this.prefs = prefs;
@@ -120,15 +126,15 @@ public class RunCheckService
 		Map<String, List<String>> teleports = new HashMap<>();
 		for (Location location : data.locations())
 		{
-			teleports.put(location.getId(), prefs.teleportsFor(location));
+			teleports.put(location.getId(), usable(prefs.teleportsFor(location)));
 		}
 		Predicate<Patch> grown = p ->
 		{
 			PatchStatus.Readiness readiness = status(p, nowSeconds).getReadiness();
 			return readiness == PatchStatus.Readiness.READY || readiness == PatchStatus.Readiness.UNKNOWN;
 		};
-		RunRequirements requirements = RequirementsBuilder.build(setup, plan, teleports, data, player.getFacts(),
-			ledger, grown, states.isAutoweedOn());
+		RunRequirements requirements = withLimitNotes(RequirementsBuilder.build(setup, plan, teleports, data,
+			player.getFacts(), ledger, grown, states.isAutoweedOn()), plan);
 		List<InventoryChecker.Line> lines = InventoryChecker.check(requirements.getRequirements(), ledger,
 			data.getItems().group("seed_box"));
 		setBankItems(lines);
@@ -138,6 +144,34 @@ public class RunCheckService
 			.map(l -> l.getFromLeprechaun() + " × " + l.getRequirement().getLabel())
 			.collect(Collectors.toUnmodifiableList());
 		return new Check(plan, requirements, lines);
+	}
+
+	/** A location's teleports without the ones used up for now ({@link TeleportLimits}). */
+	public List<String> usable(List<String> refs)
+	{
+		return refs.stream().filter(r -> !limits.isUsedUp(r)).collect(Collectors.toList());
+	}
+
+	/** Says which first-choice teleports are used up for now, so the next one is being used. */
+	private RunRequirements withLimitNotes(RunRequirements requirements, PlantingPlan plan)
+	{
+		Set<String> usedUp = new LinkedHashSet<>();
+		plan.getAssignments().stream().map(a -> a.getPatch().getLocationId()).distinct().forEach(id ->
+		{
+			List<String> refs = prefs.teleportsFor(data.location(id));
+			TeleportChoice first = refs.isEmpty() ? null : data.teleportChoice(refs.get(0));
+			if (first != null && limits.isUsedUp(first.getRef()))
+			{
+				usedUp.add(first.displayName());
+			}
+		});
+		if (usedUp.isEmpty())
+		{
+			return requirements;
+		}
+		List<String> notes = new ArrayList<>(requirements.getNotes());
+		usedUp.forEach(name -> notes.add(name + " is used up for now: using the next teleport"));
+		return new RunRequirements(requirements.getRequirements(), requirements.getTeleports(), notes);
 	}
 
 	/** Item id to how many to take, from the last check: the bank highlights these and the run tab shows them. */

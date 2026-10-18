@@ -21,12 +21,14 @@ import com.layneburns.farmingruns.state.RunePouchWatcher;
 import com.layneburns.farmingruns.state.PatchObjects;
 import com.layneburns.farmingruns.state.SetupStore;
 import com.layneburns.farmingruns.state.StatsStore;
+import com.layneburns.farmingruns.state.TeleportLimits;
 import com.layneburns.farmingruns.run.GuidanceTracker;
 import com.layneburns.farmingruns.run.RunController;
 import com.layneburns.farmingruns.run.KeepStandingGuard;
 import com.layneburns.farmingruns.run.LegTimer;
 import com.layneburns.farmingruns.run.PatchClicks;
 import com.layneburns.farmingruns.run.RunTracker;
+import com.layneburns.farmingruns.run.TeleportFallback;
 import com.layneburns.farmingruns.run.TeleportWatcher;
 import com.layneburns.farmingruns.ui.BankHighlightOverlay;
 import com.layneburns.farmingruns.ui.BankRunTab;
@@ -158,6 +160,13 @@ public class FarmingRunsPlugin extends Plugin
 	private StatsStore statsStore;
 
 	@Inject
+	private TeleportLimits teleportLimits;
+
+	/** Not used directly: it listens for used-up teleports once created. */
+	@Inject
+	private TeleportFallback teleportFallback;
+
+	@Inject
 	private RunItemOverlay runItemOverlay;
 
 	@Inject
@@ -215,6 +224,7 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(patchClicks);
 		eventBus.register(keepStandingGuard);
 		eventBus.register(statsStore);
+		eventBus.register(teleportLimits);
 		eventBus.register(patchObjects);
 		bankRunTab.register();
 		itemStore.loadRemembered();
@@ -222,6 +232,7 @@ public class FarmingRunsPlugin extends Plugin
 		DebugLogging.apply(config.debugLogging());
 		setupStore.load();
 		statsStore.load();
+		teleportLimits.load();
 		// If the plugin starts while logged in, read what the client already has.
 		clientThread.invokeLater(() ->
 		{
@@ -242,6 +253,7 @@ public class FarmingRunsPlugin extends Plugin
 	{
 		runController.stop();
 		eventBus.unregister(patchObjects);
+		eventBus.unregister(teleportLimits);
 		eventBus.unregister(statsStore);
 		eventBus.unregister(keepStandingGuard);
 		eventBus.unregister(patchClicks);

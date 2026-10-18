@@ -10,7 +10,7 @@ import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.widgets.Widget;
 
 /** Which item a menu click was on, including worn items (whose clicks don't carry the item id). */
-final class MenuItems
+public final class MenuItems
 {
 	/** A worn-item slot draws its item in this child. */
 	private static final int WORN_ITEM_CHILD = 1;
@@ -20,7 +20,7 @@ final class MenuItems
 	}
 
 	/** The clicked item's id, or -1 when the click wasn't on an item. */
-	static int itemId(MenuOptionClicked event)
+	public static int itemId(MenuOptionClicked event)
 	{
 		if (event.getItemId() > 0)
 		{

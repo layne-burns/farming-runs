@@ -88,6 +88,17 @@ public class RunSession
 		}
 	}
 
+	/** Swaps the active run's teleports, e.g. when one is used up mid-run. */
+	public void replaceTeleports(Map<String, TeleportChoice> teleports)
+	{
+		ActiveRun run = active;
+		if (run != null && !teleports.equals(run.getTeleports()))
+		{
+			active = run.withTeleports(Map.copyOf(teleports));
+			listeners.forEach(Runnable::run);
+		}
+	}
+
 	public void stop()
 	{
 		if (active != null)
