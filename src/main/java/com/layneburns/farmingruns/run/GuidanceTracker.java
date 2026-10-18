@@ -31,7 +31,8 @@ import net.runelite.client.util.Text;
 /**
  * Follows the game's messages during a run: "You treat the bush patch with supercompost." marks a patch composted,
  * and "You pay the gardener 8 ... to protect the patch." marks it paid for. Gives the overlays what to point out at
- * the current stop ({@link RunGuidance}), and while you're not at it yet, the teleport item that gets you there.
+ * the current stop ({@link RunGuidance}), and while you're still at the stop you just finished, the teleport item
+ * that gets you to the next one.
  * Client thread.
  */
 @Slf4j
@@ -48,6 +49,9 @@ public class GuidanceTracker
 	/** Patches composted in the current run, and which run that is (by its start time). */
 	private final Set<String> composted = new HashSet<>();
 	private long runStartedAt;
+	/** The current stop when last looked at, and the regions of where you were when it became current. */
+	private String stopId;
+	private Set<Integer> leaving = Set.of();
 
 	@Inject
 	GuidanceTracker(Client client, GameData data, RunSession session)
@@ -69,8 +73,8 @@ public class GuidanceTracker
 	}
 
 	/**
-	 * What to outline now: nothing when no run is going. Away from the current stop, its teleport item as well, so it's
-	 * ready when you've finished where you are.
+	 * What to outline now: nothing when no run is going. While you're still at the stop you just finished, the current
+	 * stop's teleport item as well, so it's ready to use.
 	 */
 	public RunGuidance.Highlights highlights()
 	{
@@ -82,7 +86,7 @@ public class GuidanceTracker
 		RunProgress.Stop stop = run.getProgress().currentStop();
 		RunGuidance.Highlights here = RunGuidance.at(stop, run.getProgress(), run.getSetup().getCompost(),
 			Set.copyOf(composted), data.getItems());
-		if (stop == null || isAt(stop))
+		if (stop == null || !leavingFrom(stop))
 		{
 			return here;
 		}
@@ -111,8 +115,12 @@ public class GuidanceTracker
 		}
 	}
 
-	/** True when you're in the stop's region. */
-	private boolean isAt(RunProgress.Stop stop)
+	/**
+	 * True while you're still where you were when this stop became the current one: at the stop you just finished, or
+	 * where you pressed Start. That's when to get its teleport ready; once you've left (by that teleport, or on foot
+	 * towards the patch after landing nearby), it isn't outlined any more.
+	 */
+	private boolean leavingFrom(RunProgress.Stop stop)
 	{
 		Player player = client.getLocalPlayer();
 		if (player == null)
@@ -120,8 +128,21 @@ public class GuidanceTracker
 			return false;
 		}
 		int region = player.getWorldLocation().getRegionID();
-		Location location = data.location(stop.getLocationId());
-		return location.getRegionId() == region || location.getExtraRegionIds().contains(region);
+		if (!stop.getLocationId().equals(stopId))
+		{
+			// The run has just moved on to this stop: remember where you are now.
+			leaving = stopId == null ? Set.of(region) : regions(stopId);
+			stopId = stop.getLocationId();
+		}
+		return leaving.contains(region) && !regions(stop.getLocationId()).contains(region);
+	}
+
+	private Set<Integer> regions(String locationId)
+	{
+		Location location = data.location(locationId);
+		Set<Integer> regions = new HashSet<>(location.getExtraRegionIds());
+		regions.add(location.getRegionId());
+		return regions;
 	}
 
 	@Subscribe
@@ -183,6 +204,8 @@ public class GuidanceTracker
 		{
 			runStartedAt = run.getStartedAtMillis();
 			composted.clear();
+			stopId = null;
+			leaving = Set.of();
 		}
 		return run;
 	}
