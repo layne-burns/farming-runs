@@ -1,54 +1,55 @@
-# Hand-tuned travel costs for ordering a run, in game ticks (0.6 s). Rough is fine: they only decide the order.
+# Travel costs for ordering a run, in game ticks (0.6 s). Rough is fine: they only decide the order.
 #
 #   arrive <location> <ticks>    cost of reaching the location from anywhere: its teleport plus the walk.
 #   link <a> <b> <ticks>         a cheaper way between two locations (a walk, a spirit tree hop). Works both ways.
 #
-# A leg costs the link if there is one, otherwise the destination's arrive cost.
-# Phase 9 tunes these from timed runs.
+# A leg costs the cheaper of its link (if there is one) and the destination's arrive cost.
+# The arrive costs come from timed runs (2026-10-17/18): the median travel time to each location, in ticks.
+# Locations not timed then (or timed once on a detour) keep their hand-tuned guess.
 type	from	to	ticks
-arrive	al_kharid	-	25
-arrive	aldarin	-	30
+arrive	al_kharid	-	8
+arrive	aldarin	-	37
 arrive	anglers_retreat	-	120
-arrive	ardougne	-	15
-arrive	ardougne_bush	-	20
-arrive	auburnvale	-	30
-arrive	avium_savannah	-	30
-arrive	brimhaven	-	30
-arrive	canifis_mushroom	-	25
-arrive	catherby	-	30
-arrive	catherby_fruit_tree	-	35
-arrive	champions_guild	-	25
-arrive	civitas_illa_fortis	-	25
+arrive	ardougne	-	7
+arrive	ardougne_bush	-	10
+arrive	auburnvale	-	78
+arrive	avium_savannah	-	23
+arrive	brimhaven	-	137
+arrive	canifis_mushroom	-	23
+arrive	catherby	-	27
+arrive	catherby_fruit_tree	-	52
+arrive	champions_guild	-	7
+arrive	civitas_illa_fortis	-	23
 arrive	draynor_manor	-	15
 arrive	entrana	-	80
-arrive	etceteria	-	30
-arrive	falador	-	15
-arrive	falador_park	-	20
-arrive	farming_guild	-	20
+arrive	etceteria	-	70
+arrive	falador	-	57
+arrive	falador_park	-	23
+arrive	farming_guild	-	10
 arrive	farming_guild_hespori	-	40
-arrive	fossil_island	-	40
+arrive	fossil_island	-	30
 arrive	fossil_island_seaweed	-	60
-arrive	gnome_stronghold	-	30
-arrive	great_conch	-	40
+arrive	gnome_stronghold	-	117
+arrive	great_conch	-	128
 arrive	harmony_island	-	20
-arrive	hosidius	-	25
+arrive	hosidius	-	37
 arrive	hosidius_vinery	-	30
-arrive	kastori	-	30
-arrive	lletya	-	25
-arrive	lumbridge_hops	-	35
+arrive	kastori	-	27
+arrive	lletya	-	8
+arrive	lumbridge_hops	-	30
 arrive	lumbridge_tree	-	20
-arrive	port_phasmatys	-	15
+arrive	port_phasmatys	-	33
 arrive	port_sarim	-	25
 arrive	prifddinas	-	30
-arrive	rimmington	-	40
-arrive	seers_village	-	25
-arrive	tai_bwo_wannai	-	20
-arrive	taverley	-	40
-arrive	tree_gnome_village	-	35
-arrive	troll_stronghold	-	15
+arrive	rimmington	-	65
+arrive	seers_village	-	60
+arrive	tai_bwo_wannai	-	80
+arrive	taverley	-	22
+arrive	tree_gnome_village	-	33
+arrive	troll_stronghold	-	117
 arrive	varrock	-	20
-arrive	weiss	-	15
-arrive	yanille	-	20
+arrive	weiss	-	17
+arrive	yanille	-	17
 # Short walks between neighbouring locations.
 link	catherby	catherby_fruit_tree	20
 link	farming_guild	farming_guild_hespori	25

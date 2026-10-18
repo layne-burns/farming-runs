@@ -58,8 +58,9 @@ public final class CostTable
 		{
 			return cost;
 		}
+		// A link only ever helps: teleporting straight there may be quicker one way (e.g. into the Farming Guild).
 		Integer link = links.get(linkKey(from, to));
-		int best = link != null ? link : cost;
+		int best = link != null ? Math.min(link, cost) : cost;
 		Integer walk = walk(from, to);
 		return walk != null ? Math.min(best, walk) : best;
 	}

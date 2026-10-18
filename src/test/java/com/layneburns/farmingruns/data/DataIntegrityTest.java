@@ -181,8 +181,11 @@ public class DataIntegrityTest
 		CostTable costs = data.getCosts();
 		assertEquals(20, costs.cost("catherby", "catherby_fruit_tree"));
 		assertEquals(20, costs.cost("catherby_fruit_tree", "catherby"));
-		assertEquals(30, costs.cost(null, "catherby"));
-		assertEquals(30, costs.cost("weiss", "catherby"));
+		assertEquals(27, costs.cost(null, "catherby"));
+		assertEquals(27, costs.cost("weiss", "catherby"));
+		// Into the Farming Guild the teleport beats the walk from the Hespori patch; out of it, the walk wins.
+		assertEquals(10, costs.cost("farming_guild_hespori", "farming_guild"));
+		assertEquals(25, costs.cost("farming_guild", "farming_guild_hespori"));
 	}
 
 	@Test

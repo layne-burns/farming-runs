@@ -23,8 +23,8 @@ import javax.annotation.Nullable;
  */
 public final class OnTheWay
 {
-	/** About 30 seconds at each patch (picking, planting, composting, paying), from the leg logs. */
-	public static final int WORK_TICKS_PER_PATCH = 50;
+	/** About 45 seconds at each patch (picking, planting, composting, paying), from timed runs (2026-10-17/18). */
+	public static final int WORK_TICKS_PER_PATCH = 75;
 	/** Game ticks are 0.6 seconds. */
 	private static final double SECONDS_PER_TICK = 0.6;
 

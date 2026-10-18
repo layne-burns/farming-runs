@@ -25,6 +25,14 @@ public class CostTableTest
 		assertEquals(30, costs.cost("c", "b"));
 	}
 
+	@Test
+	public void aLinkDearerThanTheTeleportIsNotUsed() throws IOException
+	{
+		CostTable costs = CostTable.parse(new StringReader("arrive\ta\t-\t10\narrive\tb\t-\t40\nlink\ta\tb\t25\n"));
+		assertEquals(10, costs.cost("b", "a"));
+		assertEquals(25, costs.cost("a", "b"));
+	}
+
 	@Test(expected = DataException.class)
 	public void rejectsANonNumberWithTheLine() throws IOException
 	{
