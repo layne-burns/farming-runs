@@ -35,8 +35,19 @@ tasks.withType(JavaCompile).configureEach {
 	options.release.set(11)
 }
 
+// Each launch runs from its own copy of the compiled classes, so rebuilding while a client is open can't feed it a
+// mix of old and new classes (Java loads them lazily; that once blanked the Live tab with a NoSuchMethodError).
+// The copies live under build/run-classes and go with `gradlew clean`.
+def runClasses = layout.buildDirectory.dir("run-classes/${System.currentTimeMillis()}")
+tasks.register('copyRunClasses', Copy) {
+    from sourceSets.main.output
+    from sourceSets.test.output
+    into runClasses
+}
+
 tasks.register('run', JavaExec) {
-    classpath = sourceSets.test.runtimeClasspath
+    dependsOn 'copyRunClasses'
+    classpath = files(runClasses) + configurations.testRuntimeClasspath
     mainClass = pluginMainClass
 
     jvmArgs "-ea"
