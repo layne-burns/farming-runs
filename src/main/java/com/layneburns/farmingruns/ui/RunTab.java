@@ -6,6 +6,7 @@
  */
 package com.layneburns.farmingruns.ui;
 
+import com.layneburns.farmingruns.FarmingRunsConfig;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.GoalPreset;
 import com.layneburns.farmingruns.data.Patch;
@@ -59,13 +60,14 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.game.ItemManager;
 
 /**
  * Run tab (SPEC §2.3): presets at the top, then the run types, a card per patch kind (seeds, payment, tree routine),
  * compost, patches to skip, and what the plan comes to. Every edit becomes a new {@link RunSetup}, saved by
  * {@link SetupStore}; the plan is worked out by {@link RunPlanService}. Patches still growing are left out until
- * Start asks about them; the Inventory section checks your items for the rest, and Start runs {@link StartFlow}.
+ * Start asks about them, unless they'll be ready on the way (a setting); the Inventory section checks your items for the rest, and Start runs {@link StartFlow}.
  */
 @Singleton
 public class RunTab extends TabPanel
@@ -82,6 +84,8 @@ public class RunTab extends TabPanel
 	private final ShortestPathClient shortestPath;
 	private final ItemManager itemManager;
 	private final BankRunTab bankRunTab;
+	private final FarmingRunsConfig config;
+	private final ConfigManager configManager;
 
 	private final FitWidthPanel content = new FitWidthPanel();
 	/** Goals and presets ticked (see PresetsPanel's keys), in the order ticked: the first one's compost wins. */
@@ -92,8 +96,11 @@ public class RunTab extends TabPanel
 	@Inject
 	RunTab(GameData data, SetupStore setups, RunPlanService planner, UnlockService unlocks, ItemStore items,
 		PlayerInfo player, ContractService contract, RunCheckService checks, RunSession session, PatchStates states,
-		ItemManager itemManager, BankRunTab bankRunTab, RunController controller, ShortestPathClient shortestPath)
+		ItemManager itemManager, BankRunTab bankRunTab, RunController controller, ShortestPathClient shortestPath,
+		FarmingRunsConfig config, ConfigManager configManager)
 	{
+		this.config = config;
+		this.configManager = configManager;
 		this.data = data;
 		this.setups = setups;
 		this.planner = planner;
@@ -317,13 +324,27 @@ public class RunTab extends TabPanel
 	private SectionPanel summary(PlantingPlan plan, int growing)
 	{
 		SectionPanel section = section("Plan");
+		JCheckBox onTheWay = new JCheckBox("Include patches ready on the way", config.readyOnTheWay());
+		onTheWay.setToolTipText("<html>Start before everything is grown: a patch still growing is included when it'll"
+			+ " be ready<br>by the time the route gets to it, and the route doesn't take you to a stop before it's"
+			+ " ready.</html>");
+		onTheWay.setFocusable(false);
+		onTheWay.setOpaque(false);
+		onTheWay.addActionListener(e ->
+		{
+			configManager.setConfiguration(FarmingRunsConfig.GROUP, FarmingRunsConfig.READY_ON_THE_WAY,
+				onTheWay.isSelected());
+			refresh();
+		});
+		section.addRow(onTheWay);
 		long kept = plan.keptCount();
 		section.addRow(text(plan.plantedCount() + " of " + plan.getAssignments().size() + " patches get a seed"
 			+ (kept > 0 ? "; " + kept + " tree" + (kept == 1 ? "" : "s") + " picked and left standing." : ".")));
 		if (growing > 0)
 		{
-			section.addRow(text(growing + " patch" + (growing == 1 ? " is" : "es are") + " still growing and left out;"
-				+ " Start asks whether to visit " + (growing == 1 ? "it" : "them") + " anyway."));
+			section.addRow(text(growing + " patch" + (growing == 1 ? " is" : "es are") + " still growing"
+				+ (config.readyOnTheWay() ? " (not ready by the time you'd get there)" : "")
+				+ " and left out; Start asks whether to visit " + (growing == 1 ? "it" : "them") + " anyway."));
 		}
 		String contract = planner.contractNote();
 		if (contract != null)

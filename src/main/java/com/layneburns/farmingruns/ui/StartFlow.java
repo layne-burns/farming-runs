@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
@@ -45,6 +46,9 @@ final class StartFlow
 	{
 		long now = System.currentTimeMillis() / 1000;
 		List<Patch> patches = new ArrayList<>(checks.readyPatches(setup, now));
+		// Growing ones in the list already will be ready on the way: the route waits for those, not the ones you
+		// tick below.
+		Set<String> waitFor = checks.stillGrowing(patches, now);
 		List<Patch> growing = checks.notReady(setup, now);
 		if (!growing.isEmpty())
 		{
@@ -72,7 +76,7 @@ final class StartFlow
 				+ " still tracks your stops; turn on Shortest Path (Plugin Hub) for directions.", "Start run",
 				JOptionPane.INFORMATION_MESSAGE);
 		}
-		controller.start(setup, check.getPlan(), check.getRequirements().getTeleports());
+		controller.start(setup, check.getPlan(), check.getRequirements().getTeleports(), waitFor);
 	}
 
 	/** Ticks for each patch still growing, all off. Null when cancelled, else the ones ticked. */

@@ -22,6 +22,7 @@ import net.runelite.client.config.Range;
 public interface FarmingRunsConfig extends Config
 {
 	String GROUP = "farmingruns";
+	String READY_ON_THE_WAY = "readyOnTheWay";
 
 	@ConfigSection(
 		name = "Seed buffers",
@@ -67,6 +68,19 @@ public interface FarmingRunsConfig extends Config
 	default int otherBuffer()
 	{
 		return 3;
+	}
+
+	@ConfigItem(
+		keyName = READY_ON_THE_WAY,
+		name = "Include patches ready on the way",
+		description = "Start a run before everything is grown: patches still growing are included when they'll be"
+			+ " ready by the time the route gets to them, and the route doesn't take you to a stop before it's"
+			+ " ready. Also in the Run tab.",
+		position = 9
+	)
+	default boolean readyOnTheWay()
+	{
+		return false;
 	}
 
 	@ConfigItem(

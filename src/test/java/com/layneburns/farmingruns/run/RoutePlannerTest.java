@@ -96,4 +96,29 @@ public class RoutePlannerTest
 		assertEquals("s3", route.get(0));
 		assertEquals(5, route.size());
 	}
+
+	@Test
+	public void aStopStillGrowingGoesLaterInsteadOfWaiting()
+	{
+		// a is nearest, but not ready for 100 ticks; b and c take 40 ticks each to reach.
+		RoutePlanner.Cost cost = (from, to) -> from == null ? (to.equals("a") ? 5 : 40) : 40;
+		RoutePlanner.Timing timing = new RoutePlanner.Timing()
+		{
+			@Override
+			public int readyAt(String stop)
+			{
+				return stop.equals("a") ? 100 : 0;
+			}
+
+			@Override
+			public int work(String stop)
+			{
+				return 10;
+			}
+		};
+		List<String> route = RoutePlanner.order(null, List.of("a", "b", "c"), cost, timing);
+		assertEquals("a", route.get(2));
+		assertEquals(List.of(40L, 90L, 140L), RoutePlanner.arrivals(null, route, cost, timing));
+		assertEquals("a", RoutePlanner.order(null, List.of("a", "b", "c"), cost).get(0));
+	}
 }

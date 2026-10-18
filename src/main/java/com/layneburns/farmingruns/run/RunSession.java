@@ -10,6 +10,7 @@ import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.data.TeleportChoice;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -38,6 +39,8 @@ public class RunSession
 		long startedAtMillis;
 		/** The stops in order and how far along they are. */
 		RunProgress progress;
+		/** Patches still growing at the start that the route waits for ({@link GrowingWait}), by id. */
+		Set<String> waitFor;
 
 		public List<Patch> patches()
 		{

@@ -6,10 +6,12 @@
  */
 package com.layneburns.farmingruns.inventory;
 
+import com.layneburns.farmingruns.FarmingRunsConfig;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.Location;
 import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.data.TeleportChoice;
+import com.layneburns.farmingruns.run.OnTheWay;
 import com.layneburns.farmingruns.run.PlantingPlan;
 import com.layneburns.farmingruns.run.RunPlanService;
 import com.layneburns.farmingruns.run.RunSetup;
@@ -70,6 +72,10 @@ public class RunCheckService
 	private final ItemStore items;
 	private final PatchStates states;
 	private final TeleportLimits limits;
+	private final FarmingRunsConfig config;
+	/** Reuse a {@link OnTheWay} answer for the same patches this many seconds. */
+	private static final int CACHE_SECONDS = 30;
+	private volatile OnTheWayCache onTheWay;
 	/**
 	 * Items the last check said you could take from the bank, with how many: what you'd otherwise withdraw, plus tools
 	 * and compost the leprechaun also has (you may grab them from either). Read on the client thread by the bank.
@@ -86,8 +92,9 @@ public class RunCheckService
 
 	@Inject
 	RunCheckService(GameData data, RunPlanService planner, LocationPrefs prefs, PlayerInfo player, ItemStore items,
-		PatchStates states, TeleportLimits limits)
+		PatchStates states, TeleportLimits limits, FarmingRunsConfig config)
 	{
+		this.config = config;
 		this.limits = limits;
 		this.data = data;
 		this.planner = planner;
@@ -97,20 +104,56 @@ public class RunCheckService
 		this.states = states;
 	}
 
-	/** The run's patches that are still growing (Time Tracking says so), soonest ready first. */
+	/**
+	 * The run's patches that are still growing (Time Tracking says so) and left out, soonest ready first. With
+	 * "Include patches ready on the way", only the ones that won't be ready by the time the run gets there.
+	 */
 	public List<Patch> notReady(RunSetup setup, long nowSeconds)
 	{
+		Set<Patch> visited = new HashSet<>(readyPatches(setup, nowSeconds));
 		return planner.patches(setup).stream()
-			.filter(p -> isGrowing(p, nowSeconds))
+			.filter(p -> !visited.contains(p))
 			.sorted((a, b) -> Long.compare(status(a, nowSeconds).getReadyAtSeconds(), status(b, nowSeconds)
 				.getReadyAtSeconds()))
 			.collect(Collectors.toList());
 	}
 
-	/** The run's patches to visit now: all of them except the ones still growing. */
+	/**
+	 * The run's patches to visit now: all of them except the ones still growing, plus, with "Include patches ready
+	 * on the way", growing ones that will be ready by the time the route gets to them ({@link OnTheWay}).
+	 */
 	public List<Patch> readyPatches(RunSetup setup, long nowSeconds)
 	{
-		return planner.patches(setup).stream().filter(p -> !isGrowing(p, nowSeconds)).collect(Collectors.toList());
+		List<Patch> patches = planner.patches(setup);
+		if (!config.readyOnTheWay())
+		{
+			return patches.stream().filter(p -> !isGrowing(p, nowSeconds)).collect(Collectors.toList());
+		}
+		OnTheWayCache cached = onTheWay;
+		if (cached != null && cached.patches.equals(patches) && Math.abs(cached.nowSeconds - nowSeconds) < CACHE_SECONDS)
+		{
+			return cached.ready;
+		}
+		List<Patch> ready = List.copyOf(OnTheWay.patches(patches, p -> isGrowing(p, nowSeconds)
+			? OnTheWay.ticks(status(p, nowSeconds).getReadyAtSeconds() - nowSeconds) : 0, data.getCosts()::cost, null));
+		onTheWay = new OnTheWayCache(patches, nowSeconds, ready);
+		return ready;
+	}
+
+	/** The last {@link OnTheWay} answer: the panel asks often, and planning takes a moment. */
+	@Value
+	private static class OnTheWayCache
+	{
+		List<Patch> patches;
+		long nowSeconds;
+		List<Patch> ready;
+	}
+
+	/** Which of these patches are still growing, by id: the ones a run started now waits for. */
+	public Set<String> stillGrowing(List<Patch> patches, long nowSeconds)
+	{
+		return patches.stream().filter(p -> isGrowing(p, nowSeconds)).map(Patch::getId)
+			.collect(Collectors.toUnmodifiableSet());
 	}
 
 	public PatchStatus status(Patch patch, long nowSeconds)

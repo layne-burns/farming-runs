@@ -62,14 +62,19 @@ public class RunController
 	private final PatchStates states;
 	/** Each run patch's last reading in the region you're in, to tick patches on changes. Client thread. */
 	private final Map<String, PatchState> seen = new HashMap<>();
+	/** The current stop already checked for being reached too early ({@link GrowingWait}). Client thread. */
+	@Nullable
+	private String earlyCheckedFor;
+	private final GrowingWait growingWait;
 	/** The region you were in last tick, to notice arriving somewhere. */
 	private int lastRegion = -1;
 
 	@Inject
 	RunController(Client client, ClientThread clientThread, GameData data, RunSession session,
 		ShortestPathClient shortestPath, FarmingRunsConfig config,
-		PlayerInfo player, GuidanceTracker guidance, PatchStates states, PatchClicks clicks)
+		PlayerInfo player, GuidanceTracker guidance, PatchStates states, PatchClicks clicks, GrowingWait growingWait)
 	{
+		this.growingWait = growingWait;
 		this.states = states;
 		clicks.addListener(this::follow);
 		this.guidance = guidance;
@@ -84,8 +89,12 @@ public class RunController
 		session.addListener(() -> clientThread.invokeLater(this::point));
 	}
 
-	/** Starts a run of this plan. Any thread. */
-	public void start(RunSetup setup, PlantingPlan plan, Map<String, TeleportChoice> teleports)
+	/**
+	 * Starts a run of this plan. Any thread.
+	 *
+	 * @param waitFor patches still growing that the run should get to only once they're ready, by id
+	 */
+	public void start(RunSetup setup, PlantingPlan plan, Map<String, TeleportChoice> teleports, Set<String> waitFor)
 	{
 		clientThread.invoke(() ->
 		{
@@ -93,12 +102,18 @@ public class RunController
 			plan.getAssignments().forEach(a -> byLocation.computeIfAbsent(a.getPatch().getLocationId(),
 				k -> new ArrayList<>()).add(a));
 			String here = locationHere(byLocation.keySet());
-			List<String> order = RoutePlanner.order(here, byLocation.keySet(), data.getCosts()::cost);
+			Map<String, List<Patch>> patches = new LinkedHashMap<>();
+			byLocation.forEach((id, list) -> patches.put(id, list.stream().map(PlantingPlan.Assignment::getPatch)
+				.collect(Collectors.toList())));
+			List<String> order = RoutePlanner.order(here, byLocation.keySet(), data.getCosts()::cost,
+				growingWait.timing(patches, waitFor));
 			List<RunProgress.Stop> stops = new ArrayList<>();
 			order.forEach(id -> stops.add(new RunProgress.Stop(id, List.copyOf(byLocation.get(id)))));
 			log.debug("[farmrun] route from {}: {}", here, order);
+			earlyCheckedFor = null;
 			session.start(new RunSession.ActiveRun(setup, plan, teleports, System.currentTimeMillis(),
-				RunProgress.start(stops, payFor(setup, plan), compostFor(setup, plan), harvestFirst(plan))));
+				RunProgress.start(stops, payFor(setup, plan), compostFor(setup, plan), harvestFirst(plan)),
+				Set.copyOf(waitFor)));
 			checkPatchesHere();
 			point();
 		});
@@ -119,6 +134,8 @@ public class RunController
 	{
 		clientThread.invoke(() ->
 		{
+			// Your choice: don't move it later even if it isn't ready yet.
+			earlyCheckedFor = locationId;
 			session.update(p -> p.goTo(locationId));
 			point();
 		});
@@ -173,6 +190,7 @@ public class RunController
 		rest.add(0, clicked.getLocationId());
 		List<String> order = RoutePlanner.order(clicked.getLocationId(), rest, data.getCosts()::cost);
 		log.debug("[farmrun] you went to {} first; route now {}", clicked.getLocationId(), order);
+		earlyCheckedFor = clicked.getLocationId();
 		session.update(p -> p.reroute(order));
 		point();
 	}
@@ -299,6 +317,10 @@ public class RunController
 		{
 			return;
 		}
+		if (waitIfEarly(run))
+		{
+			return;
+		}
 		RunProgress.Stop stop = run.getProgress().currentStop();
 		if (stop != null)
 		{
@@ -376,6 +398,30 @@ public class RunController
 		}
 		int region = player.getWorldLocation().getRegionID();
 		return region == patch.getRegionId() || data.location(patch.getLocationId()).getExtraRegionIds().contains(region);
+	}
+
+	/**
+	 * Once per new current stop: when you'd get there before its patches are ready, goes somewhere else first if
+	 * that's quicker. True when the route changed (the session then points again).
+	 */
+	private boolean waitIfEarly(RunSession.ActiveRun run)
+	{
+		RunProgress.Stop current = run.getProgress().currentStop();
+		if (current == null || current.getLocationId().equals(earlyCheckedFor))
+		{
+			return false;
+		}
+		earlyCheckedFor = current.getLocationId();
+		List<String> order = growingWait.betterOrder(run, locationHere(run.getProgress().getStops().stream()
+			.map(RunProgress.Stop::getLocationId).collect(Collectors.toList())));
+		if (order == null)
+		{
+			return false;
+		}
+		log.debug("[farmrun] {} isn't ready yet; route now {}", current.getLocationId(), order);
+		earlyCheckedFor = order.get(0);
+		session.update(p -> p.reroute(order));
+		return true;
 	}
 
 	/** The run location you're standing at, if any (so it goes first); null when you're elsewhere. */

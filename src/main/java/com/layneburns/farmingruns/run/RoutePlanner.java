@@ -15,9 +15,10 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Orders a run's stops to keep the total travel cost low (SPEC §2.5): from where you start, visiting every stop once,
- * ending wherever is cheapest. Exact (Held–Karp) for up to {@link #EXACT_LIMIT} stops; above that, nearest-next
- * then 2-opt, which is close to best and fast. Pure: unit tested.
+ * Orders a run's stops to finish soonest (SPEC §2.5): from where you start, visiting every stop once, ending wherever
+ * is cheapest. A stop can have a time it's ready (patches still growing): getting there earlier means waiting, so
+ * those go later in the route when that's quicker overall. Exact (Held–Karp) for up to {@link #EXACT_LIMIT} stops;
+ * above that, nearest-next then 2-opt, which is close to best and fast. Pure: unit tested.
  */
 public final class RoutePlanner
 {
@@ -31,6 +32,29 @@ public final class RoutePlanner
 		int cost(@Nullable String from, String to);
 	}
 
+	/** When each stop is ready (ticks from now; 0 when it already is) and how long you spend there (ticks). */
+	public interface Timing
+	{
+		Timing NONE = new Timing()
+		{
+			@Override
+			public int readyAt(String stop)
+			{
+				return 0;
+			}
+
+			@Override
+			public int work(String stop)
+			{
+				return 0;
+			}
+		};
+
+		int readyAt(String stop);
+
+		int work(String stop);
+	}
+
 	private RoutePlanner()
 	{
 	}
@@ -40,6 +64,12 @@ public final class RoutePlanner
 	 * @return the stops in visiting order
 	 */
 	public static List<String> order(@Nullable String start, Collection<String> stops, Cost cost)
+	{
+		return order(start, stops, cost, Timing.NONE);
+	}
+
+	/** As {@link #order(String, Collection, Cost)}, waiting for stops that aren't ready yet. */
+	public static List<String> order(@Nullable String start, Collection<String> stops, Cost cost, Timing timing)
 	{
 		List<String> rest = new ArrayList<>(new LinkedHashSet<>(stops));
 		List<String> route = new ArrayList<>();
@@ -52,32 +82,62 @@ public final class RoutePlanner
 		{
 			return route;
 		}
-		route.addAll(rest.size() <= EXACT_LIMIT ? exact(from, rest, cost) : nearestThenTwoOpt(from, rest, cost));
+		route.addAll(rest.size() <= EXACT_LIMIT ? exact(from, rest, cost, timing)
+			: nearestThenTwoOpt(from, rest, cost, timing));
 		return route;
 	}
 
 	/** Total cost of visiting {@code route} in order, starting from {@code from}. */
 	public static long total(@Nullable String from, List<String> route, Cost cost)
 	{
-		long sum = 0;
+		return finish(from, route, cost, Timing.NONE);
+	}
+
+	/** When you'd get to each stop of {@code route} (ticks from now), before any waiting there. */
+	public static List<Long> arrivals(@Nullable String from, List<String> route, Cost cost, Timing timing)
+	{
+		List<Long> arrivals = new ArrayList<>();
+		long time = 0;
 		String at = from;
 		for (String stop : route)
 		{
-			sum += cost.cost(at, stop);
+			time += cost.cost(at, stop);
+			arrivals.add(time);
+			time = Math.max(time, timing.readyAt(stop)) + timing.work(stop);
 			at = stop;
 		}
-		return sum;
+		return arrivals;
 	}
 
-	/** Held–Karp with a free end: best[mask][last] is the cheapest way to visit {@code mask}, ending at last. */
-	private static List<String> exact(@Nullable String from, List<String> stops, Cost cost)
+	/** When you'd finish {@code route} (ticks from now), waiting where a stop isn't ready. */
+	public static long finish(@Nullable String from, List<String> route, Cost cost, Timing timing)
+	{
+		long time = 0;
+		String at = from;
+		for (String stop : route)
+		{
+			time = Math.max(time + cost.cost(at, stop), timing.readyAt(stop)) + timing.work(stop);
+			at = stop;
+		}
+		return time;
+	}
+
+	/**
+	 * Held–Karp with a free end: best[mask][last] is the soonest you can be done visiting {@code mask}, ending at
+	 * last. Arriving sooner never makes you finish later, so keeping only the soonest is exact.
+	 */
+	private static List<String> exact(@Nullable String from, List<String> stops, Cost cost, Timing timing)
 	{
 		int n = stops.size();
 		int[][] legs = new int[n][n];
 		int[] first = new int[n];
+		int[] ready = new int[n];
+		int[] work = new int[n];
 		for (int i = 0; i < n; i++)
 		{
 			first[i] = cost.cost(from, stops.get(i));
+			ready[i] = timing.readyAt(stops.get(i));
+			work[i] = timing.work(stops.get(i));
 			for (int j = 0; j < n; j++)
 			{
 				legs[i][j] = i == j ? 0 : cost.cost(stops.get(i), stops.get(j));
@@ -92,7 +152,7 @@ public final class RoutePlanner
 		}
 		for (int i = 0; i < n; i++)
 		{
-			best[1 << i][i] = first[i];
+			best[1 << i][i] = Math.max(first[i], ready[i]) + work[i];
 			previous[1 << i][i] = -1;
 		}
 		for (int mask = 1; mask <= full; mask++)
@@ -111,7 +171,7 @@ public final class RoutePlanner
 						continue;
 					}
 					int nextMask = mask | (1 << next);
-					long via = here + legs[last][next];
+					long via = Math.max(here + legs[last][next], ready[next]) + work[next];
 					if (via < best[nextMask][next])
 					{
 						best[nextMask][next] = via;
@@ -142,7 +202,8 @@ public final class RoutePlanner
 	}
 
 	/** Nearest next stop each time, then reversing stretches of the route while that makes it cheaper. */
-	private static List<String> nearestThenTwoOpt(@Nullable String from, List<String> stops, Cost cost)
+	private static List<String> nearestThenTwoOpt(@Nullable String from, List<String> stops, Cost cost,
+		Timing timing)
 	{
 		List<String> left = new ArrayList<>(stops);
 		List<String> route = new ArrayList<>();
@@ -161,7 +222,7 @@ public final class RoutePlanner
 			left.remove(nearest);
 			at = nearest;
 		}
-		long bestTotal = total(from, route, cost);
+		long bestTotal = finish(from, route, cost, timing);
 		boolean improved = true;
 		while (improved)
 		{
@@ -171,7 +232,7 @@ public final class RoutePlanner
 				for (int k = i + 1; k < route.size(); k++)
 				{
 					Collections.reverse(route.subList(i, k + 1));
-					long candidate = total(from, route, cost);
+					long candidate = finish(from, route, cost, timing);
 					if (candidate < bestTotal)
 					{
 						bestTotal = candidate;
