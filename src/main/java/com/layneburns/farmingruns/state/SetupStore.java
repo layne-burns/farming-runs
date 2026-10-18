@@ -81,6 +81,17 @@ public class SetupStore
 		chosenName = name;
 	}
 
+	/**
+	 * The account whose setup and presets these are, or null before login (when there's nothing to show or save:
+	 * the Run tab waits for login).
+	 */
+	@Nullable
+	public String account()
+	{
+		ensureLoaded();
+		return loadedFor;
+	}
+
 	public RunSetup current()
 	{
 		ensureLoaded();

@@ -46,11 +46,13 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.BorderFactory;
@@ -92,6 +94,9 @@ public class RunTab extends TabPanel
 	private final FitWidthPanel content = new FitWidthPanel();
 	/** Goals and presets ticked (see PresetsPanel's keys), in the order ticked: the first one's compost wins. */
 	private final Set<String> ticked = new LinkedHashSet<>();
+	/** The account the tab was last drawn for; a change clears {@link #ticked}. */
+	@Nullable
+	private String shownFor;
 	private final Map<String, Boolean> collapsed = new HashMap<>(Map.of("Patches to visit", true));
 	private final AtomicBoolean redrawQueued = new AtomicBoolean();
 
@@ -145,6 +150,23 @@ public class RunTab extends TabPanel
 	private void redraw()
 	{
 		redrawQueued.set(false);
+		String account = setups.account();
+		if (!Objects.equals(account, shownFor))
+		{
+			// Another account (or a fresh login): presets ticked before belong to nothing now.
+			shownFor = account;
+			ticked.clear();
+			setups.setChosenName(null);
+		}
+		if (account == null)
+		{
+			// Before login there's no saved setup to show, and changes couldn't be saved.
+			content.removeAll();
+			content.add(text("Log in to see your run setup and presets."));
+			revalidate();
+			repaint();
+			return;
+		}
 		RunSetup setup = setups.current();
 		long now = System.currentTimeMillis() / 1000;
 		int growing = checks.notReady(setup, now).size();
