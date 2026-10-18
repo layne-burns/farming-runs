@@ -25,14 +25,17 @@ import net.runelite.api.MenuAction;
 import net.runelite.api.NPC;
 import net.runelite.api.ObjectComposition;
 import net.runelite.api.Player;
+import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.util.Text;
 
 /**
- * Times each stop of a run, to tune the travel costs (phase 9): you leave when you click the teleport towards it (or
- * when the stop before is finished, if you walk), arrive at your first click on one of its patches, its gardener or
- * the tool leprechaun, and are done when the stop is finished. So travel = arrive − leave and work = done − arrive.
+ * Times each stop of a run, to tune the travel costs (phase 9): you leave at your first teleport towards it (a
+ * recognised teleport click, or any jump in position too big to be running), or when the stop before is finished if
+ * you walk; you arrive at your first click on one of its patches, its gardener or the tool leprechaun; and you're done
+ * when the stop is finished. So travel = arrive − leave and work = done − arrive.
  * Each stop is logged as "[farmrun] leg ..." (with Debug logging on), and the last run's legs go in the debug info.
  * Client thread.
  */
@@ -58,6 +61,11 @@ public class LegTimer
 		MenuAction.NPC_SECOND_OPTION, MenuAction.NPC_THIRD_OPTION, MenuAction.NPC_FOURTH_OPTION,
 		MenuAction.NPC_FIFTH_OPTION, MenuAction.WIDGET_TARGET_ON_NPC);
 
+	/** Further than running goes in a tick: a teleport. */
+	private static final int TELEPORT_TILES = 30;
+	/** About how long a teleport takes from the click to the jump (three ticks). */
+	private static final long CAST_MILLIS = 1800;
+
 	private final Client client;
 	private final GameData data;
 	private final RunSession session;
@@ -68,6 +76,10 @@ public class LegTimer
 	@Nullable
 	private String stopId;
 	private long leaveAt;
+	/** Travel to the current stop has started (a teleport was clicked or seen). */
+	private boolean left;
+	@Nullable
+	private WorldPoint lastPosition;
 	private long arriveAt = -1;
 	@Nullable
 	private String teleport;
@@ -101,11 +113,15 @@ public class LegTimer
 		}
 		long now = System.currentTimeMillis();
 		String recognised = TeleportRecognizer.recognise(event.getMenuOption(), Text.removeTags(event.getMenuTarget()),
-			event.getItemId(), data);
+			MenuItems.itemId(event), data);
 		if (recognised != null)
 		{
-			// The latest teleport before arriving is the one that took you there.
-			leaveAt = now;
+			// Travel starts at the first teleport; the last one named is the one that took you there.
+			if (!left)
+			{
+				leaveAt = now;
+				left = true;
+			}
 			teleport = recognised;
 			return;
 		}
@@ -150,11 +166,38 @@ public class LegTimer
 				leg.getTravelMillis() < 0 ? "?" : leg.getTravelMillis() / 1000 + "s", leg.getWorkMillis() / 1000,
 				teleport == null ? "" : " via " + teleport);
 		}
-		// The next leg starts now; a teleport clicked before arriving moves its start to that click.
+		// The next leg starts now; the first teleport after this (a click or a jump) moves its start there.
 		stopId = next;
 		leaveAt = now;
+		left = false;
 		arriveAt = -1;
 		teleport = null;
+	}
+
+	/**
+	 * A jump of more than {@link #TELEPORT_TILES} in one tick (or to another level or instance) is a teleport, whatever
+	 * kind: if no teleport click was seen first, travel starts there (less the cast, {@link #CAST_MILLIS}).
+	 */
+	@Subscribe
+	public void onGameTick(GameTick event)
+	{
+		Player player = client.getLocalPlayer();
+		if (player == null)
+		{
+			return;
+		}
+		WorldPoint here = player.getWorldLocation();
+		WorldPoint before = lastPosition;
+		lastPosition = here;
+		if (run == 0 || stopId == null || arriveAt >= 0 || left || before == null)
+		{
+			return;
+		}
+		if (before.getPlane() != here.getPlane() || before.distanceTo2D(here) > TELEPORT_TILES)
+		{
+			leaveAt = System.currentTimeMillis() - CAST_MILLIS;
+			left = true;
+		}
 	}
 
 	/** True when you're in the current stop's area. */

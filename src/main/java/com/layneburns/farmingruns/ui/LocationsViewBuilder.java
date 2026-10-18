@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -36,6 +37,10 @@ import javax.annotation.Nullable;
  */
 public final class LocationsViewBuilder
 {
+	/** Patch states that want a visit though nothing is ready to pick, in the order they're mentioned. */
+	private static final List<PatchStatus.Readiness> NEEDS_YOU = List.of(PatchStatus.Readiness.EMPTY,
+		PatchStatus.Readiness.DISEASED, PatchStatus.Readiness.DEAD);
+
 	/** Longest first, so "North West" becomes "NW" rather than "N West". */
 	private static final Map<String, String> COMPASS = new LinkedHashMap<>();
 
@@ -97,7 +102,7 @@ public final class LocationsViewBuilder
 				{
 					continue;
 				}
-				LocationsView.Entry entry = entry(data, location, status, context);
+				LocationsView.Entry entry = entry(data, location, status, context, type::covers);
 				if (matches(entry, query))
 				{
 					entries.add(entry);
@@ -114,7 +119,8 @@ public final class LocationsViewBuilder
 			boolean shown = location.getPatches().stream().anyMatch(p -> runTypes.stream().anyMatch(t -> t.covers(p.getKind())));
 			if (status.getAccess() == LocationStatus.Access.LOCKED && shown)
 			{
-				LocationsView.Entry entry = entry(data, location, status, context);
+				LocationsView.Entry entry = entry(data, location, status, context,
+					kind -> runTypes.stream().anyMatch(t -> t.covers(kind)));
 				if (matches(entry, query))
 				{
 					locked.add(entry);
@@ -130,8 +136,9 @@ public final class LocationsViewBuilder
 		return new LocationsView(summary, sections, !context.isTimeTrackingOn());
 	}
 
+	/** @param focus the patch kinds the row's section is about: its at-a-glance state only counts those */
 	private static LocationsView.Entry entry(GameData data, Location location, LocationStatus status,
-		LocationsContext context)
+		LocationsContext context, Predicate<PatchImplementation> focus)
 	{
 		List<LocationsView.PatchLine> patches = location.getPatches().stream()
 			.map(p ->
@@ -149,9 +156,19 @@ public final class LocationsViewBuilder
 				c.getDestination() == null ? null : c.getDestination().getDetail(),
 				teleportWarning(c.getMethod(), context.getSpellbook())))
 			.collect(Collectors.toList());
-		PatchStatus.Readiness summaryReadiness = summaryReadiness(patches);
+		List<LocationsView.PatchLine> focused = new ArrayList<>();
+		for (int i = 0; i < patches.size(); i++)
+		{
+			if (focus.test(location.getPatches().get(i).getKind()))
+			{
+				focused.add(patches.get(i));
+			}
+		}
+		List<PatchStatus> states = location.getPatches().stream().filter(p -> focus.test(p.getKind()))
+			.map(context.getPatchStateOf()).collect(Collectors.toList());
+		PatchStatus.Readiness summaryReadiness = summaryReadiness(focused);
 		return new LocationsView.Entry(location.getId(), location.getName(), kinds(location), status,
-			readySummary(patches, location, context), summaryReadiness, statusText(status), teleports, addMenu(data, order), context.getCustomTeleports().test(location), patches,
+			readySummary(focused, states, context.getNowSeconds()), summaryReadiness, statusText(status), teleports, addMenu(data, order), context.getCustomTeleports().test(location), patches,
 			location.getNote(), location.getWikiTeleports());
 	}
 
@@ -180,36 +197,53 @@ public final class LocationsViewBuilder
 			.collect(Collectors.toList());
 	}
 
-	/** At a glance: "3 ready" when there's something to do, else when the first one is ready, else "not seen". */
-	static String readySummary(List<LocationsView.PatchLine> patches, Location location, LocationsContext context)
+	/**
+	 * At a glance, for the patches the section is about: "2 ready" when fully grown; else "empty", "diseased" or
+	 * "dead" when one is; else when the soonest will be ready; else "not seen".
+	 */
+	static String readySummary(List<LocationsView.PatchLine> patches, List<PatchStatus> states, long nowSeconds)
 	{
-		long toDo = patches.stream().filter(p -> p.isUsable() && isToDo(p.getReadiness())).count();
-		if (toDo > 0)
+		long ready = count(patches, PatchStatus.Readiness.READY);
+		if (ready > 0)
 		{
-			return toDo + " ready";
+			return ready + " ready";
 		}
-		long soonest = location.getPatches().stream()
-			.map(context.getPatchStateOf())
+		for (PatchStatus.Readiness needsYou : NEEDS_YOU)
+		{
+			long n = count(patches, needsYou);
+			if (n > 0)
+			{
+				return (n > 1 ? n + " " : "") + needsYou.name().toLowerCase(Locale.ROOT);
+			}
+		}
+		long soonest = states.stream()
 			.filter(s -> s.getReadiness() == PatchStatus.Readiness.GROWING)
 			.mapToLong(PatchStatus::getReadyAtSeconds)
 			.min().orElse(0);
-		return soonest > 0 ? "in " + PatchStatus.shortDuration(Math.max(0, soonest - context.getNowSeconds())) : "not seen";
+		return soonest > 0 ? "in " + PatchStatus.shortDuration(Math.max(0, soonest - nowSeconds)) : "not seen";
 	}
 
+	/** The colour of the at-a-glance state: the first that applies of ready, empty, diseased, dead, growing. */
 	private static PatchStatus.Readiness summaryReadiness(List<LocationsView.PatchLine> patches)
 	{
-		if (patches.stream().anyMatch(p -> p.isUsable() && isToDo(p.getReadiness())))
+		if (count(patches, PatchStatus.Readiness.READY) > 0)
 		{
 			return PatchStatus.Readiness.READY;
+		}
+		for (PatchStatus.Readiness needsYou : NEEDS_YOU)
+		{
+			if (count(patches, needsYou) > 0)
+			{
+				return needsYou;
+			}
 		}
 		return patches.stream().anyMatch(p -> p.getReadiness() == PatchStatus.Readiness.GROWING)
 			? PatchStatus.Readiness.GROWING : PatchStatus.Readiness.UNKNOWN;
 	}
 
-	/** Something to do there: harvest, plant, cure or clear (not just "never seen"). */
-	private static boolean isToDo(PatchStatus.Readiness readiness)
+	private static long count(List<LocationsView.PatchLine> patches, PatchStatus.Readiness readiness)
 	{
-		return readiness != PatchStatus.Readiness.GROWING && readiness != PatchStatus.Readiness.UNKNOWN;
+		return patches.stream().filter(p -> p.isUsable() && p.getReadiness() == readiness).count();
 	}
 
 	static String statusText(LocationStatus status)

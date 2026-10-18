@@ -70,7 +70,7 @@ public class TeleportWatcher
 			return;
 		}
 		String recognised = TeleportRecognizer.recognise(event.getMenuOption(), Text.removeTags(event.getMenuTarget()),
-			event.getItemId(), data);
+			MenuItems.itemId(event), data);
 		if (recognised != null)
 		{
 			lastTeleport = recognised;

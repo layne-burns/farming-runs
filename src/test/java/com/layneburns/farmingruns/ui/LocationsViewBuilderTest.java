@@ -202,4 +202,23 @@ public class LocationsViewBuilderTest
 	{
 		return section.getEntries().stream().map(LocationsView.Entry::getName).collect(Collectors.toList());
 	}
+
+	@Test
+	public void theGlanceOnlyCallsFullyGrownPatchesReady()
+	{
+		long now = 1_000_000;
+		LocationsView.PatchLine growing = new LocationsView.PatchLine("Herb", "Ranarr", "24 m",
+			PatchStatus.Readiness.GROWING, true, null);
+		LocationsView.PatchLine empty = new LocationsView.PatchLine("Allotment", null, "empty",
+			PatchStatus.Readiness.EMPTY, true, null);
+		LocationsView.PatchLine ready = new LocationsView.PatchLine("Herb", "Ranarr", "ready",
+			PatchStatus.Readiness.READY, true, null);
+		PatchStatus herbIn24 = new PatchStatus(PatchStatus.Readiness.GROWING, "Ranarr", now + 24 * 60, 2, 4);
+
+		// The herb section looks at the herb patch only: growing, so when it's ready.
+		assertEquals("in 24 m", LocationsViewBuilder.readySummary(List.of(growing), List.of(herbIn24), now));
+		// Empty isn't "ready".
+		assertEquals("2 empty", LocationsViewBuilder.readySummary(List.of(empty, empty), List.of(), now));
+		assertEquals("1 ready", LocationsViewBuilder.readySummary(List.of(ready, empty), List.of(), now));
+	}
 }
