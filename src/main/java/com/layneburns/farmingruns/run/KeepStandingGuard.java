@@ -29,9 +29,10 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.util.Text;
 
 /**
- * During a run, stops a misclick from destroying a plant you're keeping standing (a harvest run): "Chop down",
- * "Clear" or "Dig up" on its patch, and "Pay" to its gardener (which clears a grown tree for 200 coins). The click is
- * swallowed with a note in the chat; shift-click goes through anyway. Can be switched off in the settings. Client
+ * During a run, stops a misclick from destroying a plant you're keeping standing (a harvest run), or one you're
+ * replanting with the same seed before its crop is picked: "Chop down", "Clear" or "Dig up" on its patch, and "Pay"
+ * to its gardener (which clears a grown tree for 200 coins). The click is swallowed with a note in the chat;
+ * shift-click goes through anyway. Can be switched off in the settings. Client
  * thread.
  */
 @Slf4j
@@ -81,12 +82,13 @@ public class KeepStandingGuard
 		}
 		event.consume();
 		String what = plantName(kept);
-		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Farming Runs: keeping your " + what
-			+ " standing (harvest run). Shift-click to " + option + " anyway.", null);
+		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Farming Runs: " + (kept.isKeptStanding()
+			? "keeping your " + what + " standing (harvest run)" : "pick your " + what + " first (replanting the same)")
+			+ ". Shift-click to " + option + " anyway.", null);
 		log.debug("[farmrun] blocked {} on {}", option, kept.getPatch().getId());
 	}
 
-	/** A patch you're keeping standing, in the area you're in, that the test picks out; null if none. */
+	/** A patch to protect (kept standing, or not picked yet), in the area you're in, that the test picks out. */
 	@Nullable
 	private PlantingPlan.Assignment keptHere(RunSession.ActiveRun run,
 		Predicate<PlantingPlan.Assignment> test)
@@ -106,13 +108,22 @@ public class KeepStandingGuard
 			}
 			for (PlantingPlan.Assignment a : stop.getPatches())
 			{
-				if (a.isKeptStanding() && test.test(a))
+				if ((a.isKeptStanding() || unpicked(run, a)) && test.test(a))
 				{
 					return a;
 				}
 			}
 		}
 		return null;
+	}
+
+	/** Replanting the same seed, and its crop isn't picked yet. */
+	private static boolean unpicked(RunSession.ActiveRun run, PlantingPlan.Assignment a)
+	{
+		String id = a.getPatch().getId();
+		RunProgress progress = run.getProgress();
+		return run.getSetup().kindPlan(a.getPatch().getKind()).isReplantSame() && progress.hasHarvestFirst(id)
+			&& !progress.isHarvested(id);
 	}
 
 	private static boolean isObjectClick(MenuAction action)

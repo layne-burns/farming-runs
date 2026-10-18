@@ -211,6 +211,29 @@ public class SeedPickerTest
 		assertEquals(Map.of(ItemID.POTATO_SEED, 6), plan.itemsToPlant());
 	}
 
+	@Test
+	public void replantTheSameCropWhereSomethingIsGrowing()
+	{
+		List<Patch> fruitTrees = data.patches().stream().filter(p -> p.getKind() == PatchImplementation.FRUIT_TREE)
+			.sorted((a, b) -> a.getId().compareTo(b.getId())).limit(3).collect(Collectors.toList());
+		Seed papaya = data.seedByItem(5288);
+		Seed apple = data.seedForCrop(PatchImplementation.FRUIT_TREE, "Apple");
+		// Growing: apple, papaya, nothing known. Plenty of both saplings.
+		Map<Patch, Seed> growing = new HashMap<>();
+		growing.put(fruitTrees.get(0), apple);
+		growing.put(fruitTrees.get(1), papaya);
+		Map<Integer, Integer> held = Map.of(apple.plantItemId(), 10, papaya.plantItemId(), 10);
+		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.FRUIT_TREE)).withKindPlan(
+			PatchImplementation.FRUIT_TREE, KindPlan.AUTO.withReplantSame(true));
+		PlantingPlan plan = SeedPicker.plan(setup, fruitTrees, held, BUFFERS, 99, data, null, growing::get);
+		Map<Patch, Seed> planted = new HashMap<>();
+		plan.getAssignments().forEach(a -> planted.put(a.getPatch(), a.getSeed()));
+		// The apple tree gets an apple again; the unknown patch gets the usual best choice.
+		assertEquals(apple, planted.get(fruitTrees.get(0)));
+		assertEquals(papaya, planted.get(fruitTrees.get(1)));
+		assertTrue(planted.get(fruitTrees.get(2)).getLevel() >= papaya.getLevel());
+	}
+
 	private static RunSetup herbRun()
 	{
 		return RunSetup.EMPTY.withRunTypes(Set.of(RunType.HERB));

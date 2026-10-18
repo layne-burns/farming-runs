@@ -72,7 +72,7 @@ public final class SetupJson
 						plan.isSkipHarvest(), plan.getFillOrder() == null ? FillOrder.SHARES : plan.getFillOrder(),
 						plan.getAmuletOfBounty(), plan.isGrowSaplings(),
 						plan.getReplaceStanding() == null ? Set.of() : Set.copyOf(plan.getReplaceStanding()),
-						plan.isPayableOnly()));
+						plan.isPayableOnly(), plan.isReplantSame()));
 				}
 			});
 		}

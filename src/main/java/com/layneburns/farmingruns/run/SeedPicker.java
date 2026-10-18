@@ -117,6 +117,21 @@ public final class SeedPicker
 				assignments.add(PlantingPlan.Assignment.kept(p, tree));
 				return true;
 			});
+			if (plan.isReplantSame())
+			{
+				// The same seed again where something is growing, if you have one to spare.
+				open.removeIf(p ->
+				{
+					Seed same = standing.apply(p);
+					if (same == null || (farmingLevel >= 0 && same.getLevel() > farmingLevel) || stock.capacity(same) == 0)
+					{
+						return false;
+					}
+					stock.take(same, same.getPerPatch());
+					assignments.add(new PlantingPlan.Assignment(p, same, false, false, same));
+					return true;
+				});
+			}
 			List<Seed> candidates = data.seedsFor(entry.getKey()).stream()
 				.filter(s -> farmingLevel < 0 || s.getLevel() <= farmingLevel)
 				.sorted(Comparator.comparingInt(Seed::getLevel).reversed())

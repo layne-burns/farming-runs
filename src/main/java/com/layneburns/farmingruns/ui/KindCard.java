@@ -108,6 +108,15 @@ class KindCard extends JPanel
 				? TreeRoutine.LEAVE_STANDING : TreeRoutine.PAY_TO_REMOVE)));
 			add(left(routine));
 		}
+		if ((isTree || regrows) && !(regrows && plan.getTreeRoutine() == TreeRoutine.LEAVE_STANDING))
+		{
+			JCheckBox same = check("Replant the same crop", plan.isReplantSame());
+			same.setToolTipText("<html>Pick the grown crop, clear it and plant the seed that was growing there again"
+				+ "<br>(when you have one to spare; otherwise the seed choice below). Clearing it before it's picked"
+				+ "<br>is blocked (shift-click to do it anyway).</html>");
+			same.addActionListener(e -> onChange.accept(plan.withReplantSame(same.isSelected())));
+			add(left(same));
+		}
 		if (regrows && plan.getTreeRoutine() == TreeRoutine.LEAVE_STANDING)
 		{
 			if (seeds.size() > 1)

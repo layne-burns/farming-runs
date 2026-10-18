@@ -25,7 +25,7 @@ public class KindPlan
 {
 	/** Auto: the best seeds you can spare. */
 	public static final KindPlan AUTO = new KindPlan(true, List.of(), false, TreeRoutine.PAY_TO_REMOVE, false,
-		FillOrder.SHARES, null, false, Set.of(), false);
+		FillOrder.SHARES, null, false, Set.of(), false, false);
 
 	/** True: pick the best seeds you can spare. False: use {@link #crops}. */
 	boolean auto;
@@ -59,6 +59,11 @@ public class KindPlan
 	 * patches left over without protection. Off by default (and in older saves).
 	 */
 	boolean payableOnly;
+	/**
+	 * Fruit trees, cacti, bushes and other trees: pick the grown crop, clear it and plant the same seed that was
+	 * growing (when you have one to spare; otherwise the usual choice). Off by default (and in older saves).
+	 */
+	boolean replantSame;
 
 	/**
 	 * True when a patch of this kind growing {@code standing} (null if unknown) is picked and left, not replanted: on a
