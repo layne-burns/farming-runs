@@ -20,6 +20,7 @@ import com.layneburns.farmingruns.state.PatchStatus;
 import com.layneburns.farmingruns.state.PlayerInfo;
 import com.layneburns.farmingruns.state.UnlockService;
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,14 +105,16 @@ public class RunPlanService
 		return data.patches().stream().filter(p -> p.getKind() == kind && unlocks.isUsable(p)).collect(Collectors.toList());
 	}
 
-	/** Seeds and saplings you hold, by item id, from the places seeds are counted. */
+	/** Seeds, saplings and payment produce you hold, by item id, from the places seeds are counted. */
 	public Map<Integer, Integer> held()
 	{
 		ItemLedger ledger = items.ledger();
 		Map<Integer, Integer> held = new HashMap<>();
 		for (Seed seed : data.seeds())
 		{
-			for (int id : new int[]{seed.getItemId(), seed.plantItemId()})
+			List<Integer> ids = new ArrayList<>(List.of(seed.getItemId(), seed.plantItemId()));
+			seed.getPayment().forEach(p -> ids.add(p.getItemId()));
+			for (int id : ids)
 			{
 				int count = SEED_SOURCES.stream().mapToInt(s -> ledger.count(id, s)).sum();
 				if (count > 0)

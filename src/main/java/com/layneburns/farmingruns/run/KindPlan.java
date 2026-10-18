@@ -25,7 +25,7 @@ public class KindPlan
 {
 	/** Auto: the best seeds you can spare. */
 	public static final KindPlan AUTO = new KindPlan(true, List.of(), false, TreeRoutine.PAY_TO_REMOVE, false,
-		FillOrder.SHARES, null, false, Set.of());
+		FillOrder.SHARES, null, false, Set.of(), false);
 
 	/** True: pick the best seeds you can spare. False: use {@link #crops}. */
 	boolean auto;
@@ -54,6 +54,11 @@ public class KindPlan
 	 * gardener. Empty: every tree is left standing.
 	 */
 	Set<Integer> replaceStanding;
+	/**
+	 * When paying: plant only as many protectable crops as your payment produce covers (best first), and plant any
+	 * patches left over without protection. Off by default (and in older saves).
+	 */
+	boolean payableOnly;
 
 	/**
 	 * True when a patch of this kind growing {@code standing} (null if unknown) is picked and left, not replanted: on a

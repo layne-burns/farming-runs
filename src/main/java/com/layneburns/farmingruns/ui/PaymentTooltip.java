@@ -34,10 +34,16 @@ final class PaymentTooltip
 		Map<Seed, Integer> patches = new LinkedHashMap<>();
 		int noGardener = 0;
 		int free = 0;
+		int unprotected = 0;
 		for (PlantingPlan.Assignment a : planned)
 		{
 			if (a.getSeed() == null || !a.getSeed().canBeProtected())
 			{
+				continue;
+			}
+			if (a.isUnprotected())
+			{
+				unprotected++;
 				continue;
 			}
 			if (diseaseFree.test(a.getPatch()))
@@ -76,6 +82,11 @@ final class PaymentTooltip
 		{
 			html.append("<br>").append(free).append(free == 1 ? " patch is" : " patches are")
 				.append(" disease-free for you, so no payment is needed.");
+		}
+		if (unprotected > 0)
+		{
+			html.append("<br>").append(unprotected).append(unprotected == 1 ? " patch is" : " patches are")
+				.append(" planted without protection (not enough payment).");
 		}
 		if (noGardener > 0)
 		{

@@ -71,7 +71,8 @@ public final class SetupJson
 						plan.getTreeRoutine() == null ? TreeRoutine.PAY_TO_REMOVE : plan.getTreeRoutine(),
 						plan.isSkipHarvest(), plan.getFillOrder() == null ? FillOrder.SHARES : plan.getFillOrder(),
 						plan.getAmuletOfBounty(), plan.isGrowSaplings(),
-						plan.getReplaceStanding() == null ? Set.of() : Set.copyOf(plan.getReplaceStanding())));
+						plan.getReplaceStanding() == null ? Set.of() : Set.copyOf(plan.getReplaceStanding()),
+						plan.isPayableOnly()));
 				}
 			});
 		}

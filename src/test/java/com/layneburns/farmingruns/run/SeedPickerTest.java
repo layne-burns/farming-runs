@@ -151,6 +151,28 @@ public class SeedPickerTest
 	}
 
 	@Test
+	public void onlyWhatYouCanPayForIsProtectedAndTheRestIsPlantedUnprotected()
+	{
+		List<Patch> allotments = List.of(data.patch("catherby.allotment_north"), data.patch("catherby.allotment_south"));
+		Seed watermelon = data.seedByItem(5321);
+		int payment = watermelon.getPayment().get(0).getItemId();
+		int perPatch = watermelon.getPayment().get(0).getAmount();
+		// Seeds for both patches, payment for one.
+		Map<Integer, Integer> held = Map.of(5321, 100, payment, perPatch);
+		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.ALLOTMENT)).withKindPlan(PatchImplementation.ALLOTMENT,
+			KindPlan.AUTO.withPay(true).withPayableOnly(true));
+		PlantingPlan plan = SeedPicker.plan(setup, allotments, held, BUFFERS, 99, data, null);
+		assertEquals(2, plan.plantedCount());
+		assertEquals(1, plan.getAssignments().stream().filter(PlantingPlan.Assignment::isUnprotected).count());
+		assertTrue(plan.getWarnings().stream().anyMatch(w -> w.contains("planted unprotected")));
+
+		// Off: both are planted to be protected, whatever the payment.
+		PlantingPlan usual = SeedPicker.plan(setup.withKindPlan(PatchImplementation.ALLOTMENT,
+			KindPlan.AUTO.withPay(true)), allotments, held, BUFFERS, 99, data, null);
+		assertEquals(0, usual.getAssignments().stream().filter(PlantingPlan.Assignment::isUnprotected).count());
+	}
+
+	@Test
 	public void theContractGetsItsPatchEvenFromTheBuffer()
 	{
 		Patch guildHerb = data.patch("farming_guild.herb");

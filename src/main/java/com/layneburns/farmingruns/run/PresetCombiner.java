@@ -72,6 +72,7 @@ public final class PresetCombiner
 		Boolean amulet = null;
 		boolean grow = false;
 		Set<Integer> replace = new HashSet<>();
+		boolean payableOnly = false;
 		for (RunSetup preset : presets)
 		{
 			KindPlan plan = preset.kindPlan(kind);
@@ -79,6 +80,7 @@ public final class PresetCombiner
 			skipHarvest &= plan.isSkipHarvest();
 			grow |= plan.isGrowSaplings();
 			replace.addAll(plan.getReplaceStanding());
+			payableOnly |= plan.isPayableOnly();
 			if (routine == null && preset.getKinds().containsKey(kind))
 			{
 				routine = plan.getTreeRoutine();
@@ -94,7 +96,7 @@ public final class PresetCombiner
 		order = order == null ? FillOrder.SHARES : order;
 		if (chosen.isEmpty())
 		{
-			return new KindPlan(true, List.of(), pay, routine, skipHarvest, order, amulet, grow, Set.copyOf(replace));
+			return new KindPlan(true, List.of(), pay, routine, skipHarvest, order, amulet, grow, Set.copyOf(replace), payableOnly);
 		}
 		// Scale each preset's weights so every preset's total is the same (PRESET_TOTAL), keeping its own split.
 		List<CropShare> crops = new ArrayList<>();
@@ -107,7 +109,7 @@ public final class PresetCombiner
 				crops.add(new CropShare(crop.getSeedItemId(), weight, crop.getPatches()));
 			}
 		}
-		return new KindPlan(false, List.copyOf(crops), pay, routine, skipHarvest, order, amulet, grow, Set.copyOf(replace));
+		return new KindPlan(false, List.copyOf(crops), pay, routine, skipHarvest, order, amulet, grow, Set.copyOf(replace), payableOnly);
 	}
 
 	private static long totalWeight(KindPlan plan)

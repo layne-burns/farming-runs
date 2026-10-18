@@ -6,6 +6,7 @@
  */
 package com.layneburns.farmingruns.run;
 
+import com.layneburns.farmingruns.data.ItemAmount;
 import com.layneburns.farmingruns.data.Seed;
 import com.layneburns.farmingruns.state.BufferSettings;
 import java.util.HashMap;
@@ -16,7 +17,8 @@ import java.util.Map;
  * The seeds and saplings {@link SeedPicker} still has to plan with, as it hands them out. For trees it normally
  * counts only grown saplings; with "grow saplings" on it counts tree seeds too, and remembers how many saplings would
  * have to be grown from seed. The buffer applies to saplings and seeds separately: with a sapling buffer of 2, two of
- * each are kept back.
+ * each are kept back. With "only plant what I can pay for", the payment produce held (also in the map) limits
+ * protectable seeds, and each one planted uses a payment.
  */
 final class Stock
 {
@@ -25,6 +27,8 @@ final class Stock
 	/** Saplings to grow from seed before the run, by seed. */
 	private final Map<Seed, Integer> toGrow = new LinkedHashMap<>();
 	private boolean growSaplings;
+	/** For the kind being planned: protectable seeds are limited by the payment produce left. */
+	private boolean paymentLimited;
 
 	Stock(Map<Integer, Integer> held, BufferSettings buffers)
 	{
@@ -38,12 +42,33 @@ final class Stock
 		this.growSaplings = growSaplings;
 	}
 
-	/** Patches this seed can still fill from what's spare (held beyond the buffer, less what's already used). */
+	/** Whether protectable seeds are limited by the payment produce left, for the kind being planned now. */
+	void setPaymentLimited(boolean paymentLimited)
+	{
+		this.paymentLimited = paymentLimited;
+	}
+
+	/**
+	 * Patches this seed can still fill from what's spare (held beyond the buffer, less what's already used), and when
+	 * payment-limited, no more than the payments left cover.
+	 */
 	int capacity(Seed seed)
 	{
 		int buffer = buffers.bufferFor(seed);
 		int spare = Math.max(0, saplings(seed) - buffer) + Math.max(0, seeds(seed) - buffer);
-		return spare / seed.getPerPatch();
+		int patches = spare / seed.getPerPatch();
+		return paymentLimited && seed.canBeProtected() ? Math.min(patches, payable(seed)) : patches;
+	}
+
+	/** How many patches of this seed the payment produce left can protect. */
+	private int payable(Seed seed)
+	{
+		int patches = Integer.MAX_VALUE;
+		for (ItemAmount pay : seed.getPayment())
+		{
+			patches = Math.min(patches, left.getOrDefault(pay.getItemId(), 0) / pay.getAmount());
+		}
+		return patches;
 	}
 
 	/**
@@ -68,6 +93,11 @@ final class Stock
 		{
 			use(seed.getItemId(), fromSeeds);
 			toGrow.merge(seed, fromSeeds, Integer::sum);
+		}
+		if (paymentLimited && seed.canBeProtected())
+		{
+			// One patch's payment, so another crop paid with the same produce can't count it too.
+			seed.getPayment().forEach(pay -> use(pay.getItemId(), pay.getAmount()));
 		}
 		return true;
 	}

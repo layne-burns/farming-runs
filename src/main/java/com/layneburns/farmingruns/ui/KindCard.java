@@ -193,6 +193,14 @@ class KindCard extends JPanel
 			pay.setToolTipText(payTooltip);
 			pay.addActionListener(e -> onChange.accept(plan.withPay(pay.isSelected())));
 			add(left(pay));
+			if (plan.isPay())
+			{
+				JCheckBox payable = check("Only plant what I can pay for", plan.isPayableOnly());
+				payable.setToolTipText("Plant protectable crops only as far as your payment produce goes (best first);"
+					+ " any patches left are planted without protection.");
+				payable.addActionListener(e -> onChange.accept(plan.withPayableOnly(payable.isSelected())));
+				add(left(payable));
+			}
 		}
 		if (amulet != null)
 		{

@@ -34,15 +34,24 @@ public class PlantingPlan
 		/** The tree left standing, if known. */
 		@Nullable
 		Seed standing;
+		/** Planted without protection: there wasn't enough payment ("only plant what I can pay for"). */
+		boolean unprotected;
 
 		public Assignment(Patch patch, @Nullable Seed seed, boolean contract, boolean keptStanding,
-			@Nullable Seed standing)
+			@Nullable Seed standing, boolean unprotected)
 		{
 			this.patch = patch;
 			this.seed = seed;
 			this.contract = contract;
 			this.keptStanding = keptStanding;
 			this.standing = standing;
+			this.unprotected = unprotected;
+		}
+
+		public Assignment(Patch patch, @Nullable Seed seed, boolean contract, boolean keptStanding,
+			@Nullable Seed standing)
+		{
+			this(patch, seed, contract, keptStanding, standing, false);
 		}
 
 		public Assignment(Patch patch, @Nullable Seed seed, boolean contract)

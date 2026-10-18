@@ -24,7 +24,7 @@ public final class Protection
 
 	public static boolean shouldPay(PlantingPlan.Assignment a, RunSetup setup, GameData data, PlayerFacts facts)
 	{
-		return a.getSeed() != null && a.getSeed().canBeProtected() && a.getPatch().hasGardener()
+		return a.getSeed() != null && !a.isUnprotected() && a.getSeed().canBeProtected() && a.getPatch().hasGardener()
 			&& setup.kindPlan(a.getPatch().getKind()).isPay() && !isDiseaseFree(a.getPatch(), data, facts);
 	}
 

@@ -26,6 +26,8 @@ import lombok.Value;
  * <ul>
  * <li>A farming contract's seed goes in its Farming Guild patch first; the buffer doesn't apply to it.</li>
  * <li>On a harvest run, trees are picked and left standing, except types you chose to replace.</li>
+ * <li>"Only plant what I can pay for": protectable seeds count only as far as the payment produce held covers; any
+ * patches left are planted without protection.</li>
  * <li>Auto: the highest-level seeds you can plant and spare, mixing in the next best when one runs short.</li>
  * <li>Chosen crops: patches shared by {@link ShareSplitter} (exact counts, then by weight); patches a crop can't
  * fill (not enough spare) are filled the auto way, with a warning.</li>
@@ -80,6 +82,8 @@ public final class SeedPicker
 			List<Patch> open = new ArrayList<>(entry.getValue());
 			KindPlan plan = setup.kindPlan(entry.getKey());
 			stock.setGrowSaplings(plan.isGrowSaplings());
+			boolean payableOnly = plan.isPay() && plan.isPayableOnly();
+			stock.setPaymentLimited(payableOnly);
 			if (contract != null)
 			{
 				open.removeIf(p ->
@@ -125,7 +129,7 @@ public final class SeedPicker
 					.filter(s -> s != null && (farmingLevel < 0 || s.getLevel() <= farmingLevel))
 					.sorted(Comparator.comparingDouble(FillOrder::xpScore).reversed())
 					.collect(Collectors.toList());
-				fillAuto(open, chosen, stock, assignments);
+				fillAuto(open, chosen, stock, assignments, false);
 				if (!open.isEmpty())
 				{
 					warnings.add("Not enough of your chosen seeds for " + open.size() + " patch"
@@ -136,7 +140,24 @@ public final class SeedPicker
 			{
 				open = fillChosen(plan, open, data, farmingLevel, stock, assignments, warnings);
 			}
-			fillAuto(open, candidates, stock, assignments);
+			fillAuto(open, candidates, stock, assignments, false);
+			if (payableOnly && !open.isEmpty())
+			{
+				// Nothing left you can pay for: plant the rest without protection, your chosen crops first.
+				stock.setPaymentLimited(false);
+				int before = open.size();
+				List<Seed> order = new ArrayList<>();
+				plan.getCrops().stream().map(c -> data.seedByItem(c.getSeedItemId()))
+					.filter(s -> s != null && (farmingLevel < 0 || s.getLevel() <= farmingLevel)).forEach(order::add);
+				candidates.stream().filter(s -> !order.contains(s)).forEach(order::add);
+				fillAuto(open, order, stock, assignments, true);
+				int unprotected = before - open.size();
+				if (unprotected > 0)
+				{
+					warnings.add(unprotected + " " + kindName(entry.getKey()) + " patch" + (unprotected == 1 ? "" : "es")
+						+ " planted unprotected (not enough payment)");
+				}
+			}
 			// Whatever is still open has no seed you can spare.
 			if (!open.isEmpty())
 			{
@@ -196,7 +217,7 @@ public final class SeedPicker
 
 	/** Fills open patches with the best seeds you can spare, highest level first; filled ones leave {@code open}. */
 	private static void fillAuto(List<Patch> open, List<Seed> candidates, Stock stock,
-		List<PlantingPlan.Assignment> assignments)
+		List<PlantingPlan.Assignment> assignments, boolean unprotected)
 	{
 		int next = 0;
 		for (Seed seed : candidates)
@@ -205,7 +226,7 @@ public final class SeedPicker
 			for (int n = 0; n < capacity && next < open.size(); n++)
 			{
 				stock.take(seed, seed.getPerPatch());
-				assignments.add(new PlantingPlan.Assignment(open.get(next++), seed, false));
+				assignments.add(new PlantingPlan.Assignment(open.get(next++), seed, false, false, null, unprotected));
 			}
 		}
 		open.subList(0, next).clear();
