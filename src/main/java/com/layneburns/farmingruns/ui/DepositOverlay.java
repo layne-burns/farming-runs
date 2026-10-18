@@ -21,8 +21,9 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.overlay.WidgetItemOverlay;
 
 /**
- * While the bank is open, outlines in red the items in your inventory that the run doesn't use, so they're easy to
- * deposit. Only at the bank: elsewhere you can carry what you like without it lighting up.
+ * While the bank or the seed vault is open, outlines in red the items in your inventory that the run (or sapling
+ * making) doesn't use, so they're easy to deposit. Only there: elsewhere you can carry what you like without it
+ * lighting up.
  */
 @Singleton
 public class DepositOverlay extends WidgetItemOverlay
@@ -40,6 +41,8 @@ public class DepositOverlay extends WidgetItemOverlay
 		this.checks = checks;
 		this.itemManager = itemManager;
 		showOnInventory();
+		// The seed vault's own copy of your inventory.
+		showOnInterfaces(InterfaceID.SEED_VAULT_DEPOSIT);
 	}
 
 	@Override
@@ -47,7 +50,8 @@ public class DepositOverlay extends WidgetItemOverlay
 	{
 		Set<Integer> needed = checks.neededItems();
 		// Nothing set up: no way to tell what's spare, so mark nothing.
-		if (needed.isEmpty() || !isBankOpen() || needed.contains(itemManager.canonicalize(itemId)))
+		if (needed.isEmpty() || !(isOpen(InterfaceID.Bankmain.UNIVERSE) || isOpen(InterfaceID.SeedVault.UNIVERSE))
+			|| needed.contains(itemManager.canonicalize(itemId)))
 		{
 			return;
 		}
@@ -56,9 +60,9 @@ public class DepositOverlay extends WidgetItemOverlay
 			(int) bounds.getY(), null);
 	}
 
-	private boolean isBankOpen()
+	private boolean isOpen(int componentId)
 	{
-		Widget bank = client.getWidget(InterfaceID.Bankmain.UNIVERSE);
-		return bank != null && !bank.isHidden();
+		Widget widget = client.getWidget(componentId);
+		return widget != null && !widget.isHidden();
 	}
 }
