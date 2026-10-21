@@ -12,6 +12,7 @@ import static org.junit.Assert.assertTrue;
 import com.google.gson.Gson;
 import com.layneburns.farmingruns.data.DataLoader;
 import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.data.Seed;
 import com.layneburns.farmingruns.state.BufferSettings;
 import com.layneburns.farmingruns.state.ItemLedger;
 import com.layneburns.farmingruns.state.ItemSource;
@@ -60,6 +61,20 @@ public class BankViewBuilderTest
 			.with(ItemSource.BANK, new StorageSnapshot(Map.of(ItemID.POTATO_SEED, 5), NOW));
 		assertEquals("0 spare",
 			row(build(ledger).getSections(), "Allotments & hops", "Allotment", "Potato seed").getDetail());
+	}
+
+	@Test
+	public void kindsWithNoBufferShowNoSpareLine()
+	{
+		// The real buffers: hops are never asked for in a contract, so none are kept back.
+		Seed hops = data.seedsFor(PatchImplementation.HOPS).get(0);
+		ItemLedger ledger = ItemLedger.EMPTY.with(ItemSource.BANK,
+			new StorageSnapshot(Map.of(hops.getItemId(), 20, ItemID.POTATO_SEED, 20), NOW));
+		BankView view = BankViewBuilder.build(data, ledger, new BufferSettings(9, 2, 3, data.contractKinds()),
+			data.patchCountsByKind(), 0, NOW);
+		assertEquals(null, row(view.getSections(), "Allotments & hops", BankViewBuilder.kindName(PatchImplementation.HOPS),
+			hops.getName()).getDetail());
+		assertEquals("11 spare", row(view.getSections(), "Allotments & hops", "Allotment", "Potato seed").getDetail());
 	}
 
 	@Test

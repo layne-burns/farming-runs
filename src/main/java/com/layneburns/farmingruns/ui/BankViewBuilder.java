@@ -126,7 +126,7 @@ public final class BankViewBuilder
 			return null;
 		}
 		int spare = buffers.spare(seed, seeds);
-		return new BankView.Row(seed.getItemId(), seed.getName(), String.valueOf(seeds), spare + " spare", null,
+		return new BankView.Row(seed.getItemId(), seed.getName(), String.valueOf(seeds), spareLine(seed, spare, buffers), null,
 			BankTooltips.plantable(seed, where(ledger, seed.getItemId(), SEED_SOURCES)),
 			plantable(seed, spare, patches, ledger));
 	}
@@ -141,8 +141,15 @@ public final class BankViewBuilder
 		}
 		int spare = buffers.spare(seed, saplings);
 		return new BankView.Row(seed.getSaplingItemId(), seed.getSaplingName(), String.valueOf(saplings),
-			spare + " spare", null, BankTooltips.plantable(seed, where(ledger, seed.getSaplingItemId(), SEED_SOURCES)),
+			spareLine(seed, spare, buffers), null,
+			BankTooltips.plantable(seed, where(ledger, seed.getSaplingItemId(), SEED_SOURCES)),
 			plantable(seed, spare, patches, ledger));
+	}
+
+	/** "11 spare" under the total; none when nothing is kept back, since then it's the total again. */
+	private static String spareLine(Seed seed, int spare, BufferSettings buffers)
+	{
+		return buffers.bufferFor(seed) > 0 ? spare + " spare" : null;
 	}
 
 	/** The facts the filters need: patches the spare seeds fill, and patches the payment you hold protects. */

@@ -44,7 +44,8 @@ import javax.swing.SpinnerNumberModel;
 import net.runelite.client.ui.FontManager;
 
 /**
- * One patch kind in the Run tab (e.g. Herb, 9 patches): Auto (the best seeds you can spare) or your chosen crops,
+ * One patch kind in the Run tab (e.g. Herb, 9 patches): Auto (the best seeds you can spare, or for kinds with no
+ * buffer, the best you have) or your chosen crops,
  * each with a share or an exact number of patches; whether to pay the gardener; for trees, what to do with the grown
  * tree. Shows what will actually be planted. Every change is passed to {@code onChange} as a new {@link KindPlan}.
  */
@@ -71,12 +72,15 @@ class KindCard extends JPanel
 	 * @param onLeaveOut leaves this kind out of the run (the × by its heading)
 	 * @param runCompost the run's compost, which this kind uses unless it has its own; null when the kind can't take
 	 *                   compost (coral), so there's no compost choice
+	 * @param buffered   this kind's seeds have some kept back (kinds a farming contract can ask for); without a buffer
+	 *                   every seed you have counts, so the card doesn't talk of what you can spare
 	 */
 	KindCard(String title, KindPlan plan, List<Seed> seeds, List<PlantingPlan.Assignment> planned, int patches,
 		@Nullable String payTooltip, boolean isTree, boolean harvests, boolean regrows, List<String> notes, @Nullable Boolean amulet,
 		Map<String, Boolean> collapsed, Function<Seed, String> seedInfo, Consumer<KindPlan> onChange,
-		Runnable onLeaveOut, @Nullable CompostChoice runCompost)
+		Runnable onLeaveOut, @Nullable CompostChoice runCompost, boolean buffered)
 	{
+		String usable = buffered ? "you can spare" : "you have";
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(Palette.SURFACE);
 		setBorder(BorderFactory.createCompoundBorder(
@@ -125,7 +129,7 @@ class KindCard extends JPanel
 		{
 			JCheckBox same = check("Replant the same crop", plan.isReplantSame());
 			same.setToolTipText("<html>Pick the grown crop, clear it and plant the seed that was growing there again"
-				+ "<br>(when you have one to spare; otherwise the seed choice below). With \"only plant what I can"
+				+ "<br>(when you have one" + (buffered ? " to spare" : "") + "; otherwise the seed choice below). With \"only plant what I can"
 				+ "<br>pay for\", one you can't pay for is just picked and left standing. Clearing it before it's"
 				+ "<br>picked is blocked (shift-click to do it anyway).</html>");
 			same.addActionListener(e -> onChange.accept(plan.withReplantSame(same.isSelected())));
@@ -152,7 +156,7 @@ class KindCard extends JPanel
 			add(left(compostChoice(plan, runCompost, onChange)));
 		}
 
-		JCheckBox auto = check("Auto: best seeds you can spare", plan.isAuto());
+		JCheckBox auto = check("Auto: best seeds " + usable, plan.isAuto());
 		auto.setToolTipText("Untick to choose the seeds yourself");
 		auto.addActionListener(e ->
 		{
@@ -176,7 +180,7 @@ class KindCard extends JPanel
 			order.setSelectedItem(plan.getFillOrder());
 			order.setFocusable(false);
 			order.setToolTipText("By share: patches split by the numbers below. Most XP first: the highest-XP seed"
-				+ " fills patches first, as far as your spare goes, then the next.");
+				+ " fills patches first, as far as your " + (buffered ? "spare goes" : "seeds go") + ", then the next.");
 			order.addActionListener(e -> onChange.accept(plan.withFillOrder((FillOrder) order.getSelectedItem())));
 			add(left(order));
 			boolean byShare = plan.getFillOrder() != FillOrder.MOST_XP;
@@ -198,7 +202,7 @@ class KindCard extends JPanel
 		}
 
 		JLabel preview = TabPanel.text(preview(planned));
-		preview.setToolTipText("What will be planted, given the seeds you can spare");
+		preview.setToolTipText("What will be planted, given the seeds " + usable);
 		add(left(preview));
 		for (String note : notes)
 		{

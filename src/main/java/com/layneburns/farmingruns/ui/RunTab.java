@@ -235,7 +235,7 @@ public class RunTab extends TabPanel
 				kind == PatchImplementation.ALLOTMENT ? BountyAmulet.wanted(setup.kindPlan(kind), planned, data) : null,
 				collapsed, seedInfo, kp -> update(s -> s.withKindPlan(kind, kp)),
 				() -> update(s -> s.withLeftOut(kind, true)),
-				CompostPlan.takesCompost(kind) ? setup.getCompost() : null));
+				CompostPlan.takesCompost(kind) ? setup.getCompost() : null, data.contractKinds().contains(kind)));
 		}
 
 		SectionPanel compost = section("Compost");
