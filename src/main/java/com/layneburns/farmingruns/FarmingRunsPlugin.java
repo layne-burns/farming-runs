@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.inject.Provides;
 import com.layneburns.farmingruns.data.DataLoader;
 import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.state.CompostPrefs;
 import com.layneburns.farmingruns.state.ContainerWatcher;
 import com.layneburns.farmingruns.state.ContractService;
 import com.layneburns.farmingruns.state.ItemStore;
@@ -203,6 +204,9 @@ public class FarmingRunsPlugin extends Plugin
 	@Inject
 	private PatchObjects patchObjects;
 
+	@Inject
+	private CompostPrefs compostPrefs;
+
 	private NavigationButton navigationButton;
 
 	@Override
@@ -230,6 +234,7 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.register(leprechaunWatcher);
 		eventBus.register(playerInfo);
 		eventBus.register(locationPrefs);
+		eventBus.register(compostPrefs);
 		eventBus.register(patchStates);
 		eventBus.register(contractService);
 		eventBus.register(setupStore);
@@ -254,6 +259,7 @@ public class FarmingRunsPlugin extends Plugin
 		bankRunTab.register();
 		itemStore.loadRemembered();
 		locationPrefs.load();
+		compostPrefs.load();
 		DebugLogging.apply(config.debugLogging());
 		setupStore.load();
 		statsStore.load();
@@ -304,6 +310,7 @@ public class FarmingRunsPlugin extends Plugin
 		eventBus.unregister(setupStore);
 		eventBus.unregister(contractService);
 		eventBus.unregister(patchStates);
+		eventBus.unregister(compostPrefs);
 		eventBus.unregister(locationPrefs);
 		eventBus.unregister(playerInfo);
 		eventBus.unregister(leprechaunWatcher);

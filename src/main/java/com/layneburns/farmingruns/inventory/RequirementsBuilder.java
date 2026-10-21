@@ -16,6 +16,7 @@ import com.layneburns.farmingruns.data.Spell;
 import com.layneburns.farmingruns.data.TeleportChoice;
 import com.layneburns.farmingruns.inventory.Requirement.Importance;
 import com.layneburns.farmingruns.run.BountyAmulet;
+import com.layneburns.farmingruns.run.CompostBinFill;
 import com.layneburns.farmingruns.run.CompostChoice;
 import com.layneburns.farmingruns.run.KindPlan;
 import com.layneburns.farmingruns.run.PlantingPlan;
@@ -157,14 +158,17 @@ public final class RequirementsBuilder
 	 * to pot them and a watering can to grow them.
 	 */
 	/**
-	 * The compost bins at a run's stops: pineapples to fill them (for supercompost) and an empty bucket per item to
-	 * collect, unless it goes into the bottomless bucket.
+	 * The compost bins at a run's stops: the produce chosen to fill them ({@link CompostBinFill}), pineapples for any
+	 * shortfall (they're the ones you can buy), and an empty bucket per item to collect, unless it goes into the
+	 * bottomless bucket.
 	 */
-	public static List<Requirement> compostBinKit(int pineapples, int buckets, ItemCatalog items)
+	public static List<Requirement> compostBinKit(CompostBinFill.Fill fill, int buckets, ItemCatalog items)
 	{
 		RequirementList list = new RequirementList();
-		list.add("Pineapple", items.group("pineapple"), pineapples, Importance.NEED, false,
-			"filling the big compost bin", true);
+		String use = "filling the big compost bin";
+		fill.getTake().forEach((item, count) -> list.add(item.getName(), Set.of(item.getItemId()), count,
+			Importance.NEED, false, use, true));
+		list.add("Pineapple", items.group("pineapple"), fill.getShortBy(), Importance.NEED, false, use, true);
 		list.add("Bucket", items.group("bucket"), buckets, Importance.NEED, true, "collecting the compost", false);
 		return list.toList();
 	}

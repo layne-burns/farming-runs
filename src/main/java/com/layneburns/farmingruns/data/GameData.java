@@ -26,6 +26,12 @@ import lombok.Getter;
  */
 public final class GameData
 {
+	/** The Farming Guild's locations: the guild and Hespori's cave below it. */
+	private static final List<String> GUILD = List.of("farming_guild", "farming_guild_hespori");
+	/** Guild patches no farming contract asks for. */
+	private static final Set<PatchImplementation> NOT_CONTRACTS = Set.of(PatchImplementation.SPIRIT_TREE,
+		PatchImplementation.ANIMA, PatchImplementation.HESPORI, PatchImplementation.BIG_COMPOST);
+
 	private final Map<String, Location> locations;
 	private final Map<String, Patch> patches;
 	private final List<Seed> seeds;
@@ -42,9 +48,12 @@ public final class GameData
 	private final String runeliteTag;
 	private final Set<Integer> trackedItemIds;
 	private final List<GoalPreset> goals;
+	private final List<Compostable> compostables;
+	private final Set<PatchImplementation> contractKinds;
 
 	GameData(Map<String, Location> locations, List<Seed> seeds, Map<String, Teleport> teleports,
-		Map<String, UnlockRule> rules, CostTable costs, ItemCatalog items, String runeliteTag, List<GoalPreset> goals)
+		Map<String, UnlockRule> rules, CostTable costs, ItemCatalog items, String runeliteTag, List<GoalPreset> goals,
+		List<Compostable> compostables)
 	{
 		this.locations = locations;
 		this.patches = locations.values().stream()
@@ -66,8 +75,26 @@ public final class GameData
 		this.costs = costs;
 		this.items = items;
 		this.runeliteTag = runeliteTag;
-		this.trackedItemIds = collectTracked(this.seeds, teleports, items);
+		this.contractKinds = GUILD.stream().flatMap(id -> location(id).getPatches().stream()).map(Patch::getKind)
+			.filter(kind -> !NOT_CONTRACTS.contains(kind)).collect(Collectors.toUnmodifiableSet());
+		this.compostables = List.copyOf(compostables);
+		this.trackedItemIds = collectTracked(this.seeds, teleports, items, this.compostables);
 		this.goals = goals;
+	}
+
+	/**
+	 * Kinds a farming contract can ask for: the Farming Guild's patches, except its spirit tree, anima and Hespori
+	 * patches (and the compost bin). Only these keep a seed buffer.
+	 */
+	public Set<PatchImplementation> contractKinds()
+	{
+		return contractKinds;
+	}
+
+	/** Produce that can fill the compost bin, in the data file's order (SPEC §2.7). */
+	public List<Compostable> compostables()
+	{
+		return compostables;
 	}
 
 	public Collection<Location> locations()
@@ -217,15 +244,16 @@ public final class GameData
 
 	/**
 	 * Every item a farming run cares about: seeds, saplings, payments, tools, compost, outfit, teleport items and
-	 * runes, plus the produce and part-filled baskets and sacks for payment making. Only these are recorded from the
-	 * bank and other containers.
+	 * runes, plus the produce and part-filled baskets and sacks for payment making, and the compost bin's produce.
+	 * Only these are recorded from the bank and other containers.
 	 */
 	public Set<Integer> trackedItemIds()
 	{
 		return trackedItemIds;
 	}
 
-	private static Set<Integer> collectTracked(List<Seed> seeds, Map<String, Teleport> teleports, ItemCatalog items)
+	private static Set<Integer> collectTracked(List<Seed> seeds, Map<String, Teleport> teleports, ItemCatalog items,
+		List<Compostable> compostables)
 	{
 		Set<Integer> ids = new HashSet<>();
 		for (Seed seed : seeds)
@@ -249,6 +277,7 @@ public final class GameData
 			ids.add(pack.getProduceId());
 			ids.addAll(pack.getFills());
 		}
+		compostables.forEach(c -> ids.add(c.getItemId()));
 		return Set.copyOf(ids);
 	}
 

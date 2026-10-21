@@ -9,6 +9,7 @@ package com.layneburns.farmingruns.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -76,6 +77,36 @@ abstract class TabPanel extends JPanel
 			}
 		});
 		return button;
+	}
+
+	/** Small clickable text that lights up on hover, e.g. the ▲ ▼ beside a ranked list's rows. */
+	static JLabel link(String text, Runnable onClick)
+	{
+		JLabel label = new JLabel(text);
+		label.setForeground(Palette.SECONDARY_TEXT);
+		label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		label.setAlignmentX(LEFT_ALIGNMENT);
+		label.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				onClick.run();
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				label.setForeground(Palette.ACCENT);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				label.setForeground(Palette.SECONDARY_TEXT);
+			}
+		});
+		return label;
 	}
 
 	/** Stretches a component (a drop-down) across the section's width, at its own height. */

@@ -13,9 +13,12 @@ import com.layneburns.farmingruns.data.GoalPreset;
 import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.data.RunType;
 import com.layneburns.farmingruns.data.Seed;
+import com.layneburns.farmingruns.inventory.CompostBinChooser;
 import com.layneburns.farmingruns.inventory.RunCheckService;
 import com.layneburns.farmingruns.run.BountyAmulet;
+import com.layneburns.farmingruns.run.CompostBinFill;
 import com.layneburns.farmingruns.run.CompostChoice;
+import com.layneburns.farmingruns.run.CompostPlan;
 import com.layneburns.farmingruns.run.PineappleErrand;
 import com.layneburns.farmingruns.run.GoalSetups;
 import com.layneburns.farmingruns.run.KindPlan;
@@ -29,6 +32,7 @@ import com.layneburns.farmingruns.run.RunProgress;
 import com.layneburns.farmingruns.run.RunSession;
 import com.layneburns.farmingruns.run.RunSetup;
 import com.layneburns.farmingruns.run.TreeRoutine;
+import com.layneburns.farmingruns.state.CompostPrefs;
 import com.layneburns.farmingruns.state.ContractService;
 import com.layneburns.farmingruns.state.ItemStore;
 import com.layneburns.farmingruns.state.PatchStates;
@@ -76,6 +80,9 @@ import net.runelite.client.game.ItemManager;
 @Singleton
 public class RunTab extends TabPanel
 {
+	/** The compost bin's ranking section, closed until you open it. */
+	private static final String BIN_RANKING = "Compost bin ranking";
+
 	private final GameData data;
 	private final SetupStore setups;
 	private final RunPlanService planner;
@@ -91,6 +98,8 @@ public class RunTab extends TabPanel
 	private final FarmingRunsConfig config;
 	private final ConfigManager configManager;
 	private final PineappleErrand pineapples;
+	private final CompostBinChooser binChooser;
+	private final CompostPrefs compostPrefs;
 
 	private final FitWidthPanel content = new FitWidthPanel();
 	/** Goals and presets ticked (see PresetsPanel's keys), in the order ticked: the first one's compost wins. */
@@ -98,15 +107,19 @@ public class RunTab extends TabPanel
 	/** The account the tab was last drawn for; a change clears {@link #ticked}. */
 	@Nullable
 	private String shownFor;
-	private final Map<String, Boolean> collapsed = new HashMap<>(Map.of("Patches to visit", true));
+	private final Map<String, Boolean> collapsed = new HashMap<>(Map.of("Patches to visit", true,
+		BIN_RANKING, true));
 	private final AtomicBoolean redrawQueued = new AtomicBoolean();
 
 	@Inject
 	RunTab(GameData data, SetupStore setups, RunPlanService planner, UnlockService unlocks, ItemStore items,
 		PlayerInfo player, ContractService contract, RunCheckService checks, RunSession session, PatchStates states,
 		ItemManager itemManager, BankRunTab bankRunTab, RunController controller, ShortestPathClient shortestPath,
-		FarmingRunsConfig config, ConfigManager configManager, PineappleErrand pineapples)
+		FarmingRunsConfig config, ConfigManager configManager, PineappleErrand pineapples, CompostBinChooser binChooser,
+		CompostPrefs compostPrefs)
 	{
+		this.binChooser = binChooser;
+		this.compostPrefs = compostPrefs;
 		this.pineapples = pineapples;
 		this.config = config;
 		this.configManager = configManager;
@@ -123,7 +136,8 @@ public class RunTab extends TabPanel
 		this.itemManager = itemManager;
 		this.bankRunTab = bankRunTab;
 		add(scrollPane(content), BorderLayout.CENTER);
-		// Redraw when the setup, your items, unlocks, level, contract, patch states or the run change.
+		// Redraw when the setup, your items, unlocks, level, contract, patch states, the run or the bin's choices change.
+		compostPrefs.addListener(this::refresh);
 		setups.addListener(this::refresh);
 		items.addListener(this::refresh);
 		unlocks.addListener(this::refresh);
@@ -220,7 +234,8 @@ public class RunTab extends TabPanel
 				TreeRoutine.hasHarvest(kind), TreeRoutine.regrows(kind), kindNotes(setup, plan, kind, planned),
 				kind == PatchImplementation.ALLOTMENT ? BountyAmulet.wanted(setup.kindPlan(kind), planned, data) : null,
 				collapsed, seedInfo, kp -> update(s -> s.withKindPlan(kind, kp)),
-				() -> update(s -> s.withLeftOut(kind, true)), setup.getCompost()));
+				() -> update(s -> s.withLeftOut(kind, true)),
+				CompostPlan.takesCompost(kind) ? setup.getCompost() : null));
 		}
 
 		SectionPanel compost = section("Compost");
@@ -229,7 +244,14 @@ public class RunTab extends TabPanel
 		compostBox.setFocusable(false);
 		compostBox.addActionListener(e -> update(s -> s.withCompost((CompostChoice) compostBox.getSelectedItem())));
 		compost.addRow(fill(compostBox));
+		CompostBinFill.Fill binRanking = binChooser.ranking();
+		compost.addRow(CompostBinEditor.defaultChoice(binRanking, compostPrefs));
 		content.add(compost);
+		SectionPanel bin = section(BIN_RANKING);
+		bin.addRow(text("Tops the bin up after the item above: shop-bought first, then the most spare. Produce that"
+			+ " pays for a crop at level 65+ is never used unless you set a keep."));
+		bin.addRow(CompostBinEditor.ranking(binRanking, compostPrefs));
+		content.add(bin);
 
 		if (!setup.getRunTypes().isEmpty())
 		{

@@ -53,6 +53,27 @@ final class RequirementList
 		return List.copyOf(merged.values());
 	}
 
+	/**
+	 * Both lists as one: a requirement in {@code more} for the same items as one in {@code base} is merged into it,
+	 * amounts added, since everything in {@code more} is used up (the compost bin's produce and buckets).
+	 */
+	static List<Requirement> combine(List<Requirement> base, List<Requirement> more)
+	{
+		Map<Key, Requirement> all = new LinkedHashMap<>();
+		base.forEach(r -> all.put(new Key(r.getItemIds(), r.getImportance()), r));
+		for (Requirement r : more)
+		{
+			all.merge(new Key(r.getItemIds(), r.getImportance()), r, (old, added) ->
+			{
+				List<String> uses = new ArrayList<>(old.getUses());
+				added.getUses().stream().filter(u -> !uses.contains(u)).forEach(uses::add);
+				return new Requirement(old.getLabel(), old.getItemIds(), old.getAmount() + added.getAmount(),
+					old.getImportance(), old.isStoredByLeprechaun() || added.isStoredByLeprechaun(), List.copyOf(uses));
+			});
+		}
+		return List.copyOf(all.values());
+	}
+
 	private static final class Key
 	{
 		private final Set<Integer> itemIds;

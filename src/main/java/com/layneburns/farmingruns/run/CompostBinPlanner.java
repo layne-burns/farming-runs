@@ -38,7 +38,6 @@ public class CompostBinPlanner
 	/** Each bin at these locations with something to do, and what. */
 	public Map<Patch, CompostBins.Work> work(Collection<String> locationIds)
 	{
-		long now = System.currentTimeMillis() / 1000;
 		Map<Patch, CompostBins.Work> work = new LinkedHashMap<>();
 		for (String id : locationIds)
 		{
@@ -48,10 +47,7 @@ public class CompostBinPlanner
 				{
 					continue;
 				}
-				PatchState state = states.lastSeen(bin);
-				boolean rotted = state != null && state.getCropState() == CropState.GROWING
-					&& states.status(bin, now).getReadiness() == PatchStatus.Readiness.READY;
-				CompostBins.Work need = CompostBins.work(state, bin.getKind(), rotted);
+				CompostBins.Work need = work(bin);
 				if (need.isNeeded())
 				{
 					work.put(bin, need);
@@ -59,5 +55,14 @@ public class CompostBinPlanner
 			}
 		}
 		return work;
+	}
+
+	/** What this bin needs now, from Time Tracking's last look. */
+	public CompostBins.Work work(Patch bin)
+	{
+		PatchState state = states.lastSeen(bin);
+		boolean rotted = state != null && state.getCropState() == CropState.GROWING
+			&& states.status(bin, System.currentTimeMillis() / 1000).getReadiness() == PatchStatus.Readiness.READY;
+		return CompostBins.work(state, bin.getKind(), rotted);
 	}
 }

@@ -242,6 +242,21 @@ public class DataIntegrityTest
 	}
 
 	@Test
+	public void compostBinProduceIsTrackedAndOnlyPineapplesAreBought()
+	{
+		assertEquals(9, data.compostables().size());
+		for (Compostable item : data.compostables())
+		{
+			assertTrue(item.getName(), data.trackedItemIds().contains(item.getItemId()));
+			assertEquals(item.getName(), item.getName().equals("Pineapple"), item.isShopBought());
+		}
+		// The ids from RuneLite's names match the payment ids from the wiki.
+		assertEquals(data.seeds().stream().filter(s -> s.getName().equals("Magic seed")).findFirst().orElseThrow()
+			.getPayment().get(0).getItemId(), data.compostables().stream().filter(c -> c.getName().equals("Coconut"))
+			.findFirst().orElseThrow().getItemId());
+	}
+
+	@Test
 	public void everyPackIsAPaymentAndItsProduceIsTracked()
 	{
 		Set<Integer> payments = new HashSet<>();

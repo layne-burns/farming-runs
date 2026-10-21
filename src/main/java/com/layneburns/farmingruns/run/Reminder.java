@@ -37,6 +37,17 @@ public final class Reminder
 	public static String next(RunProgress.Stop stop, RunProgress progress, CompostPlan plan, Set<String> composted,
 		Predicate<PlantingPlan.Assignment> pays, List<String> fromLeprechaun)
 	{
+		return next(stop, progress, plan, composted, pays, fromLeprechaun, "");
+	}
+
+	/**
+	 * @param binFill what to put in the stop's compost bin ({@link CompostBinFill.Fill#words()}), e.g. "30 ×
+	 *                Watermelon"; empty when unknown
+	 */
+	@Nullable
+	public static String next(RunProgress.Stop stop, RunProgress progress, CompostPlan plan, Set<String> composted,
+		Predicate<PlantingPlan.Assignment> pays, List<String> fromLeprechaun, String binFill)
+	{
 		if (!fromLeprechaun.isEmpty())
 		{
 			return "Take from the leprechaun: " + String.join(", ", fromLeprechaun);
@@ -55,7 +66,7 @@ public final class Reminder
 			{
 				return progress.hasHarvestFirst(id) && !progress.isHarvested(id)
 					? "Collect the compost from the " + kind + " bin"
-					: "Fill the " + kind + " bin with pineapples, then close it";
+					: "Fill the " + kind + " bin" + (binFill.isEmpty() ? "" : ": " + binFill) + ", then close it";
 			}
 			if (a.isKeptStanding())
 			{

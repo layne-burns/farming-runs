@@ -45,7 +45,7 @@ public final class DataLoader
 		CostTable costs = loadCosts(locations);
 		List<Seed> seeds = loadSeeds();
 		return new GameData(locations, seeds, teleports, rules, costs, loadItems(), generated.runeliteTag,
-			loadGoals(seeds));
+			loadGoals(seeds), loadCompostables());
 	}
 
 	// ------------------------------------------------------------------ locations and patches
@@ -264,6 +264,17 @@ public final class DataLoader
 		}
 		return new ItemCatalog(Map.copyOf(groups), raw.descriptions == null ? Map.of() : Map.copyOf(raw.descriptions),
 			Map.copyOf(raw.runes), Map.copyOf(spells), List.copyOf(packs));
+	}
+
+	private List<Compostable> loadCompostables()
+	{
+		List<Compostable> items = new ArrayList<>();
+		for (RawData.RawCompostable raw : read("compost_bin.json", RawData.CompostBin.class).items)
+		{
+			String where = "compost_bin.json " + raw.name;
+			items.add(new Compostable(raw.name, GameIds.item(raw.item, where), raw.shop));
+		}
+		return List.copyOf(items);
 	}
 
 	private Map<String, UnlockRule> loadRules()

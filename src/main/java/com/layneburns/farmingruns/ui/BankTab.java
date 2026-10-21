@@ -121,7 +121,7 @@ public class BankTab extends TabPanel
 	private void redraw()
 	{
 		redrawQueued.set(false);
-		BankView view = BankViewBuilder.build(data, store.ledger(), BufferSettings.from(config),
+		BankView view = BankViewBuilder.build(data, store.ledger(), BufferSettings.from(config, data),
 			unlocks.usablePatchCounts(), leprechaun.getBottomlessBucketUses(), System.currentTimeMillis());
 
 		seenLine.removeAll();

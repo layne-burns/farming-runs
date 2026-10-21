@@ -7,6 +7,7 @@
 package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.inventory.CompostBinChooser;
 import com.layneburns.farmingruns.run.GuidanceTracker;
 import com.layneburns.farmingruns.run.LeprechaunNeeds;
 import com.layneburns.farmingruns.run.PlantingPlan;
@@ -68,6 +69,7 @@ public class LiveTab extends TabPanel
 	private final LocationPrefs prefs;
 	private final DebugInfo debugInfo;
 	private final RunPersistence persistence;
+	private final CompostBinChooser binChooser;
 
 	private final FitWidthPanel content = new FitWidthPanel();
 	private final Map<String, Boolean> collapsed = new HashMap<>(Map.of("Done", true));
@@ -79,8 +81,9 @@ public class LiveTab extends TabPanel
 	@Inject
 	LiveTab(GameData data, RunSession session, RunController controller, RunTracker tracker, GuidanceTracker guidance,
 		ItemStore items, PlayerInfo player, StatsStore stats, TeleportSuggestions suggestions, LocationPrefs prefs,
-		DebugInfo debugInfo, RunPersistence persistence)
+		DebugInfo debugInfo, RunPersistence persistence, CompostBinChooser binChooser)
 	{
+		this.binChooser = binChooser;
 		this.persistence = persistence;
 		persistence.addListener(this::refresh);
 		this.data = data;
@@ -222,6 +225,12 @@ public class LiveTab extends TabPanel
 					public boolean pays(PlantingPlan.Assignment assignment)
 					{
 						return pays.test(assignment);
+					}
+
+					@Override
+					public String binFill(PlantingPlan.Assignment bin)
+					{
+						return binChooser.wordsFor(bin.getPatch());
 					}
 
 					@Override

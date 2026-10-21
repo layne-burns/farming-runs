@@ -7,11 +7,12 @@
 package com.layneburns.farmingruns.data;
 
 import java.lang.reflect.Field;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.NpcID;
 import net.runelite.api.gameval.VarbitID;
 
 /**
- * Turns RuneLite constant names used in the data files ("FARMING_TRANSMIT_A", "KRAGEN") into numbers. Names
+ * Turns RuneLite constant names used in the data files ("FARMING_TRANSMIT_A", "KRAGEN", "PINEAPPLE") into numbers. Names
  * keep the files readable; this fails loudly if RuneLite renames one.
  */
 final class GameIds
@@ -28,6 +29,11 @@ final class GameIds
 	static int npc(String name, String where)
 	{
 		return constant(NpcID.class, name, where);
+	}
+
+	static int item(String name, String where)
+	{
+		return constant(ItemID.class, name, where);
 	}
 
 	private static int constant(Class<?> holder, String name, String where)

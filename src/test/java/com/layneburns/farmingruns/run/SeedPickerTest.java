@@ -29,7 +29,8 @@ import org.junit.Test;
 
 public class SeedPickerTest
 {
-	private static final BufferSettings BUFFERS = new BufferSettings(9, 2, 3);
+	/** Kept back for every kind, so the tests don't depend on which kinds the Farming Guild has. */
+	private static final BufferSettings BUFFERS = new BufferSettings(9, 2, 3, Set.of(PatchImplementation.values()));
 	private static GameData data;
 	private static List<Patch> herbs;
 

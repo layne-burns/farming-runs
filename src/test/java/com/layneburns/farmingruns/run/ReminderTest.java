@@ -50,6 +50,20 @@ public class ReminderTest
 	}
 
 	@Test
+	public void theBinSaysWhatGoesIn()
+	{
+		GameData data = new DataLoader(new Gson()).load();
+		PlantingPlan.Assignment bin = new PlantingPlan.Assignment(data.patch("farming_guild.big_compost"), null, false);
+		RunProgress.Stop stop = new RunProgress.Stop("farming_guild", List.of(bin));
+		RunProgress progress = RunProgress.start(List.of(stop), Set.of(), Set.of(), Set.of());
+		assertEquals("Fill the big compost bin: 18 × Watermelon + 12 × Pineapple, then close it", Reminder.next(stop,
+			progress, CompostPlan.all(CompostChoice.SUPERCOMPOST), Set.of(), a -> false, List.of(),
+			"18 × Watermelon + 12 × Pineapple"));
+		assertEquals("Fill the big compost bin, then close it", Reminder.next(stop, progress,
+			CompostPlan.all(CompostChoice.SUPERCOMPOST), Set.of(), a -> false, List.of()));
+	}
+
+	@Test
 	public void onTheWaySaysWhereAndHow()
 	{
 		GameData data = new DataLoader(new Gson()).load();

@@ -16,8 +16,10 @@ import com.layneburns.farmingruns.state.BufferSettings;
 import com.layneburns.farmingruns.state.ItemLedger;
 import com.layneburns.farmingruns.state.ItemSource;
 import com.layneburns.farmingruns.state.StorageSnapshot;
+import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import net.runelite.api.gameval.ItemID;
 import org.junit.BeforeClass;
@@ -25,7 +27,8 @@ import org.junit.Test;
 
 public class BankViewBuilderTest
 {
-	private static final BufferSettings BUFFERS = new BufferSettings(9, 2, 3);
+	/** Kept back for every kind, so the tests don't depend on which kinds the Farming Guild has. */
+	private static final BufferSettings BUFFERS = new BufferSettings(9, 2, 3, Set.of(PatchImplementation.values()));
 	private static final long NOW = 10_000_000;
 	private static GameData data;
 

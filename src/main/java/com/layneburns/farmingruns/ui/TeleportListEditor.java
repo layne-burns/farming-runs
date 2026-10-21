@@ -7,7 +7,6 @@
 package com.layneburns.farmingruns.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
@@ -60,7 +59,7 @@ class TeleportListEditor extends JPanel
 				add(warning);
 			}
 		}
-		JLabel add = link(ADD_PROMPT, () ->
+		JLabel add = TabPanel.link(ADD_PROMPT, () ->
 		{
 		});
 		JPopupMenu menu = addMenu(entry.getAddMenu(), order, onChange);
@@ -76,7 +75,7 @@ class TeleportListEditor extends JPanel
 		add(add);
 		if (entry.isCustomTeleports())
 		{
-			JLabel reset = link("Reset to default", () -> onChange.accept(null));
+			JLabel reset = TabPanel.link("Reset to default", () -> onChange.accept(null));
 			reset.setBorder(BorderFactory.createEmptyBorder(3, 0, 0, 0));
 			add(reset);
 		}
@@ -100,15 +99,15 @@ class TeleportListEditor extends JPanel
 		controls.setOpaque(false);
 		if (index > 0)
 		{
-			controls.add(link("▲", () -> onChange.accept(moved(order, index, index - 1))));
+			controls.add(TabPanel.link("▲", () -> onChange.accept(moved(order, index, index - 1))));
 		}
 		if (index < order.size() - 1)
 		{
-			controls.add(link("▼", () -> onChange.accept(moved(order, index, index + 1))));
+			controls.add(TabPanel.link("▼", () -> onChange.accept(moved(order, index, index + 1))));
 		}
 		if (order.size() > 1)
 		{
-			controls.add(link("✕", () ->
+			controls.add(TabPanel.link("✕", () ->
 			{
 				List<String> without = new ArrayList<>(order);
 				without.remove(index);
@@ -181,35 +180,5 @@ class TeleportListEditor extends JPanel
 		List<String> copy = new ArrayList<>(order);
 		Collections.swap(copy, from, to);
 		return copy;
-	}
-
-	/** Small clickable text that lights up on hover. */
-	private static JLabel link(String text, Runnable onClick)
-	{
-		JLabel label = new JLabel(text);
-		label.setForeground(Palette.SECONDARY_TEXT);
-		label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		label.setAlignmentX(LEFT_ALIGNMENT);
-		label.addMouseListener(new MouseAdapter()
-		{
-			@Override
-			public void mouseClicked(MouseEvent e)
-			{
-				onClick.run();
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent e)
-			{
-				label.setForeground(Palette.ACCENT);
-			}
-
-			@Override
-			public void mouseExited(MouseEvent e)
-			{
-				label.setForeground(Palette.SECONDARY_TEXT);
-			}
-		});
-		return label;
 	}
 }

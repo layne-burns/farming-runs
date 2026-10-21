@@ -1,0 +1,14 @@
+{
+	"_comment": "Hand-edited (SPEC §2.7). Produce for the Farming Guild's compost bin, each of which makes supercompost (checked against the wiki's Supercompost page, 2026-10-20). item is a RuneLite ItemID name. shop: where it's sold, so it's easy to replace and none is kept back. Grimy herbs, roots, snape grass, mushrooms, white lilies and celastrus bark make supercompost too, but are left out as too useful to compost.",
+	"items": [
+		{"name": "Pineapple", "item": "PINEAPPLE", "shop": "Trader Crewmember, Deepfin Point"},
+		{"name": "Watermelon", "item": "WATERMELON"},
+		{"name": "Papaya fruit", "item": "PAPAYA"},
+		{"name": "Calquat fruit", "item": "CALQUAT_FRUIT"},
+		{"name": "Coconut", "item": "COCONUT"},
+		{"name": "Dragonfruit", "item": "DRAGONFRUIT"},
+		{"name": "Jangerberries", "item": "JANGERBERRIES"},
+		{"name": "White berries", "item": "WHITE_BERRIES"},
+		{"name": "Poison ivy berries", "item": "POISONIVY_BERRIES"}
+	]
+}

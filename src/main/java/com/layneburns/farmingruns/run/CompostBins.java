@@ -13,8 +13,9 @@ import javax.annotation.Nullable;
 import lombok.Value;
 
 /**
- * What a compost bin needs on a run, from its state: collect what's in it when it's ready, then fill it (with
- * pineapples, for supercompost) and close the lid. A bin that's rotting needs nothing. Pure: unit tested.
+ * What a compost bin needs on a run, from its state: collect what's in it when it's ready, then fill it (with produce
+ * that makes supercompost, {@link CompostBinFill}) and close the lid. A bin that's rotting needs nothing. Pure: unit
+ * tested.
  */
 public final class CompostBins
 {

@@ -23,6 +23,12 @@ public interface CompostPlan
 		return kind -> compost;
 	}
 
+	/** False for patches that can't be composted: coral. */
+	static boolean takesCompost(PatchImplementation kind)
+	{
+		return kind != PatchImplementation.CORAL;
+	}
+
 	/** True when this compost is an item used on the patch (not none, and not the Fertile Soil spell). */
 	static boolean usesItems(CompostChoice compost)
 	{

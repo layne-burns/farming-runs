@@ -17,6 +17,7 @@ import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.Location;
 import com.layneburns.farmingruns.data.RunType;
 import com.layneburns.farmingruns.data.Seed;
+import com.layneburns.farmingruns.run.CompostBinFill;
 import com.layneburns.farmingruns.run.CompostChoice;
 import com.layneburns.farmingruns.run.KindPlan;
 import com.layneburns.farmingruns.run.PlantingPlan;
@@ -112,6 +113,44 @@ public class RequirementsBuilderTest
 		Requirement recommended = find(RequirementsBuilder.build(setup, herbs, defaults, data, NORMAL_BOOK, owned,
 			p -> true, false), sack);
 		assertEquals(Requirement.Importance.RECOMMENDED, recommended.getImportance());
+	}
+
+	@Test
+	public void coralTakesNoCompostEvenWhenItsKindAsksForSome()
+	{
+		RunSetup setup = RunSetup.EMPTY.withRunTypes(Set.of(RunType.CORAL))
+			.withKindPlan(PatchImplementation.CORAL, KindPlan.AUTO.withCompost(CompostChoice.ULTRACOMPOST));
+		Seed coral = data.seedsFor(PatchImplementation.CORAL).get(0);
+		RunRequirements needs = build(setup, plan(coral, "great_conch.coral_east", "great_conch.coral_west"));
+		assertEquals(CompostChoice.NONE, setup.compostFor(PatchImplementation.CORAL));
+		assertNull(find(needs, data.getItems().group("supercompost").iterator().next()));
+		assertNull(find(needs, data.getItems().group("ultracompost").iterator().next()));
+	}
+
+	@Test
+	public void theBinTakesTheChosenProduceAndPineapplesForTheShortfall()
+	{
+		int watermelon = data.compostables().stream().filter(c -> c.getName().equals("Watermelon")).findFirst()
+			.orElseThrow().getItemId();
+		// 110 watermelons, 100 kept back: 10 spare, and 20 pineapples short.
+		CompostBinFill.Fill fill = CompostBinFill.fill(data.compostables(), data.seeds(), Map.of(watermelon, 110),
+			new CompostBinFill.Choices(watermelon, List.of(), Map.of()), 30);
+		List<Requirement> kit = RequirementsBuilder.compostBinKit(fill, 30, data.getItems());
+		assertEquals(10, kit.stream().filter(r -> r.getItemIds().contains(watermelon)).findFirst().orElseThrow()
+			.getAmount());
+		assertEquals(20, kit.stream().filter(r -> r.getItemIds().contains(PINEAPPLE)).findFirst().orElseThrow()
+			.getAmount());
+
+		// Watermelons the run also pays a gardener are added to, not listed twice.
+		RequirementList payments = new RequirementList();
+		payments.add("Watermelon", Set.of(watermelon), 6, Requirement.Importance.NEED, false, "protecting Jangerberry",
+			true);
+		List<Requirement> all = RequirementList.combine(payments.toList(), kit);
+		List<Requirement> melons = all.stream().filter(r -> r.getItemIds().contains(watermelon))
+			.collect(Collectors.toList());
+		assertEquals(1, melons.size());
+		assertEquals(16, melons.get(0).getAmount());
+		assertTrue(melons.get(0).why().contains("filling the big compost bin"));
 	}
 
 	@Test

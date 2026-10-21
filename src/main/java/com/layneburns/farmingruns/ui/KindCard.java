@@ -69,12 +69,13 @@ class KindCard extends JPanel
 	 * @param collapsed which collapsible parts are closed, by key; kept by the Run tab across redraws
 	 * @param seedInfo  a seed's tooltip: XP, protection and the goals that use it
 	 * @param onLeaveOut leaves this kind out of the run (the × by its heading)
-	 * @param runCompost the run's compost, which this kind uses unless it has its own
+	 * @param runCompost the run's compost, which this kind uses unless it has its own; null when the kind can't take
+	 *                   compost (coral), so there's no compost choice
 	 */
 	KindCard(String title, KindPlan plan, List<Seed> seeds, List<PlantingPlan.Assignment> planned, int patches,
 		@Nullable String payTooltip, boolean isTree, boolean harvests, boolean regrows, List<String> notes, @Nullable Boolean amulet,
 		Map<String, Boolean> collapsed, Function<Seed, String> seedInfo, Consumer<KindPlan> onChange,
-		Runnable onLeaveOut, CompostChoice runCompost)
+		Runnable onLeaveOut, @Nullable CompostChoice runCompost)
 	{
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(Palette.SURFACE);
@@ -146,7 +147,10 @@ class KindCard extends JPanel
 			// Some types are replaced: the seed choice below is for those patches.
 		}
 
-		add(left(compostChoice(plan, runCompost, onChange)));
+		if (runCompost != null)
+		{
+			add(left(compostChoice(plan, runCompost, onChange)));
+		}
 
 		JCheckBox auto = check("Auto: best seeds you can spare", plan.isAuto());
 		auto.setToolTipText("Untick to choose the seeds yourself");

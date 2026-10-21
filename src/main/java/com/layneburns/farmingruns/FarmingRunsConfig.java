@@ -31,7 +31,9 @@ public interface FarmingRunsConfig extends Config
 
 	@ConfigSection(
 		name = "Seed buffers",
-		description = "Seeds kept back for farming contracts and retries: never planted automatically, not counted as spare",
+		description = "Seeds kept back for farming contracts and retries: never planted automatically, not counted as spare."
+			+ " Only for kinds a contract can ask for, the Farming Guild's crops (hops, mushrooms, hardwood, spirit"
+			+ " trees, anima, Hespori and the like keep none)",
 		position = 0
 	)
 	String buffers = "buffers";
@@ -52,7 +54,8 @@ public interface FarmingRunsConfig extends Config
 	@ConfigItem(
 		keyName = "saplingBuffer",
 		name = "Saplings",
-		description = "Saplings of each tree type to keep back (and tree seeds, when a tree card grows saplings from seed)",
+		description = "Saplings of each tree type a contract can ask for to keep back (and tree seeds, when a tree card"
+			+ " grows saplings from seed)",
 		position = 2,
 		section = buffers
 	)
@@ -65,7 +68,7 @@ public interface FarmingRunsConfig extends Config
 	@ConfigItem(
 		keyName = "otherBuffer",
 		name = "Other seeds",
-		description = "Seeds of each other type (herbs, flowers, hops...) to keep back",
+		description = "Seeds of each other type a contract can ask for (herbs, flowers, bushes, cacti...) to keep back",
 		position = 3,
 		section = buffers
 	)

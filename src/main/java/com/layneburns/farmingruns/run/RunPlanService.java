@@ -69,7 +69,7 @@ public class RunPlanService
 	/** The plan for just these patches (e.g. leaving out the ones still growing). */
 	public PlantingPlan plan(RunSetup setup, List<Patch> patches)
 	{
-		return SeedPicker.plan(setup, patches, held(), BufferSettings.from(config), player.getFarmingLevel(), data,
+		return SeedPicker.plan(setup, patches, held(), BufferSettings.from(config, data), player.getFarmingLevel(), data,
 			contract.unplanted(), this::standing);
 	}
 

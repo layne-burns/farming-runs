@@ -40,6 +40,9 @@ final class LiveStopCard
 		/** The gardener is to be paid for this patch (it may already have been). */
 		boolean pays(PlantingPlan.Assignment assignment);
 
+		/** What to put in this compost bin, e.g. "30 × Watermelon"; empty when unknown. */
+		String binFill(PlantingPlan.Assignment bin);
+
 		/** You ticked a step the plugin didn't see (or chose to skip): planted / picked / cleared. */
 		void markWorked(String patchId);
 
@@ -88,7 +91,9 @@ final class LiveStopCard
 				{
 					card.add(step("Collect the compost", progress.isHarvested(id), () -> facts.markHarvested(id)));
 				}
-				card.add(step("Fill with pineapples, close the lid", worked, () -> facts.markWorked(id)));
+				String fill = facts.binFill(a);
+				card.add(step(fill.isEmpty() ? "Fill it, close the lid" : "Fill with " + fill + ", close the lid", worked,
+					() -> facts.markWorked(id)));
 				continue;
 			}
 			if (a.getSeed() == null)

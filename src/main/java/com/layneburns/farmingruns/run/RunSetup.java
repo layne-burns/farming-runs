@@ -61,9 +61,13 @@ public class RunSetup
 		return withSkippedPatches(Set.copyOf(copy));
 	}
 
-	/** The compost this kind gets: its own choice if it has one, else the run's. */
+	/** The compost this kind gets: its own choice if it has one, else the run's; none for coral, which can't take it. */
 	public CompostChoice compostFor(PatchImplementation kind)
 	{
+		if (!CompostPlan.takesCompost(kind))
+		{
+			return CompostChoice.NONE;
+		}
 		CompostChoice own = kindPlan(kind).getCompost();
 		return own != null ? own : compost;
 	}

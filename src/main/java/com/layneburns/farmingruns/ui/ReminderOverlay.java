@@ -8,6 +8,7 @@ package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.FarmingRunsConfig;
 import com.layneburns.farmingruns.data.GameData;
+import com.layneburns.farmingruns.inventory.CompostBinChooser;
 import com.layneburns.farmingruns.data.TeleportChoice;
 import com.layneburns.farmingruns.data.Location;
 import com.layneburns.farmingruns.run.GuidanceTracker;
@@ -64,12 +65,14 @@ public class ReminderOverlay extends Overlay
 	private final PlayerInfo player;
 	private final FarmingRunsConfig config;
 	private final EventBus eventBus;
+	private final CompostBinChooser binChooser;
 
 	@Inject
 	ReminderOverlay(Client client, GameData data, RunSession session, GuidanceTracker guidance, LegTimer legs,
 		ItemStore items, PlayerInfo player, FarmingRunsConfig config, FairyRingRoute fairyRings,
-		PineappleErrand pineapples, LocationPrefs prefs, EventBus eventBus)
+		PineappleErrand pineapples, LocationPrefs prefs, EventBus eventBus, CompostBinChooser binChooser)
 	{
+		this.binChooser = binChooser;
 		this.eventBus = eventBus;
 		this.prefs = prefs;
 		this.pineapples = pineapples;
@@ -125,10 +128,12 @@ public class ReminderOverlay extends Overlay
 		}
 		Set<String> composted = stop.getPatches().stream().map(a -> a.getPatch().getId())
 			.filter(guidance::isComposted).collect(Collectors.toSet());
+		String binFill = stop.getPatches().stream().filter(a -> a.getPatch().isCompostBin()).findFirst()
+			.map(a -> binChooser.wordsFor(a.getPatch())).orElse("");
 		String text = Reminder.next(stop, run.getProgress(), run.getSetup()::compostFor, composted,
 			(PlantingPlan.Assignment a) -> Protection.shouldPay(a, run.getSetup(), data, player.getFacts()),
 			LeprechaunNeeds.atStop(stop, run.getProgress(), run.getSetup()::compostFor, composted, data.getItems(),
-				items.ledger()));
+				items.ledger()), binFill);
 		if (text != null)
 		{
 			draw(graphics, me, text);

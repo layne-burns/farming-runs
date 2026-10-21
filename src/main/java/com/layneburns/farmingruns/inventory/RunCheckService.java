@@ -85,6 +85,7 @@ public class RunCheckService
 	private final TeleportLimits limits;
 	private final FarmingRunsConfig config;
 	private final CompostBinPlanner compostBins;
+	private final CompostBinChooser binChooser;
 	private final TravelLog travelLog;
 	/** Reuse a {@link OnTheWay} answer for the same patches this many seconds. */
 	private static final int CACHE_SECONDS = 30;
@@ -109,8 +110,9 @@ public class RunCheckService
 	@Inject
 	RunCheckService(GameData data, RunPlanService planner, LocationPrefs prefs, PlayerInfo player, ItemStore items,
 		PatchStates states, TeleportLimits limits, FarmingRunsConfig config, CompostBinPlanner compostBins,
-		TravelLog travelLog)
+		TravelLog travelLog, CompostBinChooser binChooser)
 	{
+		this.binChooser = binChooser;
 		this.travelLog = travelLog;
 		this.compostBins = compostBins;
 		this.config = config;
@@ -308,7 +310,10 @@ public class RunCheckService
 		return refs.stream().filter(r -> !limits.isUsedUp(r)).collect(Collectors.toList());
 	}
 
-	/** Adds what the compost bins at the run's stops need: pineapples to fill, buckets to collect. */
+	/**
+	 * Adds what the compost bins at the run's stops need: produce to fill them (your default, then the ranking, from
+	 * what the run doesn't use otherwise) and buckets to collect.
+	 */
 	private RunRequirements withCompostBins(RunRequirements requirements, RunSetup setup, PlantingPlan plan)
 	{
 		Set<String> visited = plan.getAssignments().stream().map(a -> a.getPatch().getLocationId())
@@ -321,8 +326,17 @@ public class RunCheckService
 		int fill = bins.values().stream().mapToInt(CompostBins.Work::getFill).sum();
 		int collect = setup.getCompost() == CompostChoice.BOTTOMLESS_BUCKET ? 0
 			: bins.values().stream().mapToInt(CompostBins.Work::getCollect).sum();
-		List<Requirement> all = new ArrayList<>(requirements.getRequirements());
-		all.addAll(RequirementsBuilder.compostBinKit(fill, collect, data.getItems()));
+		// Produce the run pays to gardeners isn't spare for the bin.
+		Map<Integer, Integer> reserved = new HashMap<>();
+		for (Requirement r : requirements.getRequirements())
+		{
+			if (r.getItemIds().size() == 1)
+			{
+				reserved.merge(r.getItemIds().iterator().next(), r.getAmount(), Integer::sum);
+			}
+		}
+		List<Requirement> all = RequirementList.combine(requirements.getRequirements(),
+			RequirementsBuilder.compostBinKit(binChooser.fill(fill, reserved), collect, data.getItems()));
 		return new RunRequirements(all, requirements.getTeleports(), requirements.getNotes());
 	}
 

@@ -203,6 +203,19 @@ final class RawData
 		List<RawPack> packs;
 	}
 
+	/** compost_bin.json (hand-edited). */
+	static class CompostBin
+	{
+		List<RawCompostable> items;
+	}
+
+	static class RawCompostable
+	{
+		String name;
+		String item;
+		String shop;
+	}
+
 	static class RawPack
 	{
 		String name;
