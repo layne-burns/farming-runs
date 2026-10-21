@@ -240,4 +240,24 @@ public class DataIntegrityTest
 		assertTrue(strawberry.stream().anyMatch(s -> s.startsWith("Dwellberry")));
 		assertTrue(strawberry.stream().anyMatch(s -> s.startsWith("Orange tree")));
 	}
+
+	@Test
+	public void everyPackIsAPaymentAndItsProduceIsTracked()
+	{
+		Set<Integer> payments = new HashSet<>();
+		data.seeds().forEach(s -> s.getPayment().forEach(p -> payments.add(p.getItemId())));
+		for (Pack pack : data.getItems().packs())
+		{
+			assertTrue(pack.getName() + " pays for nothing", payments.contains(pack.fullId()));
+			assertEquals(pack.getName(), pack.fillName(pack.size()));
+			assertTrue(data.trackedItemIds().contains(pack.getProduceId()));
+			assertTrue(data.trackedItemIds().containsAll(pack.getFills()));
+		}
+		// Maple trees are paid a basket of oranges.
+		Pack oranges = data.getItems().packs().get(0);
+		assertEquals("Oranges(5)", oranges.getName());
+		assertEquals(oranges.fullId(), data.seeds().stream().filter(s -> s.getName().equals("Maple seed")).findFirst()
+			.orElseThrow().getPayment().get(0).getItemId());
+		assertEquals(5, oranges.size());
+	}
 }

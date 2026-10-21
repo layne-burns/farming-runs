@@ -7,6 +7,7 @@
 package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.FarmingRunsConfig;
+import com.layneburns.farmingruns.MakingMode;
 import com.layneburns.farmingruns.inventory.RunCheckService;
 import com.layneburns.farmingruns.state.SetupStore;
 import java.util.ArrayList;
@@ -32,19 +33,21 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.util.Text;
 
 /**
- * A raised "Farm Run Items" button ("Sapling Items" while sapling making, or named after the preset you ticked)
- * down the right of the chatbox while you search the bank or seed vault, so the run's
+ * A raised "Farm Run Items" button ("Sapling Items" or "Payment Items" in a making mode, or named after the preset you
+ * ticked) down the right of the chatbox while you search the bank or seed vault, so the run's
  * items are one click away without the side panel: in the bank it opens the run's tab, in the seed vault it switches
  * {@link SeedVaultFilter} on (and "Show All Seeds" off again). It shows only when the run check has something to take from the bank, and is hidden again when
- * the search closes (the chatbox's prompt area is shared with other prompts). Client thread.
+ * the search closes (the chatbox's prompt area is shared with other prompts). Payment making has nothing in the seed
+ * vault, so there it doesn't show. Client thread.
  */
 @Singleton
 public class BankSearchButton
 {
 	/** Each part starts a new line, and wraps onto more if it's too wide; centred on the button. */
 	private static final List<String> LABEL = List.of("Farm Run", "Items");
-	/** With sapling making on (the setting). */
+	/** In the making modes (the Making tab). */
 	private static final List<String> SAPLING_LABEL = List.of("Sapling", "Items");
+	private static final List<String> PAYMENT_LABEL = List.of("Payment", "Items");
 	/** Largest first: the label takes the first that fits the button. */
 	private static final List<Integer> FONTS = List.of(FontID.BOLD_12, FontID.PLAIN_12, FontID.PLAIN_11);
 	/** Pixels between lines, beyond the font's baseline. */
@@ -91,14 +94,19 @@ public class BankSearchButton
 	}
 
 	/**
-	 * What the button says: "Sapling Items" while sapling making, the ticked preset's name ("Herbs Items") when
-	 * there's one, else "Farm Run Items".
+	 * What the button says: "Sapling Items" or "Payment Items" in a making mode, the ticked preset's name ("Herbs
+	 * Items") when there's one, else "Farm Run Items".
 	 */
 	private List<String> label()
 	{
-		if (config.saplingMode())
+		switch (config.makingMode())
 		{
-			return SAPLING_LABEL;
+			case SAPLINGS:
+				return SAPLING_LABEL;
+			case PAYMENTS:
+				return PAYMENT_LABEL;
+			default:
+				break;
 		}
 		String name = setups.chosenName();
 		return name == null || name.isBlank() ? LABEL : List.of(name.trim(), "Items");
@@ -150,8 +158,9 @@ public class BankSearchButton
 
 	private void update()
 	{
+		boolean inVault = vault.isVaultOpen() && config.makingMode() != MakingMode.PAYMENTS;
 		boolean searching = client.getVarcIntValue(VarClientID.MESLAYERMODE) == InputType.SEARCH.getType()
-			&& (isBankOpen() || vault.isVaultOpen()) && (!checks.bankItems().isEmpty() || vault.isOn());
+			&& (isBankOpen() || inVault) && (!checks.bankItems().isEmpty() || vault.isOn());
 		if (searching)
 		{
 			add();

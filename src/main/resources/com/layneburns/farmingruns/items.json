@@ -117,6 +117,12 @@
 			5339,
 			5340,
 			13353
+		],
+		"basket": [
+			5376
+		],
+		"empty_sack": [
+			5418
 		]
 	},
 	"descriptions": {
@@ -147,7 +153,9 @@
 		"diving_apparatus": "Worn with a fishbowl helmet to breathe underwater (seaweed and coral patches).",
 		"fishbowl_helmet": "Worn with a diving apparatus to breathe underwater (seaweed and coral patches).",
 		"filled_plant_pot": "A pot of soil: plant a tree seed in it (with a trowel) to grow a sapling.",
-		"watering_can": "Waters a potted seedling so it grows into a sapling."
+		"watering_can": "Waters a potted seedling so it grows into a sapling.",
+		"basket": "Holds 5 of one fruit; some gardeners are paid a full basket.",
+		"empty_sack": "Holds 10 of one vegetable; some gardeners are paid a full sack."
 	},
 	"runes": {
 		"Air rune": 556,
@@ -181,5 +189,126 @@
 				}
 			]
 		}
-	}
+	},
+	"packs": [
+		{
+			"name": "Oranges(5)",
+			"produce": "Orange",
+			"produceId": 2108,
+			"container": "basket",
+			"fills": [
+				5388,
+				5390,
+				5392,
+				5394,
+				5396
+			]
+		},
+		{
+			"name": "Apples(5)",
+			"produce": "Cooking apple",
+			"produceId": 1955,
+			"container": "basket",
+			"fills": [
+				5378,
+				5380,
+				5382,
+				5384,
+				5386
+			]
+		},
+		{
+			"name": "Tomatoes(5)",
+			"produce": "Tomato",
+			"produceId": 1982,
+			"container": "basket",
+			"fills": [
+				5960,
+				5962,
+				5964,
+				5966,
+				5968
+			]
+		},
+		{
+			"name": "Strawberries(5)",
+			"produce": "Strawberry",
+			"produceId": 5504,
+			"container": "basket",
+			"fills": [
+				5398,
+				5400,
+				5402,
+				5404,
+				5406
+			]
+		},
+		{
+			"name": "Bananas(5)",
+			"produce": "Banana",
+			"produceId": 1963,
+			"container": "basket",
+			"fills": [
+				5408,
+				5410,
+				5412,
+				5414,
+				5416
+			]
+		},
+		{
+			"name": "Potatoes(10)",
+			"produce": "Potato",
+			"produceId": 1942,
+			"container": "empty_sack",
+			"fills": [
+				5420,
+				5422,
+				5424,
+				5426,
+				5428,
+				5430,
+				5432,
+				5434,
+				5436,
+				5438
+			]
+		},
+		{
+			"name": "Onions(10)",
+			"produce": "Onion",
+			"produceId": 1957,
+			"container": "empty_sack",
+			"fills": [
+				5440,
+				5442,
+				5444,
+				5446,
+				5448,
+				5450,
+				5452,
+				5454,
+				5456,
+				5458
+			]
+		},
+		{
+			"name": "Cabbages(10)",
+			"produce": "Cabbage",
+			"produceId": 1965,
+			"container": "empty_sack",
+			"fills": [
+				5460,
+				5462,
+				5464,
+				5466,
+				5468,
+				5470,
+				5472,
+				5474,
+				5476,
+				5478
+			]
+		}
+	]
 }

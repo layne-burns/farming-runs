@@ -217,7 +217,8 @@ public final class GameData
 
 	/**
 	 * Every item a farming run cares about: seeds, saplings, payments, tools, compost, outfit, teleport items and
-	 * runes. Only these are recorded from the bank and other containers.
+	 * runes, plus the produce and part-filled baskets and sacks for payment making. Only these are recorded from the
+	 * bank and other containers.
 	 */
 	public Set<Integer> trackedItemIds()
 	{
@@ -243,6 +244,11 @@ public final class GameData
 			ids.addAll(items.group(group));
 		}
 		ids.addAll(items.runes().values());
+		for (Pack pack : items.packs())
+		{
+			ids.add(pack.getProduceId());
+			ids.addAll(pack.getFills());
+		}
 		return Set.copyOf(ids);
 	}
 

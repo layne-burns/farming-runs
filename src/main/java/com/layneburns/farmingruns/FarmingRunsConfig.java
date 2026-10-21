@@ -23,8 +23,11 @@ public interface FarmingRunsConfig extends Config
 {
 	String GROUP = "farmingruns";
 	String READY_ON_THE_WAY = "readyOnTheWay";
+	/** Replaced by {@link #MAKING_MODE}; read once to carry an old setting over. */
 	String SAPLING_MODE = "saplingMode";
+	String MAKING_MODE = "makingMode";
 	String SAPLING_SKIPPED = "saplingSkipped";
+	String PAYMENT_SKIPPED = "paymentSkipped";
 
 	@ConfigSection(
 		name = "Seed buffers",
@@ -86,26 +89,37 @@ public interface FarmingRunsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = SAPLING_MODE,
-		name = "Sapling making",
-		description = "The bank button, bank tab, highlights and seed vault filter show what pots every tree seed you"
-			+ " have (the seeds, a filled plant pot for each, trowel, watering cans) instead of the run's items. Set in the"
-			+ " Saplings tab.",
+		keyName = MAKING_MODE,
+		name = "Making",
+		description = "Sapling making: the bank button, bank tab, highlights and seed vault filter show what pots every"
+			+ " tree seed you have. Payment making: they show the baskets, sacks and produce to pack payments. Either"
+			+ " replaces the run's items. Set in the Making tab.",
 		position = 9,
 		hidden = true
 	)
-	default boolean saplingMode()
+	default MakingMode makingMode()
 	{
-		return false;
+		return MakingMode.OFF;
 	}
 
 	@ConfigItem(
 		keyName = SAPLING_SKIPPED,
 		name = "Seeds left out of sapling making",
-		description = "Seed item ids, comma-separated. Set in the Saplings tab.",
+		description = "Seed item ids, comma-separated. Set in the Making tab.",
 		hidden = true
 	)
 	default String saplingSkipped()
+	{
+		return "";
+	}
+
+	@ConfigItem(
+		keyName = PAYMENT_SKIPPED,
+		name = "Payments left out of payment making",
+		description = "Item ids of the full basket or sack, comma-separated. Set in the Making tab.",
+		hidden = true
+	)
+	default String paymentSkipped()
 	{
 		return "";
 	}

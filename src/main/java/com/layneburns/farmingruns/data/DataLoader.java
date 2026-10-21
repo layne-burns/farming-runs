@@ -247,8 +247,23 @@ public final class DataLoader
 				.map(r -> new ItemAmount(r.rune, r.itemId, r.amount))
 				.collect(Collectors.toUnmodifiableList()))));
 		}
+		List<Pack> packs = new ArrayList<>();
+		if (raw.packs != null)
+		{
+			for (RawData.RawPack p : raw.packs)
+			{
+				String where = "items.json pack " + p.name;
+				requireKey(groups, p.container, where + ": container");
+				if (p.fills == null || p.fills.size() < 2)
+				{
+					throw new DataException(where + ": needs an id for each fill level (re-run update_item_data.py)");
+				}
+				packs.add(new Pack(p.name, p.produce, requireId(p.produceId, where + " produce"), p.container,
+					List.copyOf(p.fills)));
+			}
+		}
 		return new ItemCatalog(Map.copyOf(groups), raw.descriptions == null ? Map.of() : Map.copyOf(raw.descriptions),
-			Map.copyOf(raw.runes), Map.copyOf(spells));
+			Map.copyOf(raw.runes), Map.copyOf(spells), List.copyOf(packs));
 	}
 
 	private Map<String, UnlockRule> loadRules()

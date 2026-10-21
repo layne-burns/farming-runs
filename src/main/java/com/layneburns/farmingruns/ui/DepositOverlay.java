@@ -21,9 +21,9 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.overlay.WidgetItemOverlay;
 
 /**
- * While the bank or the seed vault is open, outlines in red the items in your inventory that the run (or sapling
- * making) doesn't use, so they're easy to deposit. Only there: elsewhere you can carry what you like without it
- * lighting up.
+ * While the bank or the seed vault is open, outlines in red the items in your inventory that the run (or the making
+ * mode) doesn't use, so they're easy to deposit: in payment making, that includes the full baskets and sacks. Only
+ * there: elsewhere you can carry what you like without it lighting up.
  */
 @Singleton
 public class DepositOverlay extends WidgetItemOverlay

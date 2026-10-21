@@ -83,6 +83,9 @@ public class FarmingRunsPlugin extends Plugin
 	private FarmingRunsConfig config;
 
 	@Inject
+	private ConfigManager configManager;
+
+	@Inject
 	private ClientThread clientThread;
 
 	@Inject
@@ -205,6 +208,7 @@ public class FarmingRunsPlugin extends Plugin
 	@Override
 	protected void startUp()
 	{
+		upgradeSaplingMode();
 		BufferedImage icon = ImageUtil.loadImageResource(FarmingRunsPlugin.class, "icon.png");
 		navigationButton = NavigationButton.builder()
 			.tooltip("Farming Runs")
@@ -326,6 +330,22 @@ public class FarmingRunsPlugin extends Plugin
 			DebugLogging.apply(config.debugLogging());
 			bankTab.refresh();
 		}
+	}
+
+	/** Sapling making used to be an on/off setting; it's now one of the making modes. */
+	private void upgradeSaplingMode()
+	{
+		Boolean old = configManager.getConfiguration(FarmingRunsConfig.GROUP, FarmingRunsConfig.SAPLING_MODE,
+			Boolean.class);
+		if (old == null)
+		{
+			return;
+		}
+		if (old)
+		{
+			configManager.setConfiguration(FarmingRunsConfig.GROUP, FarmingRunsConfig.MAKING_MODE, MakingMode.SAPLINGS);
+		}
+		configManager.unsetConfiguration(FarmingRunsConfig.GROUP, FarmingRunsConfig.SAPLING_MODE);
 	}
 
 	/** The game data, loaded and checked once. A broken data file stops the plugin here with a clear message. */

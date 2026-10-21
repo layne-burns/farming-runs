@@ -7,6 +7,7 @@
 package com.layneburns.farmingruns.ui;
 
 import com.layneburns.farmingruns.FarmingRunsConfig;
+import com.layneburns.farmingruns.MakingMode;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.GoalPreset;
 import com.layneburns.farmingruns.data.Patch;
@@ -36,7 +37,6 @@ import com.layneburns.farmingruns.state.SetupStore;
 import com.layneburns.farmingruns.state.UnlockService;
 import com.layneburns.farmingruns.vendor.timetracking.PatchImplementation;
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -396,9 +396,10 @@ public class RunTab extends TabPanel
 			refresh();
 		});
 		section.addRow(onTheWay);
-		if (config.saplingMode())
+		if (config.makingMode() != MakingMode.OFF)
 		{
-			section.addRow(text("Sapling making is on (Saplings tab): the bank shows sapling items, not the run's."));
+			section.addRow(text(config.makingMode().getTitle() + " is on (Making tab): the bank shows its items, not"
+				+ " the run's."));
 		}
 		long kept = plan.keptCount();
 		section.addRow(text(plan.plantedCount() + " of " + plan.getAssignments().size() + " patches get a seed"
@@ -500,15 +501,5 @@ public class RunTab extends TabPanel
 	private SectionPanel section(String title)
 	{
 		return new SectionPanel(title, collapsed.getOrDefault(title, false), state -> collapsed.put(title, state));
-	}
-
-	private static JPanel fill(Component component)
-	{
-		JPanel wrapper = new JPanel(new BorderLayout());
-		wrapper.setBackground(Palette.BACKGROUND);
-		wrapper.setAlignmentX(LEFT_ALIGNMENT);
-		wrapper.add(component, BorderLayout.CENTER);
-		wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, wrapper.getPreferredSize().height));
-		return wrapper;
 	}
 }

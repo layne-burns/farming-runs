@@ -1,8 +1,8 @@
 """Generate teleports.json and items.json from the hand-edited scripts/teleports.in.json and items.in.json.
 
 The .in files name items by their wiki page; this looks up every item id (all charge variants, minus the
-excluded versions), every spell's rune cost and spellbook, and the fairy ring codes, so the plugin never relies on
-ids typed by hand.
+excluded versions), every spell's rune cost and spellbook, the fairy ring codes, and each packed payment's ids by
+fill level (Oranges(1) to Oranges(5)), so the plugin never relies on ids typed by hand.
 
 The outputs are generated: edit the .in files, not the outputs, then re-run. The script stops if a page is
 missing or has no ids, so a typo can't slip through.
@@ -38,6 +38,23 @@ def resolve_items(entries, texts, where):
             raise SystemExit(f"{where}: no item ids found on wiki page {entry['page']!r}")
         ids += found
     return sorted(set(ids))
+
+
+def resolve_pack(entry, texts, groups):
+    """A packed payment: its ids by fill level (Oranges(1) first, the full basket last) and its loose item's id."""
+    where = f"pack {entry['page']}"
+    box = re.search(r"\{\{Infobox Item\n(.*?)\n\}\}", texts.get(entry["page"], ""), re.S)
+    ids = {int(n): int(i) for n, i in re.findall(r"^\|id(\d+)\s*=\s*(\d+)\s*$", box.group(1), re.M)} if box else {}
+    size = re.search(r"\((\d+)\)$", entry["page"])
+    if not size or sorted(ids) != list(range(1, int(size.group(1)) + 1)):
+        raise SystemExit(f"{where}: expected one id per fill level 1..N on its wiki page, found {sorted(ids)}")
+    produce = infobox_ids(texts.get(entry["produce"], ""))
+    if len(produce) != 1:
+        raise SystemExit(f"{where}: expected one item id for {entry['produce']!r}, found {produce}")
+    if entry["container"] not in groups:
+        raise SystemExit(f"{where}: container {entry['container']!r} is not an item group")
+    return {"name": entry["page"], "produce": entry["produce"], "produceId": produce[0],
+            "container": entry["container"], "fills": [ids[n] for n in sorted(ids)]}
 
 
 def fairy_ring_codes():
@@ -86,6 +103,7 @@ def main() -> None:
     pages += [e["page"] for entries in items_in["groups"].values() for e in entries]
     pages += items_in["runes"]
     pages += list(items_in.get("spells", {}).values())
+    pages += [p for pack in items_in.get("packs", []) for p in (pack["page"], pack["produce"])]
     texts = page_texts(pages)
 
     rune_ids = {}
@@ -150,12 +168,13 @@ def main() -> None:
     for spell_id, page in items_in.get("spells", {}).items():
         book, runes = spell_cost(texts.get(page, ""), page, rune_ids)
         spells[spell_id] = {"name": page, "spellbook": book, "runes": runes}
+    packs = [resolve_pack(entry, texts, groups) for entry in items_in.get("packs", [])]
     (RESOURCES / "items.json").write_text(json.dumps(
         {"_comment": generated.format("items.in.json"), "groups": groups, "descriptions": descriptions,
-         "runes": rune_ids, "spells": spells}, indent="\t", ensure_ascii=False) + "\n",
+         "runes": rune_ids, "spells": spells, "packs": packs}, indent="\t", ensure_ascii=False) + "\n",
         encoding="utf-8", newline="\n")
     print(f"wrote teleports.json ({len(teleports)} teleports, {len(from_sp)} from Shortest Path) and items.json ({len(groups)} groups, "
-          f"{len(rune_ids)} runes)")
+          f"{len(rune_ids)} runes, {len(packs)} packs)")
 
 
 if __name__ == "__main__":

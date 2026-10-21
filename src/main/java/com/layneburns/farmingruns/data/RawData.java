@@ -200,6 +200,16 @@ final class RawData
 		Map<String, String> descriptions;
 		Map<String, Integer> runes;
 		Map<String, RawSpell> spells;
+		List<RawPack> packs;
+	}
+
+	static class RawPack
+	{
+		String name;
+		String produce;
+		Integer produceId;
+		String container;
+		List<Integer> fills;
 	}
 
 	static class RawSpell

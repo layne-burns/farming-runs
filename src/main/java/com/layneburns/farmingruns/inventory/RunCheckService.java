@@ -7,8 +7,10 @@
 package com.layneburns.farmingruns.inventory;
 
 import com.layneburns.farmingruns.FarmingRunsConfig;
+import com.layneburns.farmingruns.MakingMode;
 import com.layneburns.farmingruns.data.GameData;
 import com.layneburns.farmingruns.data.Location;
+import com.layneburns.farmingruns.data.Pack;
 import com.layneburns.farmingruns.data.Patch;
 import com.layneburns.farmingruns.data.Seed;
 import com.layneburns.farmingruns.data.TeleportChoice;
@@ -48,7 +50,8 @@ import lombok.Value;
  * Joins a run setup to what's known about you and checks your items for it (SPEC §2.4): which patches are still
  * growing, the plan for the rest, what that needs, and where each thing is. The thinking is in the pure
  * {@link RequirementsBuilder} and {@link InventoryChecker}; this gathers their inputs. Also remembers what the last
- * check said to take from the bank, for the bank highlight and the "Show in bank" tab.
+ * check said to take from the bank, for the bank highlight and the "Show in bank" tab: in a making mode (the Making
+ * tab), the sapling kit or this trip's payment packing ({@link PaymentKit}) instead of the run's items.
  */
 @Singleton
 public class RunCheckService
@@ -99,6 +102,8 @@ public class RunCheckService
 	/** What the last check said to take from the tool leprechaun, e.g. "9 × Supercompost". */
 	private volatile List<String> fromLeprechaun = List.of();
 	private volatile List<String> saplingKit = List.of();
+	private volatile List<String> paymentTrip = List.of();
+	private volatile PaymentKit.Plan paymentPlan = PaymentKit.Plan.NONE;
 	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
 	@Inject
@@ -195,19 +200,28 @@ public class RunCheckService
 			prefs::fare, data, player.getFacts(), ledger, grown, states.isAutoweedOn()), plan), setup, plan);
 		List<InventoryChecker.Line> lines = InventoryChecker.check(requirements.getRequirements(), ledger,
 			data.getItems().group("seed_box"));
-		if (config.saplingMode())
+		MakingMode mode = config.makingMode();
+		if (mode != MakingMode.OFF)
 		{
-			// The bank shows the sapling kit instead of the run's items.
-			List<Requirement> kit = buildSaplingKit();
+			// The bank shows what's being made instead of the run's items.
+			PaymentKit.Plan payments = mode == MakingMode.PAYMENTS
+				? PaymentKit.plan(paymentPacks(), ledger, data.getItems()) : PaymentKit.Plan.NONE;
+			List<Requirement> kit = mode == MakingMode.SAPLINGS ? buildSaplingKit() : payments.getTrip();
 			List<InventoryChecker.Line> kitLines = InventoryChecker.check(kit, ledger, data.getItems().group("seed_box"));
 			setBankItems(kitLines);
 			setNeededItems(kit);
 			fromLeprechaun = List.of();
-			saplingKit = kitLines.stream().map(l -> l.getRequirement().getAmount() + " × " + l.getRequirement().getLabel()
-				+ (l.fromBank() > 0 ? " (" + l.fromBank() + " from the bank)" : "")).collect(Collectors.toUnmodifiableList());
+			List<String> taking = kitLines.stream().map(l -> l.getRequirement().getAmount() + " × "
+				+ l.getRequirement().getLabel() + (l.fromBank() > 0 ? " (" + l.fromBank() + " from the bank)" : ""))
+				.collect(Collectors.toUnmodifiableList());
+			saplingKit = mode == MakingMode.SAPLINGS ? taking : List.of();
+			paymentTrip = mode == MakingMode.PAYMENTS ? taking : List.of();
+			paymentPlan = payments;
 			return new Check(plan, requirements, lines);
 		}
 		saplingKit = List.of();
+		paymentTrip = List.of();
+		paymentPlan = PaymentKit.Plan.NONE;
 		setBankItems(lines);
 		setNeededItems(requirements.getRequirements());
 		fromLeprechaun = lines.stream()
@@ -246,7 +260,7 @@ public class RunCheckService
 		return seeds;
 	}
 
-	/** Seed item ids (as text) left out of sapling making, from the Saplings tab. */
+	/** Seed item ids (as text) left out of sapling making, from the Making tab. */
 	public Set<String> saplingSkipped()
 	{
 		String saved = config.saplingSkipped();
@@ -258,6 +272,34 @@ public class RunCheckService
 	public List<String> saplingKit()
 	{
 		return saplingKit;
+	}
+
+	/** The payments you can pack (Making tab), less the ones left out there, in list order. */
+	private List<Pack> paymentPacks()
+	{
+		Set<String> skipped = paymentSkipped();
+		return data.getItems().packs().stream().filter(p -> !skipped.contains(String.valueOf(p.fullId())))
+			.collect(Collectors.toList());
+	}
+
+	/** Full basket and sack ids (as text) left out of payment making, from the Making tab. */
+	public Set<String> paymentSkipped()
+	{
+		String saved = config.paymentSkipped();
+		return saved == null || saved.isBlank() ? Set.of()
+			: Arrays.stream(saved.split(",")).map(String::trim).collect(Collectors.toUnmodifiableSet());
+	}
+
+	/** With payment making on, what you can make and what's short, from the last check; else {@link PaymentKit.Plan#NONE}. */
+	public PaymentKit.Plan paymentPlan()
+	{
+		return paymentPlan;
+	}
+
+	/** With payment making on, this trip's items from the last check, e.g. "4 × Basket (4 from the bank)"; else empty. */
+	public List<String> paymentTrip()
+	{
+		return paymentTrip;
 	}
 
 	/** A location's teleports without the ones used up for now ({@link TeleportLimits}). */

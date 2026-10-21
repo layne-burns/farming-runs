@@ -8,6 +8,7 @@ package com.layneburns.farmingruns.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -75,6 +76,17 @@ abstract class TabPanel extends JPanel
 			}
 		});
 		return button;
+	}
+
+	/** Stretches a component (a drop-down) across the section's width, at its own height. */
+	static JPanel fill(Component component)
+	{
+		JPanel wrapper = new JPanel(new BorderLayout());
+		wrapper.setBackground(Palette.BACKGROUND);
+		wrapper.setAlignmentX(LEFT_ALIGNMENT);
+		wrapper.add(component, BorderLayout.CENTER);
+		wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, wrapper.getPreferredSize().height));
+		return wrapper;
 	}
 
 	/** Width text wraps at: the panel is about 225 wide, less padding and the scroll bar. */

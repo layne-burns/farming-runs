@@ -20,14 +20,14 @@ import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
 
 /**
- * The side panel: five tabs (Run, Live, Bank, Locations, Saplings). It lays the tabs out, and switches to Live when a run
+ * The side panel: five tabs (Run, Live, Bank, Locations, Making). It lays the tabs out, and switches to Live when a run
  * starts; each tab is its own class.
  */
 @Singleton
 public class FarmingRunsPanel extends PluginPanel
 {
 	@Inject
-	FarmingRunsPanel(RunTab runTab, LiveTab liveTab, BankTab bankTab, LocationsTab locationsTab, SaplingTab saplingTab,
+	FarmingRunsPanel(RunTab runTab, LiveTab liveTab, BankTab bankTab, LocationsTab locationsTab, MakingTab makingTab,
 		RunSession session)
 	{
 		// Not wrapped in RuneLite's scroll pane (each tab scrolls itself), which also means PluginPanel
@@ -48,7 +48,7 @@ public class FarmingRunsPanel extends PluginPanel
 		tabs.addTab(live);
 		tabs.addTab(new CompactTab("Bank", tabs, bankTab));
 		tabs.addTab(new CompactTab("Locations", tabs, locationsTab));
-		tabs.addTab(new CompactTab("Saplings", tabs, saplingTab));
+		tabs.addTab(new CompactTab("Making", tabs, makingTab));
 		tabs.select(run);
 
 		// Starting a run brings up the Live tab (once per run, so you can still look elsewhere during it).

@@ -29,7 +29,9 @@
 		"fishbowl_helmet": [{"page": "Fishbowl helmet"}],
 		"filled_plant_pot": [{"page": "Filled plant pot"}],
 		"pineapple": [{"page": "Pineapple"}],
-		"watering_can": [{"page": "Watering can", "excludeVersions": ["Empty"]}, {"page": "Gricoller's can"}]
+		"watering_can": [{"page": "Watering can", "excludeVersions": ["Empty"]}, {"page": "Gricoller's can"}],
+		"basket": [{"page": "Basket"}],
+		"empty_sack": [{"page": "Empty sack"}]
 	},
 	"descriptions": {
 		"spade": "Harvests crops, digs up tree roots and clears dead plants.",
@@ -59,8 +61,21 @@
 		"diving_apparatus": "Worn with a fishbowl helmet to breathe underwater (seaweed and coral patches).",
 		"fishbowl_helmet": "Worn with a diving apparatus to breathe underwater (seaweed and coral patches).",
 		"filled_plant_pot": "A pot of soil: plant a tree seed in it (with a trowel) to grow a sapling.",
-		"watering_can": "Waters a potted seedling so it grows into a sapling."
+		"watering_can": "Waters a potted seedling so it grows into a sapling.",
+		"basket": "Holds 5 of one fruit; some gardeners are paid a full basket.",
+		"empty_sack": "Holds 10 of one vegetable; some gardeners are paid a full sack."
 	},
+	"_packs": "Payments packed into a container, for payment making: the full one's page (whose versions are each fill level), the loose item that goes in, and the item group of the empty container. In this order on the Making tab.",
+	"packs": [
+		{"page": "Oranges(5)", "produce": "Orange", "container": "basket"},
+		{"page": "Apples(5)", "produce": "Cooking apple", "container": "basket"},
+		{"page": "Tomatoes(5)", "produce": "Tomato", "container": "basket"},
+		{"page": "Strawberries(5)", "produce": "Strawberry", "container": "basket"},
+		{"page": "Bananas(5)", "produce": "Banana", "container": "basket"},
+		{"page": "Potatoes(10)", "produce": "Potato", "container": "empty_sack"},
+		{"page": "Onions(10)", "produce": "Onion", "container": "empty_sack"},
+		{"page": "Cabbages(10)", "produce": "Cabbage", "container": "empty_sack"}
+	],
 	"spells": {"fertile_soil": "Fertile Soil"},
 	"runes": ["Air rune", "Water rune", "Earth rune", "Fire rune", "Law rune", "Astral rune", "Nature rune", "Soul rune"]
 }

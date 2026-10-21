@@ -6,13 +6,14 @@
  */
 package com.layneburns.farmingruns.data;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 
 /**
  * Named groups of item ids from items.json ("spade", "axe", "farmers_boots"...): any id in a group counts as
- * having that item. Also each rune's id, and the spells a run casts (Fertile Soil).
+ * having that item. Also each rune's id, the spells a run casts (Fertile Soil), and the payments you pack yourself.
  */
 @RequiredArgsConstructor
 public final class ItemCatalog
@@ -23,6 +24,8 @@ public final class ItemCatalog
 	private final Map<String, Integer> runes;
 	/** Non-teleport spells a run can cast (Fertile Soil), by id. */
 	private final Map<String, Spell> spells;
+	/** Baskets and sacks of produce, in the order the Making tab lists them. */
+	private final List<Pack> packs;
 
 	public Set<Integer> group(String name)
 	{
@@ -42,6 +45,11 @@ public final class ItemCatalog
 	public Map<String, Integer> runes()
 	{
 		return runes;
+	}
+
+	public List<Pack> packs()
+	{
+		return packs;
 	}
 
 	public Spell spell(String id)
